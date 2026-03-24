@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+projeto_facul/
+.venv/
+venv/
+*.db
