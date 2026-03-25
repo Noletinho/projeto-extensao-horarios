@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Professores</title>
+</head>
+<body>
+    <h1>Lista de Professores</h1>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>Email</th>
+            <th>Telefone</th>
+            <th>Status</th>
+        </tr>
+
+        {% for professor in professores %}
+        <tr>
+            <td>{{ professor[0] }}</td>
+            <td>{{ professor[1] }}</td>
+            <td>{{ professor[2] }}</td>
+            <td>{{ professor[3] }}</td>
+            <td>{{ professor[4] }}</td>
+            <td>{{ professor[5] }}</td>
+            <td>
+                <form action="/deletar_professor/{{ professor[0] }}" method="POST" style="display:inline;">
+                    <button type="submit">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+    <a href="/">Voltar</a>
+</body>
+</html>
