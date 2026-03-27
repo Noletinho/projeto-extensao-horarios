@@ -55,5 +55,35 @@ def deletar_professor(id_professor):
 
     return redirect(url_for('listar_professores'))
 
+@app.route('/editar-professor/<int:id_professor>')
+def editar_professor(id_professor):
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute('SELECT * FROM professor WHERE id_professor = ?', (id_professor,))
+    professor = cursor.fetchone()
+    conexao.close()
+
+    return render_template('editar_professor.html', professor=professor)
+
+@app.route('/atualizar-professor/<int:id_professor>', methods=['POST'])
+def atualizar_professor(id_professor):
+    nome = request.form['nome']
+    cpf = request.form['cpf']
+    email = request.form['email']
+    telefone = request.form['telefone']
+    status = request.form['status']
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute("""
+        UPDATE professor
+        SET nome = ?, cpf = ?, email = ?, telefone = ?, status = ?
+        WHERE id_professor = ?
+    """, (nome, cpf, email, telefone, status, id_professor))
+    conexao.commit()
+    conexao.close()
+
+    return redirect(url_for('listar_professores'))
+
 if __name__ == "__main__":
     app.run(debug=True)

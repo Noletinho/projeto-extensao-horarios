@@ -26,6 +26,10 @@
             <td>{{ professor[4] }}</td>
             <td>{{ professor[5] }}</td>
             <td>
+                <a href="/editar-professor/{{ professor[0] }}">
+                    <button type="button">Editar</button>
+                </a>
+                
                 <form action="/deletar_professor/{{ professor[0] }}" method="POST" style="display:inline;">
                     <button type="submit">Excluir</button>
                 </form>

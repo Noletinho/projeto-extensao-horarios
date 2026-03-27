@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Professor</title>
+</head>
+<body>
+    <h1>Editar Professor</h1>
+
+    <form method="POST" action="/atualizar-professor/{{ professor[0] }}">
+        <label>Nome:</label><br>
+        <input type="text" name="nome" value="{{ professor[1] }}" required><br><br>
+
+        <label>CPF:</label><br>
+        <input type="text" name="cpf" value="{{ professor[2] }}"><br><br>
+
+        <label>Email:</label><br>
+        <input type="email" name="email" value="{{ professor[3] }}"><br><br>
+
+        <label>Telefone:</label><br>
+        <input type="text" name="telefone" value="{{ professor[4] }}"><br><br>
+
+        <label>Status:</label><br>
+        <select name="status">
+            <option value="ativo" {% if professor[5] == 'ativo' %}selected{% endif %}>Ativo</option>
+            <option value="inativo" {% if professor[5] == 'inativo' %}selected{% endif %}>Inativo</option>
+        </select><br><br>
+
+        <button type="submit">Atualizar</button>
+    </form>
+
+    <br>
+    <a href="/professores">Voltar</a>
+</body>
+</html>
