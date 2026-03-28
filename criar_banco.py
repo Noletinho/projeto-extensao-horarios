@@ -31,7 +31,7 @@ comandos_sql = [
         id_disciplina INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL UNIQUE,
         sigla TEXT NOT NULL UNIQUE,
-        cor TEXT NOT NULL UNIQUE,
+        cor TEXT NOT NULL,
         carga_horaria_semanal INTEGER NOT NULL
     )
     """,

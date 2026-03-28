@@ -27,7 +27,7 @@ def listar_professores():
 def cadastro_professor():
     return render_template('cadastro_professor.html')
 
-@app.route('/salvar-professor', methods=['POST'])
+@app.route('/salvar_professor', methods=['POST'])
 def salvar_professor():
     nome = request.form['nome']
     cpf = request.form['cpf']
@@ -84,6 +84,31 @@ def atualizar_professor(id_professor):
     conexao.close()
 
     return redirect(url_for('listar_professores'))
+
+@app.route('/cadastrar_disciplina')
+def cadastrar_disciplina():
+    return render_template('disciplinas.html')
+
+@app.route('/salvar_disciplina', methods=['POST'])
+def salvar_disciplina():
+    
+    nome = request.form['nome']
+    sigla = request.form['sigla']
+    cor = request.form['cor']
+    carga_horaria_semanal = request.form['carga_horaria_semanal']
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+    INSERT INTO disciplina (nome, sigla, cor, carga_horaria_semanal)
+    VALUES (?, ?, ?, ?)
+""", (nome, sigla, cor, carga_horaria_semanal))
+        
+    conexao.commit()
+    conexao.close()
+    return 'Disciplina salva com sucesso!'
+
 
 if __name__ == "__main__":
     app.run(debug=True)
