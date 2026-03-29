@@ -1,20 +1,23 @@
-import sqlite3
+from db import conectar
 from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
-
-
-def conectar():
-    conexao = sqlite3.connect('escola_horarios.db')
-    conexao.row_factory = sqlite3.Row
-    return conexao
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
 
+# =========================
+# PROFESSORES
+# =========================
+
 @app.route('/professores')
+
+@app.route('/cadastro_professor')
+def cadastro_professor():
+    return render_template('cadastro_professor.html')
+
 def listar_professores():
     conexao = conectar()
     cursor = conexao.cursor()
@@ -22,10 +25,6 @@ def listar_professores():
     professores = cursor.fetchall()
     conexao.close()
     return render_template('professores.html', professores=professores)
-
-@app.route('/cadastro_professor')
-def cadastro_professor():
-    return render_template('cadastro_professor.html')
 
 @app.route('/salvar_professor', methods=['POST'])
 def salvar_professor():
@@ -45,17 +44,8 @@ def salvar_professor():
 
     return 'Professor salvo com sucesso!'
 
-@app.route('/deletar_professor/<int:id_professor>', methods=['POST'])
-def deletar_professor(id_professor):
-    conexao = conectar()
-    cursor = conexao.cursor()
-    cursor.execute('DELETE FROM professor WHERE id_professor = ?', (id_professor,))
-    conexao.commit()
-    conexao.close()
 
-    return redirect(url_for('listar_professores'))
-
-@app.route('/editar-professor/<int:id_professor>')
+@app.route('/editar_professor/<int:id_professor>')
 def editar_professor(id_professor):
     conexao = conectar()
     cursor = conexao.cursor()
@@ -65,7 +55,7 @@ def editar_professor(id_professor):
 
     return render_template('editar_professor.html', professor=professor)
 
-@app.route('/atualizar-professor/<int:id_professor>', methods=['POST'])
+@app.route('/atualizar_professor/<int:id_professor>', methods=['POST'])
 def atualizar_professor(id_professor):
     nome = request.form['nome']
     cpf = request.form['cpf']
@@ -85,9 +75,24 @@ def atualizar_professor(id_professor):
 
     return redirect(url_for('listar_professores'))
 
+@app.route('/deletar_professor/<int:id_professor>', methods=['POST'])
+def deletar_professor(id_professor):
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute('DELETE FROM professor WHERE id_professor = ?', (id_professor,))
+    conexao.commit()
+    conexao.close()
+
+    return redirect(url_for('listar_professores'))
+
+
+# =========================
+# DISCIPLINAS
+# =========================
+
 @app.route('/cadastrar_disciplina')
 def cadastrar_disciplina():
-    return render_template('disciplinas.html')
+    return render_template('cadastro_disciplina.html')
 
 @app.route('/salvar_disciplina', methods=['POST'])
 def salvar_disciplina():
@@ -108,6 +113,57 @@ def salvar_disciplina():
     conexao.commit()
     conexao.close()
     return 'Disciplina salva com sucesso!'
+
+@app.route('/disciplinas')
+def listar_disciplinas():
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute('SELECT * FROM disciplina')
+    disciplinas = cursor.fetchall()
+    conexao.close()
+    return render_template('disciplinas.html', disciplinas=disciplinas)
+
+@app.route('/editar_disciplina/<int:id_disciplina>')
+def editar_disciplina(id_disciplina):
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute('SELECT * FROM disciplina WHERE id_disciplina = ?', (id_disciplina,))
+    disciplina = cursor.fetchone()
+    conexao.close()
+
+    return render_template('editar_disciplina.html', disciplina=disciplina)
+
+@app.route("/atualizar-disciplina/<int:id_disciplina>", methods=["POST"])
+def atualizar_disciplina(id_disciplina):
+    try:
+        nome = request.form["nome"]
+        sigla = request.form["sigla"]
+        cor = request.form["cor"]
+        carga_horaria_semanal = request.form["carga_horaria_semanal"]
+
+        conexao = conectar()
+        cursor = conexao.cursor()
+        cursor.execute("""
+            UPDATE disciplina
+            SET nome = ?, sigla = ?, cor = ?, carga_horaria_semanal = ?
+            WHERE id_disciplina = ?
+        """, (nome, sigla, cor, carga_horaria_semanal, id_disciplina))
+        conexao.commit()
+        conexao.close()
+
+        return redirect(url_for("listar_disciplinas"))
+    except Exception as e:
+        return f"Erro real: {e}"
+    
+@app.route("/deletar-disciplina/<int:id_disciplina>", methods=["POST"])
+def deletar_disciplina(id_disciplina):
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute("DELETE FROM disciplina WHERE id_disciplina = ?", (id_disciplina,))
+    conexao.commit()
+    conexao.close()
+
+    return redirect(url_for("listar_disciplinas"))
 
 
 if __name__ == "__main__":
