@@ -19,12 +19,12 @@
 
         {% for professor in professores %}
         <tr>
-            <td>{{ professor[0] }}</td>
-            <td>{{ professor[1] }}</td>
-            <td>{{ professor[2] }}</td>
-            <td>{{ professor[3] }}</td>
-            <td>{{ professor[4] }}</td>
-            <td>{{ professor[5] }}</td>
+            <td>{{ professor['id_professor'] }}</td>
+            <td>{{ professor['nome'] }}</td>
+            <td>{{ professor['cpf'] }}</td>
+            <td>{{ professor['email'] }}</td>
+            <td>{{ professor['telefone'] }}</td>
+            <td>{{ professor['status'] }}</td>
             <td>
                 <a href="{{ url_for('editar_professor', id_professor=professor[0]) }}">
                     <button type="button">Editar</button>
@@ -38,7 +38,33 @@
         {% endfor %}
     </table>
 
+    {% if professor_edicao %}
+        <hr>
+        <h2>Editar Professor</h2>
+
+        <form method="POST" action="{{ url_for('atualizar_professor', id_professor=professor_edicao['id_professor']) }}">
+            <label>Nome:</label><br>
+            <input type="text" name="nome" value="{{ professor_edicao['nome'] }}" required><br><br>
+
+            <label>CPF:</label><br>
+            <input type="text" name="cpf" value="{{ professor_edicao['cpf'] }}"><br><br>
+
+            <label>Email:</label><br>
+            <input type="email" name="email" value="{{ professor_edicao['email'] }}"><br><br>
+
+            <label>Telefone:</label><br>
+            <input type="text" name="telefone" value="{{ professor_edicao['telefone'] }}"><br><br>
+
+            <label>Status:</label><br>
+            <select name="status">
+                <option value="ativo" {% if professor_edicao['status'] == 'ativo' %}selected{% endif %}>Ativo</option>
+                <option value="inativo" {% if professor_edicao['status'] == 'inativo' %}selected{% endif %}>Inativo</option>
+            </select><br><br>
+
+            <button type="submit">Atualizar</button>
+        </form>
+    {% endif %}
     <br>
-    <a href="/">Voltar</a>
+    <a href="{{ url_for('index') }}">Voltar</a>
 </body>
 </html>

@@ -37,7 +37,28 @@
         {% endfor %}
     </table>
 
+    {% if disciplina_edicao %}
+        <hr>
+        <h2>Editar Disciplina</h2>
+
+        <form method="POST" action="{{ url_for('atualizar_disciplina', id_disciplina=disciplina_edicao['id_disciplina']) }}">
+            <label>Disciplina:</label><br>
+            <input type="text" name="nome" value="{{ disciplina_edicao['nome'] }}" required><br><br>
+
+            <label>Sigla:</label><br>
+            <input type="text" name="sigla" value="{{ disciplina_edicao['sigla'] }}" required><br><br>
+
+            <label>Cor:</label><br>
+            <input type="text" name="cor" value="{{ disciplina_edicao['cor'] }}" required><br><br>
+
+            <label>Carga Horária:</label><br>
+            <input type="number" name="carga_horaria_semanal" value="{{ disciplina_edicao['carga_horaria_semanal'] }}" required><br><br>
+
+            <button type="submit">Atualizar</button>
+        </form>
+    {% endif %}
+
     <br>
-    <a href="/">Voltar</a>
+    <a href="{{ url_for('index') }}">Voltar</a>
 </body>
 </html>

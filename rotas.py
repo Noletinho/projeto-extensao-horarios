@@ -12,19 +12,11 @@ def index():
 # PROFESSORES
 # =========================
 
-@app.route('/professores')
 
 @app.route('/cadastro_professor')
 def cadastro_professor():
     return render_template('cadastro_professor.html')
 
-def listar_professores():
-    conexao = conectar()
-    cursor = conexao.cursor()
-    cursor.execute('SELECT * FROM professor')
-    professores = cursor.fetchall()
-    conexao.close()
-    return render_template('professores.html', professores=professores)
 
 @app.route('/salvar_professor', methods=['POST'])
 def salvar_professor():
@@ -44,16 +36,33 @@ def salvar_professor():
 
     return 'Professor salvo com sucesso!'
 
+@app.route('/professores')
+def listar_professores():
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute('SELECT * FROM professor')
+    professores = cursor.fetchall()
+    conexao.close()
+    return render_template('professores.html', professores=professores)
 
 @app.route('/editar_professor/<int:id_professor>')
 def editar_professor(id_professor):
     conexao = conectar()
     cursor = conexao.cursor()
+
+    cursor.execute('SELECT * FROM professor')
+    professores = cursor.fetchall()
+
     cursor.execute('SELECT * FROM professor WHERE id_professor = ?', (id_professor,))
-    professor = cursor.fetchone()
+    professor_edicao = cursor.fetchone()
+
     conexao.close()
 
-    return render_template('editar_professor.html', professor=professor)
+    return render_template(
+        'professores.html',
+        professores=professores,
+        professor_edicao=professor_edicao
+    )
 
 @app.route('/atualizar_professor/<int:id_professor>', methods=['POST'])
 def atualizar_professor(id_professor):
@@ -127,33 +136,39 @@ def listar_disciplinas():
 def editar_disciplina(id_disciplina):
     conexao = conectar()
     cursor = conexao.cursor()
+
+    cursor.execute('SELECT * FROM disciplina')
+    disciplinas = cursor.fetchall()
+
     cursor.execute('SELECT * FROM disciplina WHERE id_disciplina = ?', (id_disciplina,))
-    disciplina = cursor.fetchone()
+    disciplina_edicao = cursor.fetchone()
+
     conexao.close()
 
-    return render_template('editar_disciplina.html', disciplina=disciplina)
+    return render_template(
+    'disciplinas.html',
+    disciplinas=disciplinas,
+    disciplina_edicao=disciplina_edicao
+)
 
 @app.route("/atualizar-disciplina/<int:id_disciplina>", methods=["POST"])
 def atualizar_disciplina(id_disciplina):
-    try:
-        nome = request.form["nome"]
-        sigla = request.form["sigla"]
-        cor = request.form["cor"]
-        carga_horaria_semanal = request.form["carga_horaria_semanal"]
+    nome = request.form['nome']
+    sigla = request.form['sigla']
+    cor = request.form['cor']
+    carga_horaria_semanal = request.form['carga_horaria_semanal']
 
-        conexao = conectar()
-        cursor = conexao.cursor()
-        cursor.execute("""
-            UPDATE disciplina
-            SET nome = ?, sigla = ?, cor = ?, carga_horaria_semanal = ?
-            WHERE id_disciplina = ?
-        """, (nome, sigla, cor, carga_horaria_semanal, id_disciplina))
-        conexao.commit()
-        conexao.close()
+    conexao = conectar()
+    cursor = conexao.cursor()
+    cursor.execute("""
+        UPDATE disciplina
+        SET nome = ?, sigla = ?, cor = ?, carga_horaria_semanal = ?
+        WHERE id_disciplina = ?
+    """, (nome, sigla, cor, carga_horaria_semanal, id_disciplina))
+    conexao.commit()
+    conexao.close()
 
-        return redirect(url_for("listar_disciplinas"))
-    except Exception as e:
-        return f"Erro real: {e}"
+    return redirect(url_for('listar_disciplinas'))
     
 @app.route("/deletar-disciplina/<int:id_disciplina>", methods=["POST"])
 def deletar_disciplina(id_disciplina):
