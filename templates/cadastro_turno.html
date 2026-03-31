@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastrar Turnos</title>
+</head>
+<body>
+    <h1>Cadastrar Turnos</h1>
+
+    <form method="POST" action="{{ url_for('salvar_turno') }}">
+        <label>Turno:</label><br>
+        <input type="text" name="nome" required><br><br>
+
+        <button type="submit">Salvar</button><br><br>
+    </form>
+
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>

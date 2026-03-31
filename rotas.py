@@ -27,21 +27,25 @@ def salvar_professor():
 
     conexao = conectar()
     cursor = conexao.cursor()
+
     cursor.execute("""
     INSERT INTO professor (nome, cpf, email, telefone)
     VALUES (?, ?, ?, ?)
 """, (nome, cpf, email, telefone))
+    
     conexao.commit()
     conexao.close()
 
-    return 'Professor salvo com sucesso!'
+    return redirect(url_for('listar_professores'))
 
 @app.route('/professores')
 def listar_professores():
     conexao = conectar()
     cursor = conexao.cursor()
+
     cursor.execute('SELECT * FROM professor')
     professores = cursor.fetchall()
+
     conexao.close()
     return render_template('professores.html', professores=professores)
 
@@ -74,11 +78,13 @@ def atualizar_professor(id_professor):
 
     conexao = conectar()
     cursor = conexao.cursor()
+
     cursor.execute("""
         UPDATE professor
         SET nome = ?, cpf = ?, email = ?, telefone = ?, status = ?
         WHERE id_professor = ?
     """, (nome, cpf, email, telefone, status, id_professor))
+
     conexao.commit()
     conexao.close()
 
@@ -88,7 +94,9 @@ def atualizar_professor(id_professor):
 def deletar_professor(id_professor):
     conexao = conectar()
     cursor = conexao.cursor()
+
     cursor.execute('DELETE FROM professor WHERE id_professor = ?', (id_professor,))
+
     conexao.commit()
     conexao.close()
 
@@ -105,7 +113,6 @@ def cadastrar_disciplina():
 
 @app.route('/salvar_disciplina', methods=['POST'])
 def salvar_disciplina():
-    
     nome = request.form['nome']
     sigla = request.form['sigla']
     cor = request.form['cor']
@@ -121,14 +128,16 @@ def salvar_disciplina():
         
     conexao.commit()
     conexao.close()
-    return 'Disciplina salva com sucesso!'
+    return redirect(url_for('listar_disciplinas'))
 
 @app.route('/disciplinas')
 def listar_disciplinas():
     conexao = conectar()
     cursor = conexao.cursor()
+
     cursor.execute('SELECT * FROM disciplina')
     disciplinas = cursor.fetchall()
+
     conexao.close()
     return render_template('disciplinas.html', disciplinas=disciplinas)
 
@@ -160,25 +169,115 @@ def atualizar_disciplina(id_disciplina):
 
     conexao = conectar()
     cursor = conexao.cursor()
+
     cursor.execute("""
         UPDATE disciplina
         SET nome = ?, sigla = ?, cor = ?, carga_horaria_semanal = ?
         WHERE id_disciplina = ?
     """, (nome, sigla, cor, carga_horaria_semanal, id_disciplina))
+
     conexao.commit()
     conexao.close()
 
     return redirect(url_for('listar_disciplinas'))
     
-@app.route("/deletar-disciplina/<int:id_disciplina>", methods=["POST"])
+@app.route('/deletar-disciplina/<int:id_disciplina>', methods=['POST'])
 def deletar_disciplina(id_disciplina):
     conexao = conectar()
     cursor = conexao.cursor()
-    cursor.execute("DELETE FROM disciplina WHERE id_disciplina = ?", (id_disciplina,))
+
+    cursor.execute('DELETE FROM disciplina WHERE id_disciplina = ?', (id_disciplina,))
+
     conexao.commit()
     conexao.close()
 
-    return redirect(url_for("listar_disciplinas"))
+    return redirect(url_for('listar_disciplinas'))
+
+
+# =========================
+# TURNOS
+# =========================
+
+@app.route('/cadastrar_turno')
+def cadastrar_turno():
+    return render_template('cadastro_turno.html')
+
+@app.route('/salvar_turno', methods=['POST'])
+def salvar_turno():
+    nome = request.form['nome']
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+    INSERT INTO turno (nome)
+    VALUES (?) 
+""", (nome,))
+    
+    conexao.commit()
+    conexao.close()
+    return redirect(url_for('listar_turnos'))
+    
+@app.route('/turnos')
+def listar_turnos():
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute('SELECT * FROM turno')
+    turnos = cursor.fetchall()  
+
+    conexao.close()
+    return render_template('turnos.html', turnos=turnos)  
+
+@app.route('/editar_turno/<int:id_turno>')
+def editar_turno(id_turno):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute('SELECT * FROM turno')
+    turnos = cursor.fetchall()
+
+    cursor.execute('SELECT * FROM turno WHERE id_turno = ?', (id_turno,))
+    turno_edicao = cursor.fetchone()
+
+    conexao.close()
+    return render_template('turnos.html', turnos=turnos, turno_edicao=turno_edicao)
+
+@app.route('/atualizar_turno/<int:id_turno>', methods=['POST'])
+def atualizar_turno(id_turno):
+    nome = request.form['nome']
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+    UPDATE turno
+    SET nome = ?
+    WHERE id_turno = ?
+""", (nome, id_turno))
+    
+    conexao.commit()
+    conexao.close()
+
+    return redirect(url_for('listar_turnos'))
+
+@app.route('/deletar_turno/<int:id_turno>', methods=['POST'])
+def deletar_turno(id_turno):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute('DELETE FROM turno WHERE id_turno = ?', (id_turno,))
+
+    conexao.commit()
+    conexao.close()
+
+    return redirect(url_for('listar_turnos'))
+
+
+# =========================
+# Turmas
+# =========================
+
 
 
 if __name__ == "__main__":
