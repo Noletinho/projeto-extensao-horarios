@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro das Turmas</title>
+</head>
+<body>
+    <h1>Cadastrar Turmas</h1>
+    <form method='POST' action="{{ url_for('salvar_turma') }}">
+        <label>Turma:</label>
+        <input type="text" name="nome" required><br><br>
+
+        <label>Série:</label>
+        <input type="number" name="serie"><br><br>
+
+        <label for="id_turno">Turno:</label>
+        <select name="id_turno" id="id_turno" required>
+            
+            <option value="">Selecione</option>
+
+            {% for turno in turnos %}
+                <option value="{{ turno['id_turno'] }}">{{ turno['nome'] }}</option>
+            {% endfor %}
+
+        </select>
+
+        <button type="submit">Salvar</button><br><br>
+
+    </form>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>
