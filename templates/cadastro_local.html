@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Locais</title>
+</head>
+<body>
+    <h1>Cadastrar Local</h1>
+
+    <form method="POST" action="{{ url_for('salvar_local') }}">
+        <label>Nome:</label><br>
+        <input type="text" name="nome" required><br><br>
+
+        <label>Tipo:</label><br>
+        <input type="text" name="tipo"><br><br>
+
+        <button type="submit">Salvar</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>

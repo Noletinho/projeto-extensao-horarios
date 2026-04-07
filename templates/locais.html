@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Locais</title>
+</head>
+<body>
+    <h1>Lista dos Locais</h1>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Tipo</th>
+            <th>Status</th>
+            <th>Ações</th>
+        </tr>
+
+        {% for local in locais %}
+        <tr>
+            <td>{{ local['id_local'] }}</td>
+            <td>{{ local['nome'] }}</td>
+            <td>{{ local['tipo'] }}</td>
+            <td>{{ local['status'] }}</td>
+            <td>
+                <a href="{{ url_for('editar_local', id_local=local['id_local']) }}">
+                    <button type="button">Editar</button>
+                </a>
+                
+                <form action="{{ url_for('deletar_local', id_local=local['id_local']) }}" method="POST" style="display:inline;">
+                    <button type="submit">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if local_edicao %}
+        <hr>
+        <h2>Editar Local</h2>
+
+        <form method="POST" action="{{ url_for('atualizar_local', id_local=local_edicao['id_local']) }}">
+            <label>Nome:</label><br>
+            <input type="text" name="nome" value="{{ local_edicao['nome'] }}" required><br><br>
+
+            <label>Tipo:</label><br>
+            <input type="text" name="tipo" value="{{ local_edicao['tipo'] }}"><br><br>
+
+            <label>Status:</label><br>
+            <select name="status">
+                <option value="ativo" {% if local_edicao['status'] == 'ativo' %}selected{% endif %}>Ativo</option>
+                <option value="inativo" {% if local_edicao['status'] == 'inativo' %}selected{% endif %}>Inativo</option>
+            </select><br><br>
+
+            <button type="submit">Atualizar</button>
+        </form>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>

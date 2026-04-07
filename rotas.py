@@ -396,6 +396,96 @@ def deletar_turma(id_turma):
     return redirect(url_for('listar_turmas'))
 
 
+# =========================
+# Local
+# =========================
+
+
+@app.route('/cadastrar_local')
+def cadastrar_local():
+    return render_template('cadastro_local.html')
+
+
+@app.route('/salvar_local', methods=['POST'])
+def salvar_local():
+    nome = request.form['nome']
+    tipo = request.form['tipo']
+    
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        INSERT INTO local (nome, tipo)
+        VALUES (?, ?)
+    """, (nome, tipo))
+    
+    conexao.commit()
+    conexao.close()
+
+    return redirect(url_for('listar_locais'))
+
+
+
+@app.route('/locais')
+def listar_locais():
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("SELECT * FROM local")
+    locais = cursor.fetchall()
+
+    conexao.close()
+    return render_template('locais.html', locais=locais, local_edicao=None)
+
+
+@app.route('/editar_local/<int:id_local>')
+def editar_local(id_local):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute('SELECT * FROM local')
+    locais = cursor.fetchall()
+
+    cursor.execute('SELECT * FROM local WHERE id_local = ?', (id_local,))
+    local_edicao = cursor.fetchone()
+
+    conexao.close()
+    return render_template('locais.html', locais=locais, local_edicao=local_edicao)
+
+@app.route('/atualizar_local/<int:id_local>', methods=['POST'])
+def atualizar_local(id_local):
+    nome = request.form['nome']
+    tipo = request.form['tipo']
+    status = request.form['status']
+
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        UPDATE local
+        SET nome = ?, tipo = ?, status = ?
+        WHERE id_local = ?
+    """, (nome, tipo, status, id_local))
+    
+    conexao.commit()
+    conexao.close()
+
+    return redirect(url_for('listar_locais'))
+
+
+
+@app.route('/deletar_local/<int:id_local>', methods=['POST'])
+def deletar_local(id_local):
+    conexao = conectar()
+    cursor = conexao.cursor()
+
+    cursor.execute('DELETE FROM local WHERE id_local = ?', (id_local,))
+
+    conexao.commit()
+    conexao.close()
+
+    return redirect(url_for('listar_locais'))
+
 
 if __name__ == "__main__":
     app.run(debug=True)

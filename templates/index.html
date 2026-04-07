@@ -7,14 +7,19 @@
 <body>
     <h1>Sistema de Horários</h1>
 
-    <a href="/cadastro_professor">Cadastrar Professor</a><br><br>
-    <a href="/professores">Listar Professores</a><br><br>
-    <a href="/cadastrar_disciplina">Cadastrar Disciplina</a><br><br>
-    <a href="/disciplinas">Listar Disciplinas</a><br><br>
-    <a href="/cadastrar_turno">Cadastrar Turno</a><br><br>
-    <a href="/turnos">Listar Turnos</a><br><br>
-    <a href="/cadastrar_turma">Cadastrar Turma</a><br><br>
-    <a href="/turmas">Listar Turmas</a>
+    <a href="{{ url_for('cadastro_professor') }}">Cadastrar Professor</a><br><br>
+    <a href="{{ url_for('listar_professores') }}">Listar Professores</a><br><br>
 
+    <a href="{{ url_for('cadastrar_disciplina') }}">Cadastrar Disciplina</a><br><br>
+    <a href="{{ url_for('listar_disciplinas') }}">Listar Disciplinas</a><br><br>
+
+    <a href="{{ url_for('cadastrar_turno') }}">Cadastrar Turno</a><br><br>
+    <a href="{{ url_for('listar_turnos') }}">Listar Turnos</a><br><br>
+
+    <a href="{{ url_for('cadastrar_turma') }}">Cadastrar Turma</a><br><br>
+    <a href="{{ url_for('listar_turmas') }}">Listar Turmas</a><br><br>
+
+    <a href="{{ url_for('cadastrar_local') }}">Cadastrar Local</a><br><br>
+    <a href="{{ url_for('listar_locais') }}">Listar Locais</a>
 </body>
 </html>
