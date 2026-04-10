@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastros dos Horários</title>
+</head>
+<body>
+    <h1>Cadastrar Horário</h1>
+
+    <form method="POST" action="{{ url_for('salvar_horario') }}">
+        <label for="hora_inicio">Hora de início:</label><br>
+        <input type="time" name="hora_inicio" required><br><br>
+
+        <label for="hora_fim">Hora de Fim:</label><br>
+        <input type="time" name="hora_fim"><br><br>
+
+        <button type="submit">Salvar</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>

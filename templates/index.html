@@ -7,7 +7,7 @@
 <body>
     <h1>Sistema de Horários</h1>
 
-    <a href="{{ url_for('cadastro_professor') }}">Cadastrar Professor</a><br><br>
+    <a href="{{ url_for('cadastrar_professor') }}">Cadastrar Professor</a><br><br>
     <a href="{{ url_for('listar_professores') }}">Listar Professores</a><br><br>
 
     <a href="{{ url_for('cadastrar_disciplina') }}">Cadastrar Disciplina</a><br><br>
@@ -20,6 +20,9 @@
     <a href="{{ url_for('listar_turmas') }}">Listar Turmas</a><br><br>
 
     <a href="{{ url_for('cadastrar_local') }}">Cadastrar Local</a><br><br>
-    <a href="{{ url_for('listar_locais') }}">Listar Locais</a>
+    <a href="{{ url_for('listar_locais') }}">Listar Locais</a><br><br>
+
+    <a href="{{ url_for('cadastrar_horario')}}">Cadastrar Horário</a><br><br>
+    <a href="{{ url_for('listar_horarios')}}">Listar Horários</a><br><br>
 </body>
 </html>

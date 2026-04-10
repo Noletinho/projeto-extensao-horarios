@@ -56,7 +56,8 @@ comandos_sql = [
     CREATE TABLE IF NOT EXISTS horario_aula (
         id_horario INTEGER PRIMARY KEY AUTOINCREMENT,
         hora_inicio TEXT NOT NULL,
-        hora_fim TEXT NOT NULL
+        hora_fim TEXT NOT NULL,
+        UNIQUE(hora_inicio, hora_fim)
     )
     """,
     """

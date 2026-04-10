@@ -13,54 +13,52 @@ def index():
 # =========================
 
 
-@app.route('/cadastro_professor')
-def cadastro_professor():
+@app.route('/cadastrar_professor')
+def cadastrar_professor():
     return render_template('cadastro_professor.html')
 
 
-@app.route('/salvar_professor', methods=['POST'])
+@app.route('/salvar_professor', methods=[ 'POST'])
 def salvar_professor():
-    nome = request.form['nome']
-    cpf = request.form['cpf']
-    email = request.form['email']
-    telefone = request.form['telefone']
+    if request.method == 'POST':
+        nome = request.form['nome']
+        cpf = request.form['cpf']
+        email = request.form['email']
+        telefone = request.form['telefone']
 
-    conexao = conectar()
-    cursor = conexao.cursor()
+        with conectar() as conexao:
+            cursor = conexao.cursor()
 
-    cursor.execute("""
-    INSERT INTO professor (nome, cpf, email, telefone)
-    VALUES (?, ?, ?, ?)
-""", (nome, cpf, email, telefone))
-    
-    conexao.commit()
-    conexao.close()
+            cursor.execute("""
+            INSERT INTO professor (nome, cpf, email, telefone)
+            VALUES (?, ?, ?, ?)
+            """, (nome, cpf, email, telefone))
+            conexao.commit()
 
-    return redirect(url_for('listar_professores'))
+        return redirect(url_for('listar_professores'))
+    return render_template('cadastro_professor.html')
 
 @app.route('/professores')
 def listar_professores():
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('SELECT * FROM professor')
-    professores = cursor.fetchall()
+        cursor.execute('SELECT * FROM professor')
+        professores = cursor.fetchall()
 
-    conexao.close()
     return render_template('professores.html', professores=professores)
 
 @app.route('/editar_professor/<int:id_professor>')
 def editar_professor(id_professor):
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('SELECT * FROM professor')
-    professores = cursor.fetchall()
+        cursor.execute('SELECT * FROM professor')
+        professores = cursor.fetchall()
 
-    cursor.execute('SELECT * FROM professor WHERE id_professor = ?', (id_professor,))
-    professor_edicao = cursor.fetchone()
+        cursor.execute('SELECT * FROM professor WHERE id_professor = ?', (id_professor,))
+        professor_edicao = cursor.fetchone()
 
-    conexao.close()
 
     return render_template(
         'professores.html',
@@ -76,29 +74,25 @@ def atualizar_professor(id_professor):
     telefone = request.form['telefone']
     status = request.form['status']
 
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute("""
-        UPDATE professor
-        SET nome = ?, cpf = ?, email = ?, telefone = ?, status = ?
-        WHERE id_professor = ?
-    """, (nome, cpf, email, telefone, status, id_professor))
-
-    conexao.commit()
-    conexao.close()
+        cursor.execute("""
+            UPDATE professor
+            SET nome = ?, cpf = ?, email = ?, telefone = ?, status = ?
+            WHERE id_professor = ?
+        """, (nome, cpf, email, telefone, status, id_professor))
+        conexao.commit()
 
     return redirect(url_for('listar_professores'))
 
 @app.route('/deletar_professor/<int:id_professor>', methods=['POST'])
 def deletar_professor(id_professor):
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('DELETE FROM professor WHERE id_professor = ?', (id_professor,))
-
-    conexao.commit()
-    conexao.close()
+        cursor.execute('DELETE FROM professor WHERE id_professor = ?', (id_professor,))
+        conexao.commit()
 
     return redirect(url_for('listar_professores'))
 
@@ -111,48 +105,47 @@ def deletar_professor(id_professor):
 def cadastrar_disciplina():
     return render_template('cadastro_disciplina.html')
 
-@app.route('/salvar_disciplina', methods=['POST'])
+@app.route('/salvar_disciplina', methods=['GET', 'POST'])
 def salvar_disciplina():
-    nome = request.form['nome']
-    sigla = request.form['sigla']
-    cor = request.form['cor']
-    carga_horaria_semanal = request.form['carga_horaria_semanal']
+    if request.method == 'POST':
+        nome = request.form['nome']
+        sigla = request.form['sigla']
+        cor = request.form['cor']
+        carga_horaria_semanal = request.form['carga_horaria_semanal']
 
-    conexao = conectar()
-    cursor = conexao.cursor()
+        with conectar() as conexao:
+            cursor = conexao.cursor()
 
-    cursor.execute("""
-    INSERT INTO disciplina (nome, sigla, cor, carga_horaria_semanal)
-    VALUES (?, ?, ?, ?)
-""", (nome, sigla, cor, carga_horaria_semanal))
-        
-    conexao.commit()
-    conexao.close()
-    return redirect(url_for('listar_disciplinas'))
+            cursor.execute("""
+            INSERT INTO disciplina (nome, sigla, cor, carga_horaria_semanal)
+            VALUES (?, ?, ?, ?)
+            """, (nome, sigla, cor, carga_horaria_semanal))    
+            conexao.commit()
+
+        return redirect(url_for('listar_disciplinas'))
+    return render_template('cadastro_disciplina.html')
 
 @app.route('/disciplinas')
 def listar_disciplinas():
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('SELECT * FROM disciplina')
-    disciplinas = cursor.fetchall()
+        cursor.execute('SELECT * FROM disciplina')
+        disciplinas = cursor.fetchall()
 
-    conexao.close()
     return render_template('disciplinas.html', disciplinas=disciplinas)
 
 @app.route('/editar_disciplina/<int:id_disciplina>')
 def editar_disciplina(id_disciplina):
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('SELECT * FROM disciplina')
-    disciplinas = cursor.fetchall()
+        cursor.execute('SELECT * FROM disciplina')
+        disciplinas = cursor.fetchall()
 
-    cursor.execute('SELECT * FROM disciplina WHERE id_disciplina = ?', (id_disciplina,))
-    disciplina_edicao = cursor.fetchone()
+        cursor.execute('SELECT * FROM disciplina WHERE id_disciplina = ?', (id_disciplina,))
+        disciplina_edicao = cursor.fetchone()
 
-    conexao.close()
 
     return render_template(
     'disciplinas.html',
@@ -167,29 +160,25 @@ def atualizar_disciplina(id_disciplina):
     cor = request.form['cor']
     carga_horaria_semanal = request.form['carga_horaria_semanal']
 
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute("""
-        UPDATE disciplina
-        SET nome = ?, sigla = ?, cor = ?, carga_horaria_semanal = ?
-        WHERE id_disciplina = ?
-    """, (nome, sigla, cor, carga_horaria_semanal, id_disciplina))
-
-    conexao.commit()
-    conexao.close()
+        cursor.execute("""
+            UPDATE disciplina
+            SET nome = ?, sigla = ?, cor = ?, carga_horaria_semanal = ?
+            WHERE id_disciplina = ?
+        """, (nome, sigla, cor, carga_horaria_semanal, id_disciplina))
+        conexao.commit()
 
     return redirect(url_for('listar_disciplinas'))
     
 @app.route('/deletar-disciplina/<int:id_disciplina>', methods=['POST'])
 def deletar_disciplina(id_disciplina):
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('DELETE FROM disciplina WHERE id_disciplina = ?', (id_disciplina,))
-
-    conexao.commit()
-    conexao.close()
+        cursor.execute('DELETE FROM disciplina WHERE id_disciplina = ?', (id_disciplina,))
+        conexao.commit()
 
     return redirect(url_for('listar_disciplinas'))
 
@@ -202,74 +191,69 @@ def deletar_disciplina(id_disciplina):
 def cadastrar_turno():
     return render_template('cadastro_turno.html')
 
-@app.route('/salvar_turno', methods=['POST'])
+@app.route('/salvar_turno', methods=['GET', 'POST'])
 def salvar_turno():
-    nome = request.form['nome']
+    if request.method == 'POST':
+        nome = request.form['nome']
 
-    conexao = conectar()
-    cursor = conexao.cursor()
+        with conectar() as conexao:
+            cursor = conexao.cursor()
 
-    cursor.execute("""
-    INSERT INTO turno (nome)
-    VALUES (?) 
-""", (nome,))
-    
-    conexao.commit()
-    conexao.close()
-    return redirect(url_for('listar_turnos'))
+            cursor.execute("""
+            INSERT INTO turno (nome)
+            VALUES (?) 
+            """, (nome,))
+            conexao.commit()
+
+        return redirect(url_for('listar_turnos'))
+    return render_template('cadastro_turno.html')
     
 @app.route('/turnos')
 def listar_turnos():
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('SELECT * FROM turno')
-    turnos = cursor.fetchall()  
+        cursor.execute('SELECT * FROM turno')
+        turnos = cursor.fetchall()  
 
-    conexao.close()
     return render_template('turnos.html', turnos=turnos)  
 
 @app.route('/editar_turno/<int:id_turno>')
 def editar_turno(id_turno):
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('SELECT * FROM turno')
-    turnos = cursor.fetchall()
+        cursor.execute('SELECT * FROM turno')
+        turnos = cursor.fetchall()
 
-    cursor.execute('SELECT * FROM turno WHERE id_turno = ?', (id_turno,))
-    turno_edicao = cursor.fetchone()
+        cursor.execute('SELECT * FROM turno WHERE id_turno = ?', (id_turno,))
+        turno_edicao = cursor.fetchone()
 
-    conexao.close()
     return render_template('turnos.html', turnos=turnos, turno_edicao=turno_edicao)
 
 @app.route('/atualizar_turno/<int:id_turno>', methods=['POST'])
 def atualizar_turno(id_turno):
     nome = request.form['nome']
 
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute("""
-    UPDATE turno
-    SET nome = ?
-    WHERE id_turno = ?
-""", (nome, id_turno))
-    
-    conexao.commit()
-    conexao.close()
+        cursor.execute("""
+        UPDATE turno
+        SET nome = ?
+        WHERE id_turno = ?
+        """, (nome, id_turno))
+        conexao.commit()
 
     return redirect(url_for('listar_turnos'))
 
 @app.route('/deletar_turno/<int:id_turno>', methods=['POST'])
 def deletar_turno(id_turno):
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('DELETE FROM turno WHERE id_turno = ?', (id_turno,))
-
-    conexao.commit()
-    conexao.close()
+        cursor.execute('DELETE FROM turno WHERE id_turno = ?', (id_turno,))
+        conexao.commit()
 
     return redirect(url_for('listar_turnos'))
 
@@ -289,77 +273,71 @@ def cadastrar_turma():
     conexao.close()
     return render_template('cadastro_turma.html', turnos=turnos)
 
-@app.route('/salvar_turma', methods=['POST'])
+@app.route('/salvar_turma', methods=['GET', 'POST'])
 def salvar_turma():
-    nome = request.form['nome']
-    serie = request.form['serie']
-    id_turno = request.form['id_turno']
+    if request.method == 'POST':
+        nome = request.form['nome']
+        serie = request.form['serie']
+        id_turno = request.form['id_turno']
 
-    conexao = conectar()
-    cursor = conexao.cursor()
+        with conectar() as conexao:
+            cursor = conexao.cursor()
 
-    cursor.execute("""
-    INSERT INTO turma (nome, serie, id_turno)
-    VALUES(?, ?, ?)
-""",(nome, serie, id_turno))
-    
-    conexao.commit()
-    conexao.close()
+            cursor.execute("""
+            INSERT INTO turma (nome, serie, id_turno)
+            VALUES(?, ?, ?)
+            """,(nome, serie, id_turno))
+            conexao.commit()
 
-    return redirect(url_for('listar_turmas'))
+        return redirect(url_for('listar_turmas'))
+    return render_template('cadastro_turma.html')
 
 @app.route('/turmas')
 def listar_turmas():
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute("""
-        SELECT 
-            turma.id_turma,
-            turma.nome,
-            turma.serie,
-            turma.id_turno,
-            turno.nome AS nome_turno
-        FROM turma
-        LEFT JOIN turno ON turma.id_turno = turno.id_turno
-        ORDER BY turma.id_turma
-    """)
-    turmas = cursor.fetchall()
+        cursor.execute("""
+            SELECT 
+                turma.id_turma,
+                turma.nome,
+                turma.serie,
+                turma.id_turno,
+                turno.nome AS nome_turno
+            FROM turma
+            LEFT JOIN turno ON turma.id_turno = turno.id_turno
+            ORDER BY turma.id_turma
+        """)
+        turmas = cursor.fetchall()
 
-    cursor.execute("SELECT id_turno, nome FROM turno")
-    turnos = cursor.fetchall()
-
-    conexao.close()
-
-    print(turmas)
+        cursor.execute("SELECT id_turno, nome FROM turno")
+        turnos = cursor.fetchall()
 
     return render_template('turmas.html', turmas=turmas, turnos=turnos, turma_edicao=None)
 
 
 @app.route('/editar_turma/<int:id_turma>')
 def editar_turma(id_turma):
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute("""
-        SELECT 
-            turma.id_turma,
-            turma.nome,
-            turma.serie,
-            turma.id_turno,
-            turno.nome AS nome_turno
-        FROM turma
-        JOIN turno ON turma.id_turno = turno.id_turno
-    """)
-    turmas = cursor.fetchall()
+        cursor.execute("""
+            SELECT 
+                turma.id_turma,
+                turma.nome,
+                turma.serie,
+                turma.id_turno,
+                turno.nome AS nome_turno
+            FROM turma
+            JOIN turno ON turma.id_turno = turno.id_turno
+        """)
+        turmas = cursor.fetchall()
 
-    cursor.execute("SELECT * FROM turma WHERE id_turma = ?", (id_turma,))
-    turma_edicao = cursor.fetchone()
+        cursor.execute("SELECT * FROM turma WHERE id_turma = ?", (id_turma,))
+        turma_edicao = cursor.fetchone()
 
-    cursor.execute("SELECT id_turno, nome FROM turno")
-    turnos = cursor.fetchall()
-
-    conexao.close()
+        cursor.execute("SELECT id_turno, nome FROM turno")
+        turnos = cursor.fetchall()
 
     return render_template('turmas.html', turmas=turmas, turnos=turnos, turma_edicao=turma_edicao)
 
@@ -369,29 +347,25 @@ def atualizar_turma(id_turma):
     serie = request.form['serie']
     id_turno = request.form['id_turno']
 
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute("""
-    UPDATE turma
-    SET nome = ?, serie = ?, id_turno = ?
-    WHERE id_turma = ?
-""", (nome, serie, id_turno, id_turma))
-    
-    conexao.commit()
-    conexao.close()
+        cursor.execute("""
+        UPDATE turma
+        SET nome = ?, serie = ?, id_turno = ?
+        WHERE id_turma = ?
+        """, (nome, serie, id_turno, id_turma))
+        conexao.commit()
     
     return redirect(url_for('listar_turmas'))
 
 @app.route('/deletar_turma/<int:id_turma>', methods=['POST'])
 def deletar_turma(id_turma):
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('DELETE FROM turma WHERE id_turma = ?', (id_turma,))
-
-    conexao.commit()
-    conexao.close()
+        cursor.execute('DELETE FROM turma WHERE id_turma = ?', (id_turma,))
+        conexao.commit()
 
     return redirect(url_for('listar_turmas'))
 
@@ -406,50 +380,48 @@ def cadastrar_local():
     return render_template('cadastro_local.html')
 
 
-@app.route('/salvar_local', methods=['POST'])
+@app.route('/salvar_local', methods=['GET', 'POST'])
 def salvar_local():
-    nome = request.form['nome']
-    tipo = request.form['tipo']
+    if request.method == 'POST':
+        nome = request.form['nome']
+        tipo = request.form['tipo']
     
-    conexao = conectar()
-    cursor = conexao.cursor()
+        with conectar() as conexao:
+            cursor = conexao.cursor()
 
-    cursor.execute("""
-        INSERT INTO local (nome, tipo)
-        VALUES (?, ?)
-    """, (nome, tipo))
-    
-    conexao.commit()
-    conexao.close()
+            cursor.execute("""
+                INSERT INTO local (nome, tipo)
+                VALUES (?, ?)
+            """, (nome, tipo))
+            conexao.commit()
 
-    return redirect(url_for('listar_locais'))
+        return redirect(url_for('listar_locais'))
+    return render_template('cadastro_local.html')
 
 
 
 @app.route('/locais')
 def listar_locais():
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute("SELECT * FROM local")
-    locais = cursor.fetchall()
+        cursor.execute("SELECT * FROM local")
+        locais = cursor.fetchall()
 
-    conexao.close()
     return render_template('locais.html', locais=locais, local_edicao=None)
 
 
 @app.route('/editar_local/<int:id_local>')
 def editar_local(id_local):
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('SELECT * FROM local')
-    locais = cursor.fetchall()
+        cursor.execute('SELECT * FROM local')
+        locais = cursor.fetchall()
 
-    cursor.execute('SELECT * FROM local WHERE id_local = ?', (id_local,))
-    local_edicao = cursor.fetchone()
+        cursor.execute('SELECT * FROM local WHERE id_local = ?', (id_local,))
+        local_edicao = cursor.fetchone()
 
-    conexao.close()
     return render_template('locais.html', locais=locais, local_edicao=local_edicao)
 
 @app.route('/atualizar_local/<int:id_local>', methods=['POST'])
@@ -458,17 +430,15 @@ def atualizar_local(id_local):
     tipo = request.form['tipo']
     status = request.form['status']
 
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute("""
-        UPDATE local
-        SET nome = ?, tipo = ?, status = ?
-        WHERE id_local = ?
-    """, (nome, tipo, status, id_local))
-    
-    conexao.commit()
-    conexao.close()
+        cursor.execute("""
+            UPDATE local
+            SET nome = ?, tipo = ?, status = ?
+            WHERE id_local = ?
+        """, (nome, tipo, status, id_local))
+        conexao.commit()
 
     return redirect(url_for('listar_locais'))
 
@@ -476,15 +446,92 @@ def atualizar_local(id_local):
 
 @app.route('/deletar_local/<int:id_local>', methods=['POST'])
 def deletar_local(id_local):
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute('DELETE FROM local WHERE id_local = ?', (id_local,))
-
-    conexao.commit()
-    conexao.close()
+        cursor.execute('DELETE FROM local WHERE id_local = ?', (id_local,))
+        conexao.commit()
 
     return redirect(url_for('listar_locais'))
+
+
+# =========================
+# Horário Aula
+# =========================
+
+@app.route('/cadastrar_horario')
+def cadastrar_horario():
+    return render_template('cadastro_horario.html')
+
+@app.route('/salvar_horario', methods=['GET', 'POST'])
+def salvar_horario():
+    if request.method == 'POST':
+        hora_inicio = request.form['hora_inicio']
+        hora_fim = request.form['hora_fim']
+
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+
+            cursor.execute("""
+                INSERT INTO horario_aula (hora_inicio, hora_fim)
+                VALUES (?, ?)
+            """, (hora_inicio, hora_fim))
+            conexao.commit()
+
+        return redirect(url_for('listar_horarios'))
+    return render_template('cadastro_horario.html')
+
+@app.route('/horarios')
+def listar_horarios():
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute('SELECT * FROM horario_aula')
+        horarios = cursor.fetchall()
+
+    return render_template('horarios_aula.html', horarios=horarios, horario_edicao=None)
+
+@app.route('/editar_horario/<int:id_horario>')
+def editar_horario(id_horario):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute('SELECT * FROM horario_aula')
+        horario = cursor.fetchall()
+
+        cursor.execute('SELECT * FROM horario_aula WHERE id_horario = ?', (id_horario,))
+        horario_edicao = cursor.fetchone()
+
+    return render_template('horarios_aula.html', horario=horario, horario_edicao=horario_edicao)
+
+@app.route('/atualizar_horario/<int:id_horario>', methods=['POST'])
+def atualizar_horario(id_horario):
+    hora_inicio = request.form['hora_inicio']
+    hora_fim = request.form['hora_fim']
+
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            UPDATE horario_aula
+            SET hora_inicio = ?, hora_fim = ?
+            WHERE id_horario = ?
+        """, (hora_inicio, hora_fim, id_horario))
+        conexao.commit()
+
+    return redirect(url_for('listar_horarios'))
+
+@app.route('/deletar_horario/<int:id_horario>', methods=['POST'])
+def deletar_horario(id_horario):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        
+        cursor.execute('DELETE FROM horario_aula WHERE id_horario = ?', (id_horario,))
+        conexao.commit()
+
+    return redirect(url_for('listar_horarios'))
+
+
 
 
 if __name__ == "__main__":

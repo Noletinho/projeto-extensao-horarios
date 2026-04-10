@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Horário</title>
+</head>
+<body>
+    <h1>Lista dos Horários das Aulas</h1>
+
+    <a href="{{ url_for('salvar_horario') }}">
+        <button>Cadastrar Novo Horário</button>
+    </a>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>ID</th>
+            <th>Hora Início</th>
+            <th>Hora Fim</th>
+            <th>Ações</th>
+        </tr>
+
+        {% for horario in horarios %}
+        <tr>
+            <td>{{ horario['id_horario'] }}</td>
+            <td>{{ horario['hora_inicio'] }}</td>
+            <td>{{ horario['hora_fim'] }}</td>
+            <td>
+                <a href="{{ url_for('editar_horario', id_horario=horario['id_horario']) }}">
+                    <button type="button">Editar</button>
+                </a>
+                
+                <form action="{{ url_for('deletar_horario', id_horario=horario['id_horario']) }}" method="POST" style="display:inline;">
+                    <button type="submit">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if horario_edicao %}
+        <hr>
+        <h2>Editar Horário</h2>
+
+        <form method="POST" action="{{ url_for('atualizar_horario', id_horario=horario_edicao['id_horario']) }}">
+            <label>Hora Início:</label><br>
+            <input type="time" name="hora_inicio" value="{{ horario_edicao['hora_inicio'] }}" required><br><br>
+
+            <label>Hora Fim:</label><br>
+            <input type="time" name="hora_fim" value="{{ horario_edicao['hora_fim'] }}"><br><br>
+
+            <button type="submit">Atualizar</button>
+        </form>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</body>
+</html>
