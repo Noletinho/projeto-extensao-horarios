@@ -22,8 +22,8 @@ comandos_sql = [
         id_turma INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
         serie TEXT NOT NULL,
-        id_turno INTEGER NOT NULL UNIQUE,
-        FOREIGN KEY (id_turno) REFERENCES turno(id_turno)
+        id_turno INTEGER NOT NULL,
+        FOREIGN KEY (id_turno) REFERENCES turno(id_turno),
         UNIQUE (nome, serie, id_turno)
     )
     """,

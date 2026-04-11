@@ -45,7 +45,9 @@
     <a href="{{ url_for('cadastrar_disponibilidade_professor') }}">
     <button>Cadastrar Disponibilidade </button></a><br>
     <a href="{{ url_for('listar_disponibilidade_professor') }}">
-    <button>Disponibilidade Professor</button></a><br><br>
+    <button>Lista Tradicional</button></a><br>
+    <a href="{{ url_for('grade_disponibilidades') }}">
+    <button>Grade de Disponibilidades</button></a><br><br>
 
     <a href="{{ url_for('cadastrar_grade_curricular') }}">
     <button>Cadastrar Grade Curricular</button></a><br>
@@ -55,7 +57,10 @@
     <a href="{{ url_for('cadastrar_alocacao') }}">
     <button>Cadastrar Alocação</button></a><br>
     <a href="{{ url_for('listar_alocacoes') }}">
-    <button>Listar Alocações</button></a>
+    <button>Listar Alocações</button></a><br><br>
+
+    <a href="{{ url_for('selecionar_turno_relatorio') }}">
+    <button>Relatório por Turno</button></a>
 
 </body>
 </html>

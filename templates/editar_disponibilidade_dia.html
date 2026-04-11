@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Disponibilidade por Dia</title>
+    <style>
+        .caixa-opcoes {
+            border: 1px solid #ccc;
+            padding: 12px;
+            width: fit-content;
+            min-width: 280px;
+        }
+
+        .caixa-opcoes label {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .linha-botoes button {
+            margin-right: 6px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Editar Disponibilidade por Dia</h1>
+
+    <p><strong>Professor:</strong> {{ professor['nome'] }}</p>
+    <p><strong>Dia:</strong> {{ dia_semana|capitalize }}</p>
+
+    <form method="POST" action="{{ url_for('atualizar_disponibilidade_dia', id_professor=professor['id_professor'], dia_semana=dia_semana) }}">
+        <div class="linha-botoes">
+            <button type="button" onclick="marcarTodos()">Marcar todos</button>
+            <button type="button" onclick="desmarcarTodos()">Desmarcar todos</button>
+        </div>
+
+        <br>
+
+        <div class="caixa-opcoes">
+            {% for horario in horarios %}
+                <label>
+                    <input
+                        type="checkbox"
+                        name="id_horario"
+                        value="{{ horario['id_horario'] }}"
+                        class="horario-check"
+                        {% if horario['id_horario'] in horarios_selecionados %}checked{% endif %}
+                    >
+                    {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
+                </label>
+            {% endfor %}
+        </div>
+
+        <br>
+        <button type="submit">Salvar Alterações</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('grade_disponibilidades') }}">Voltar</a>
+
+    <script>
+        function marcarTodos() {
+            document.querySelectorAll('.horario-check').forEach(item => item.checked = true);
+        }
+
+        function desmarcarTodos() {
+            document.querySelectorAll('.horario-check').forEach(item => item.checked = false);
+        }
+    </script>
+</body>
+</html>

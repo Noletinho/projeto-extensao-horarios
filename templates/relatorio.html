@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Grade Horária por Turno</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 8px;
+            font-size: 9px;
+            color: #000;
+        }
+
+        .acoes {
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .acoes button {
+            padding: 6px 12px;
+            margin: 0 4px;
+            cursor: pointer;
+        }
+
+        .titulo {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .subtitulo {
+            text-align: center;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #666;
+            text-align: center;
+            vertical-align: middle;
+            padding: 2px;
+            word-wrap: break-word;
+        }
+
+        th {
+            background: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .th-dia {
+            font-size: 10px;
+            background: #e6e6e6;
+            height: 24px;
+        }
+
+        .th-turma {
+            font-size: 9px;
+            background: #fafafa;
+            height: 28px;
+        }
+
+        .col-aula {
+            width: 36px;
+            font-weight: bold;
+            background: #f8f8f8;
+        }
+
+        .col-hora {
+            width: 62px;
+            font-size: 8px;
+            background: #f8f8f8;
+        }
+
+        .celula {
+            height: 34px;
+            font-size: 8px;
+            line-height: 1.15;
+            font-weight: bold;
+        }
+
+        .prof {
+            display: block;
+            font-size: 7px;
+            font-weight: normal;
+            margin-top: 2px;
+        }
+
+        .vazia {
+            background: #fff;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="acoes no-print">
+        <button onclick="window.print()">Imprimir</button>
+        <a href="{{ url_for('selecionar_turno_relatorio') }}">
+            <button type="button">Voltar</button>
+        </a>
+    </div>
+
+    <div class="titulo">GRADE HORÁRIA</div>
+    <div class="subtitulo">{{ turno['nome'] }}</div>
+
+    <table>
+        <tr>
+            <th rowspan="2" class="col-aula">Aula</th>
+            <th rowspan="2" class="col-hora">Horário</th>
+            {% for dia in dias %}
+                <th colspan="{{ turmas|length }}" class="th-dia">{{ dia|upper }}</th>
+            {% endfor %}
+        </tr>
+
+        <tr>
+            {% for dia in dias %}
+                {% for turma in turmas %}
+                    <th class="th-turma">
+                        {{ turma['nome'] }}<br>
+                        {{ turma['serie'] }}
+                    </th>
+                {% endfor %}
+            {% endfor %}
+        </tr>
+
+        {% for horario in horarios %}
+            <tr>
+                <td class="col-aula">{{ loop.index }}ª</td>
+                <td class="col-hora">
+                    {{ horario['hora_inicio'] }}<br>
+                    {{ horario['hora_fim'] }}
+                </td>
+
+                {% for dia in dias %}
+                    {% for turma in turmas %}
+                        {% set chave = (horario['id_horario'], dia, turma['id_turma']) %}
+                        {% set aula = grade.get(chave) %}
+
+                        {% if aula %}
+                            <td class="celula" style="background-color: {{ aula['cor'] }};">
+                                {{ aula['sigla'] }}
+                                <span class="prof">{{ aula['professor'] }}</span>
+                            </td>
+                        {% else %}
+                            <td class="vazia"></td>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

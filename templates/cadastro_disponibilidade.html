@@ -3,6 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Cadastrar Disponibilidade do Professor</title>
+    <style>
+        .grupo {
+            margin-bottom: 18px;
+        }
+
+        .caixa-opcoes {
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: fit-content;
+            min-width: 260px;
+        }
+
+        .caixa-opcoes label {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .linha-botoes button {
+            margin-right: 6px;
+        }
+    </style>
 </head>
 <body>
     <h1>Cadastrar Disponibilidade do Professor</h1>
@@ -12,44 +33,77 @@
     {% endif %}
 
     <form method="POST" action="{{ url_for('cadastrar_disponibilidade_professor') }}">
-        <label>Professor:</label><br>
-        <select name="id_professor" required>
-            <option value="">Selecione</option>
-            {% for professor in professores %}
-                <option value="{{ professor['id_professor'] }}">{{ professor['nome'] }}</option>
-            {% endfor %}
-        </select><br><br>
+        <div class="grupo">
+            <label>Professor:</label><br>
+            <select name="id_professor" required>
+                <option value="">Selecione</option>
+                {% for professor in professores %}
+                    <option value="{{ professor['id_professor'] }}">{{ professor['nome'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <label>Dia da semana:</label><br>
-        <select name="dia_semana" required>
-            <option value="">Selecione</option>
-            <option value="segunda">Segunda</option>
-            <option value="terca">Terça</option>
-            <option value="quarta">Quarta</option>
-            <option value="quinta">Quinta</option>
-            <option value="sexta">Sexta</option>
-        </select><br><br>
+        <div class="grupo">
+            <label>Dias da semana:</label>
+            <div class="linha-botoes">
+                <button type="button" onclick="marcarTodosDias()">Marcar todos</button>
+                <button type="button" onclick="desmarcarTodosDias()">Desmarcar todos</button>
+            </div>
+            <div class="caixa-opcoes">
+                <label><input type="checkbox" name="dias_semana" value="segunda" class="dia-check"> Segunda</label>
+                <label><input type="checkbox" name="dias_semana" value="terca" class="dia-check"> Terça</label>
+                <label><input type="checkbox" name="dias_semana" value="quarta" class="dia-check"> Quarta</label>
+                <label><input type="checkbox" name="dias_semana" value="quinta" class="dia-check"> Quinta</label>
+                <label><input type="checkbox" name="dias_semana" value="sexta" class="dia-check"> Sexta</label>
+            </div>
+        </div>
 
-        <label>Horário:</label><br>
-        <select name="id_horario" required>
-            <option value="">Selecione</option>
-            {% for horario in horarios %}
-                <option value="{{ horario['id_horario'] }}">
-                    {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
-                </option>
-            {% endfor %}
-        </select><br><br>
+        <div class="grupo">
+            <label>Horários:</label>
+            <div class="linha-botoes">
+                <button type="button" onclick="marcarTodosHorarios()">Marcar todos</button>
+                <button type="button" onclick="desmarcarTodosHorarios()">Desmarcar todos</button>
+            </div>
+            <div class="caixa-opcoes">
+                {% for horario in horarios %}
+                    <label>
+                        <input type="checkbox" name="id_horario" value="{{ horario['id_horario'] }}" class="horario-check">
+                        {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
 
-        <label>Disponível?</label><br>
-        <select name="disponivel" required>
-            <option value="1">Sim</option>
-            <option value="0">Não</option>
-        </select><br><br>
+        <div class="grupo">
+            <label>Disponível?</label><br>
+            <select name="disponivel" required>
+                <option value="1">Sim</option>
+                <option value="0">Não</option>
+            </select>
+        </div>
 
         <button type="submit">Salvar</button>
     </form>
 
     <br>
     <a href="{{ url_for('index') }}">Voltar</a>
+
+    <script>
+        function marcarTodosDias() {
+            document.querySelectorAll('.dia-check').forEach(item => item.checked = true);
+        }
+
+        function desmarcarTodosDias() {
+            document.querySelectorAll('.dia-check').forEach(item => item.checked = false);
+        }
+
+        function marcarTodosHorarios() {
+            document.querySelectorAll('.horario-check').forEach(item => item.checked = true);
+        }
+
+        function desmarcarTodosHorarios() {
+            document.querySelectorAll('.horario-check').forEach(item => item.checked = false);
+        }
+    </script>
 </body>
 </html>

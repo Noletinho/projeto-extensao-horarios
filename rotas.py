@@ -730,24 +730,49 @@ def cadastrar_disponibilidade_professor():
 
         if request.method == 'POST':
             id_professor = request.form['id_professor']
-            dia_semana = request.form['dia_semana']
-            id_horario = request.form['id_horario']
+            dias_semana = request.form.getlist('dias_semana')
+            horarios_marcados = request.form.getlist('id_horario')
             disponivel = request.form['disponivel']
 
-            try:
-                cursor.execute("""
-                    INSERT INTO disponibilidade_professor (id_professor, dia_semana, id_horario, disponivel)
-                    VALUES (?, ?, ?, ?)
-                """, (id_professor, dia_semana, id_horario, disponivel))
+            if not id_professor:
+                erro = "Selecione um professor."
+            elif not dias_semana:
+                erro = "Selecione pelo menos um dia."
+            elif not horarios_marcados:
+                erro = "Selecione pelo menos um horário."
+            else:
+                inseridos = 0
+
+                for dia_semana in dias_semana:
+                    for id_horario in horarios_marcados:
+                        cursor.execute("""
+                            SELECT 1
+                            FROM disponibilidade_professor
+                            WHERE id_professor = ? AND dia_semana = ? AND id_horario = ?
+                        """, (id_professor, dia_semana, id_horario))
+
+                        existe = cursor.fetchone()
+
+                        if not existe:
+                            cursor.execute("""
+                                INSERT INTO disponibilidade_professor (
+                                    id_professor,
+                                    dia_semana,
+                                    id_horario,
+                                    disponivel
+                                )
+                                VALUES (?, ?, ?, ?)
+                            """, (id_professor, dia_semana, id_horario, disponivel))
+                            inseridos += 1
+
                 conexao.commit()
 
-                return redirect(url_for('listar_disponibilidade_professor'))
+                if inseridos > 0:
+                    return redirect(url_for('grade_disponibilidades'))
+                else:
+                    erro = "Todas as combinações selecionadas já estavam cadastradas."
 
-            except sqlite3.IntegrityError:
-                erro = "Essa disponibilidade já foi cadastrada para esse professor, dia e horário."
-
-    return render_template(
-        'cadastro_disponibilidade.html',
+    return render_template('cadastro_disponibilidade.html',
         professores=professores,
         horarios=horarios,
         erro=erro)
@@ -796,9 +821,18 @@ def editar_disponibilidade_professor(id_disponibilidade):
             FROM disponibilidade_professor dp
             JOIN professor p ON dp.id_professor = p.id_professor
             JOIN horario_aula h ON dp.id_horario = h.id_horario
-            ORDER BY p.nome, dp.dia_semana, h.hora_inicio
+            ORDER BY
+                p.nome,
+                CASE dp.dia_semana
+                    WHEN 'segunda' THEN 1
+                    WHEN 'terca' THEN 2
+                    WHEN 'quarta' THEN 3
+                    WHEN 'quinta' THEN 4
+                    WHEN 'sexta' THEN 5
+                END,
+                h.hora_inicio
         """)
-        disponibilidades = cursor.fetchall()
+        registros = cursor.fetchall()
 
         cursor.execute("SELECT * FROM professor ORDER BY nome")
         professores = cursor.fetchall()
@@ -807,16 +841,66 @@ def editar_disponibilidade_professor(id_disponibilidade):
         horarios = cursor.fetchall()
 
         cursor.execute("""
-            SELECT * FROM disponibilidade_professor
+            SELECT *
+            FROM disponibilidade_professor
             WHERE id_disponibilidade = ?
         """, (id_disponibilidade,))
         disponibilidade_edicao = cursor.fetchone()
 
-    return render_template('disponibilidade.html',
-        disponibilidades=disponibilidades,
+    dias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
+
+    grade = {}
+    professores_ordem = []
+
+    for registro in registros:
+        professor = registro['nome_professor']
+        dia = registro['dia_semana']
+
+        if professor not in grade:
+            grade[professor] = {d: [] for d in dias}
+            professores_ordem.append(professor)
+
+        texto_horario = f"{registro['hora_inicio']} às {registro['hora_fim']}"
+
+        grade[professor][dia].append({
+            'id_disponibilidade': registro['id_disponibilidade'],
+            'horario': texto_horario,
+            'disponivel': registro['disponivel']
+        })
+
+    return render_template('grade_disponibilidades.html',
+        grade=grade,
+        professores_ordem=professores_ordem,
+        dias=dias,
         disponibilidade_edicao=disponibilidade_edicao,
         professores=professores,
         horarios=horarios)
+
+@app.route('/editar_disponibilidade_dia/<int:id_professor>/<dia_semana>')
+def editar_disponibilidade_dia(id_professor, dia_semana):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("SELECT * FROM professor WHERE id_professor = ?", (id_professor,))
+        professor = cursor.fetchone()
+
+        cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+        horarios = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT id_horario
+            FROM disponibilidade_professor
+            WHERE id_professor = ? AND dia_semana = ? AND disponivel = 1
+        """, (id_professor, dia_semana))
+        horarios_marcados = cursor.fetchall()
+
+    horarios_selecionados = [item['id_horario'] for item in horarios_marcados]
+
+    return render_template('editar_disponibilidade_dia.html',
+        professor=professor,
+        dia_semana=dia_semana,
+        horarios=horarios,
+        horarios_selecionados=horarios_selecionados)
 
 @app.route('/atualizar_disponibilidade_professor/<int:id_disponibilidade>', methods=['POST'])
 def atualizar_disponibilidade_professor(id_disponibilidade):
@@ -837,7 +921,7 @@ def atualizar_disponibilidade_professor(id_disponibilidade):
             """, (id_professor, dia_semana, id_horario, disponivel, id_disponibilidade))
             conexao.commit()
 
-        return redirect(url_for('listar_disponibilidade_professor'))
+        return redirect(url_for('grade_disponibilidades'))
 
     except sqlite3.IntegrityError:
         with conectar() as conexao:
@@ -874,12 +958,41 @@ def atualizar_disponibilidade_professor(id_disponibilidade):
 
         erro = "Já existe um cadastro igual para esse professor, dia e horário."
 
-        return render_template('disponibilidades.html',
+        return render_template('disponibilidade.html',
             disponibilidades=disponibilidades,
             disponibilidade_edicao=disponibilidade_edicao,
             professores=professores,
             horarios=horarios,
             erro=erro)
+    
+@app.route('/atualizar_disponibilidade_dia/<int:id_professor>/<dia_semana>', methods=['POST'])
+def atualizar_disponibilidade_dia(id_professor, dia_semana):
+    horarios_marcados = request.form.getlist('id_horario')
+
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        # apaga todas as disponibilidades daquele professor naquele dia
+        cursor.execute("""
+            DELETE FROM disponibilidade_professor
+            WHERE id_professor = ? AND dia_semana = ?
+        """, (id_professor, dia_semana))
+
+        # recria só as que foram marcadas
+        for id_horario in horarios_marcados:
+            cursor.execute("""
+                INSERT INTO disponibilidade_professor (
+                    id_professor,
+                    dia_semana,
+                    id_horario,
+                    disponivel
+                )
+                VALUES (?, ?, ?, 1)
+            """, (id_professor, dia_semana, id_horario))
+
+        conexao.commit()
+
+    return redirect(url_for('grade_disponibilidades'))
 
 @app.route('/deletar_disponibilidade_professor/<int:id_disponibilidade>', methods=['POST'])
 def deletar_disponibilidade_professor(id_disponibilidade):
@@ -892,6 +1005,75 @@ def deletar_disponibilidade_professor(id_disponibilidade):
         conexao.commit()
 
     return redirect(url_for('listar_disponibilidade_professor'))
+
+@app.route('/grade_disponibilidades')
+def grade_disponibilidades():
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT
+                dp.id_disponibilidade,
+                dp.id_professor,
+                dp.dia_semana,
+                dp.id_horario,
+                dp.disponivel,
+                p.nome AS nome_professor,
+                h.hora_inicio,
+                h.hora_fim
+            FROM disponibilidade_professor dp
+            JOIN professor p ON dp.id_professor = p.id_professor
+            JOIN horario_aula h ON dp.id_horario = h.id_horario
+            ORDER BY
+                p.nome,
+                CASE dp.dia_semana
+                    WHEN 'segunda' THEN 1
+                    WHEN 'terca' THEN 2
+                    WHEN 'quarta' THEN 3
+                    WHEN 'quinta' THEN 4
+                    WHEN 'sexta' THEN 5
+                END,
+                h.hora_inicio
+        """)
+        registros = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM professor ORDER BY nome")
+        professores = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+        horarios = cursor.fetchall()
+
+    dias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
+
+    grade = {}
+    professores_ordem = []
+
+    for registro in registros:
+        professor = registro['nome_professor']
+        id_professor = registro['id_professor']
+        dia = registro['dia_semana']
+
+        if professor not in grade:
+            grade[professor] = {
+                'id_professor': id_professor,
+                'dias': {d: [] for d in dias}
+            }
+            professores_ordem.append(professor)
+
+        texto_horario = f"{registro['hora_inicio']} às {registro['hora_fim']}"
+
+        grade[professor]['dias'][dia].append({
+            'id_disponibilidade': registro['id_disponibilidade'],
+            'horario': texto_horario,
+            'disponivel': registro['disponivel']})
+
+    return render_template('grade_disponibilidades.html',
+        grade=grade,
+        professores_ordem=professores_ordem,
+        dias=dias,
+        disponibilidade_edicao=None,
+        professores=professores,
+        horarios=horarios)
 
 # =========================
 # Grade - Curricular
@@ -1404,6 +1586,107 @@ def deletar_alocacao(id_alocacao):
         conexao.commit()
 
     return redirect(url_for('listar_alocacoes'))
+
+
+# =========================
+# Relatório
+# =========================
+
+@app.route('/relatorio_horario_turno/<int:id_turno>')
+def relatorio_horario_turno(id_turno):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        # Buscar o nome do turno
+        cursor.execute("""
+            SELECT * FROM turno
+            WHERE id_turno = ?
+        """, (id_turno,))
+        turno = cursor.fetchone()
+
+        # Buscar turmas apenas desse turno
+        cursor.execute("""
+            SELECT
+                t.id_turma,
+                t.nome,
+                t.serie,
+                tr.nome AS nome_turno
+            FROM turma t
+            JOIN turno tr ON t.id_turno = tr.id_turno
+            WHERE t.id_turno = ?
+            ORDER BY t.nome
+        """, (id_turno,))
+        turmas = cursor.fetchall()
+
+        # Buscar horários
+        cursor.execute("""
+            SELECT
+                id_horario,
+                hora_inicio,
+                hora_fim
+            FROM horario_aula
+            ORDER BY hora_inicio
+        """)
+        horarios = cursor.fetchall()
+
+        # Buscar alocações só das turmas do turno escolhido
+        cursor.execute("""
+            SELECT
+                a.dia_semana,
+                a.id_turma,
+                a.id_horario,
+                d.sigla,
+                d.cor,
+                p.nome AS nome_professor
+            FROM alocacao a
+            JOIN turma t ON a.id_turma = t.id_turma
+            JOIN disciplina d ON a.id_disciplina = d.id_disciplina
+            JOIN professor p ON a.id_professor = p.id_professor
+            WHERE t.id_turno = ?
+            ORDER BY
+                CASE a.dia_semana
+                    WHEN 'segunda' THEN 1
+                    WHEN 'terca' THEN 2
+                    WHEN 'quarta' THEN 3
+                    WHEN 'quinta' THEN 4
+                    WHEN 'sexta' THEN 5
+                END,
+                a.id_horario,
+                a.id_turma
+        """, (id_turno,))
+        alocacoes = cursor.fetchall()
+
+    dias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
+
+    grade = {}
+
+    for alocacao in alocacoes:
+        chave = (
+            alocacao['id_horario'],
+            alocacao['dia_semana'],
+            alocacao['id_turma']
+        )
+        grade[chave] = {
+            'sigla': alocacao['sigla'],
+            'professor': alocacao['nome_professor'],
+            'cor': alocacao['cor'] or '#ffffff'
+        }
+
+    return render_template('relatorio.html',
+        dias=dias,
+        turmas=turmas,
+        horarios=horarios,
+        grade=grade,
+        turno=turno)
+
+@app.route('/selecionar_turno_relatorio')
+def selecionar_turno_relatorio():
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("SELECT * FROM turno ORDER BY nome")
+        turnos = cursor.fetchall()
+
+    return render_template('selecionar_turno_relatorio.html', turnos=turnos)
 
 
 if __name__ == "__main__":
