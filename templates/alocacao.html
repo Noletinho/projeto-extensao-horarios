@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Alocações</title>
+</head>
+<body>
+    <h1>Lista de Alocações</h1>
+
+    {% if erro %}
+        <p style="color:red;">{{ erro }}</p>
+    {% endif %}
+
+    <a href="{{ url_for('cadastrar_alocacao') }}">
+        <button type="button">Cadastrar Nova Alocação</button>
+    </a>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>ID</th>
+            <th>Turma</th>
+            <th>Série</th>
+            <th>Disciplina</th>
+            <th>Professor</th>
+            <th>Local</th>
+            <th>Dia</th>
+            <th>Horário</th>
+            <th>Ações</th>
+        </tr>
+
+        {% for alocacao in alocacoes %}
+        <tr>
+            <td>{{ alocacao['id_alocacao'] }}</td>
+            <td>{{ alocacao['nome_turma'] }}</td>
+            <td>{{ alocacao['serie'] }}</td>
+            <td>{{ alocacao['nome_disciplina'] }}</td>
+            <td>{{ alocacao['nome_professor'] }}</td>
+            <td>{{ alocacao['nome_local'] }}</td>
+            <td>{{ alocacao['dia_semana'] }}</td>
+            <td>{{ alocacao['hora_inicio'] }} às {{ alocacao['hora_fim'] }}</td>
+            <td>
+                <a href="{{ url_for('editar_alocacao', id_alocacao=alocacao['id_alocacao']) }}">
+                    <button type="button">Editar</button>
+                </a>
+
+                <form action="{{ url_for('deletar_alocacao', id_alocacao=alocacao['id_alocacao']) }}" method="POST" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir esta alocação?')">
+                        Excluir
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if alocacao_edicao %}
+        <hr>
+        <h2>Editar Alocação</h2>
+
+        <form method="POST" action="{{ url_for('atualizar_alocacao', id_alocacao=alocacao_edicao['id_alocacao']) }}">
+            <label>Turma:</label><br>
+            <select name="id_turma" required>
+                {% for turma in turmas %}
+                    <option value="{{ turma['id_turma'] }}"
+                        {% if turma['id_turma'] == alocacao_edicao['id_turma'] %}selected{% endif %}>
+                        {{ turma['nome'] }} - {{ turma['serie'] }} - {{ turma['nome_turno'] }}
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Disciplina:</label><br>
+            <select name="id_disciplina" required>
+                {% for disciplina in disciplinas %}
+                    <option value="{{ disciplina['id_disciplina'] }}"
+                        {% if disciplina['id_disciplina'] == alocacao_edicao['id_disciplina'] %}selected{% endif %}>
+                        {{ disciplina['nome'] }} ({{ disciplina['sigla'] }})
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Professor:</label><br>
+            <select name="id_professor" required>
+                {% for professor in professores %}
+                    <option value="{{ professor['id_professor'] }}"
+                        {% if professor['id_professor'] == alocacao_edicao['id_professor'] %}selected{% endif %}>
+                        {{ professor['nome'] }}
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Local:</label><br>
+            <select name="id_local" required>
+                {% for local in locais %}
+                    <option value="{{ local['id_local'] }}"
+                        {% if local['id_local'] == alocacao_edicao['id_local'] %}selected{% endif %}>
+                        {{ local['nome'] }} ({{ local['tipo'] }})
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Dia da semana:</label><br>
+            <select name="dia_semana" required>
+                <option value="segunda" {% if alocacao_edicao['dia_semana'] == 'segunda' %}selected{% endif %}>Segunda</option>
+                <option value="terca" {% if alocacao_edicao['dia_semana'] == 'terca' %}selected{% endif %}>Terça</option>
+                <option value="quarta" {% if alocacao_edicao['dia_semana'] == 'quarta' %}selected{% endif %}>Quarta</option>
+                <option value="quinta" {% if alocacao_edicao['dia_semana'] == 'quinta' %}selected{% endif %}>Quinta</option>
+                <option value="sexta" {% if alocacao_edicao['dia_semana'] == 'sexta' %}selected{% endif %}>Sexta</option>
+            </select><br><br>
+
+            <label>Horário:</label><br>
+            <select name="id_horario" required>
+                {% for horario in horarios %}
+                    <option value="{{ horario['id_horario'] }}"
+                        {% if horario['id_horario'] == alocacao_edicao['id_horario'] %}selected{% endif %}>
+                        {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <button type="submit">Atualizar</button>
+        </form>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>

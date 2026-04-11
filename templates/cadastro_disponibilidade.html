@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastrar Disponibilidade do Professor</title>
+</head>
+<body>
+    <h1>Cadastrar Disponibilidade do Professor</h1>
+
+    {% if erro %}
+        <p style="color:red;">{{ erro }}</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('cadastrar_disponibilidade_professor') }}">
+        <label>Professor:</label><br>
+        <select name="id_professor" required>
+            <option value="">Selecione</option>
+            {% for professor in professores %}
+                <option value="{{ professor['id_professor'] }}">{{ professor['nome'] }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <label>Dia da semana:</label><br>
+        <select name="dia_semana" required>
+            <option value="">Selecione</option>
+            <option value="segunda">Segunda</option>
+            <option value="terca">Terça</option>
+            <option value="quarta">Quarta</option>
+            <option value="quinta">Quinta</option>
+            <option value="sexta">Sexta</option>
+        </select><br><br>
+
+        <label>Horário:</label><br>
+        <select name="id_horario" required>
+            <option value="">Selecione</option>
+            {% for horario in horarios %}
+                <option value="{{ horario['id_horario'] }}">
+                    {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
+                </option>
+            {% endfor %}
+        </select><br><br>
+
+        <label>Disponível?</label><br>
+        <select name="disponivel" required>
+            <option value="1">Sim</option>
+            <option value="0">Não</option>
+        </select><br><br>
+
+        <button type="submit">Salvar</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>

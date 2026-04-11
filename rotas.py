@@ -711,5 +711,700 @@ def deletar_professor_disciplina(id_professor, id_disciplina):
     return redirect(url_for('listar_professores_disciplinas'))
 
 
+# =========================
+# Disponibilidade
+# =========================
+
+@app.route('/cadastrar_disponibilidade_professor', methods=['GET', 'POST'])
+def cadastrar_disponibilidade_professor():
+    erro = None
+
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("SELECT * FROM professor ORDER BY nome")
+        professores = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+        horarios = cursor.fetchall()
+
+        if request.method == 'POST':
+            id_professor = request.form['id_professor']
+            dia_semana = request.form['dia_semana']
+            id_horario = request.form['id_horario']
+            disponivel = request.form['disponivel']
+
+            try:
+                cursor.execute("""
+                    INSERT INTO disponibilidade_professor (id_professor, dia_semana, id_horario, disponivel)
+                    VALUES (?, ?, ?, ?)
+                """, (id_professor, dia_semana, id_horario, disponivel))
+                conexao.commit()
+
+                return redirect(url_for('listar_disponibilidade_professor'))
+
+            except sqlite3.IntegrityError:
+                erro = "Essa disponibilidade já foi cadastrada para esse professor, dia e horário."
+
+    return render_template(
+        'cadastro_disponibilidade.html',
+        professores=professores,
+        horarios=horarios,
+        erro=erro)
+
+@app.route('/disponibilidade_professor')
+def listar_disponibilidade_professor():
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT
+                dp.id_disponibilidade,
+                dp.id_professor,
+                dp.dia_semana,
+                dp.id_horario,
+                dp.disponivel,
+                p.nome AS nome_professor,
+                h.hora_inicio,
+                h.hora_fim
+            FROM disponibilidade_professor dp
+            JOIN professor p ON dp.id_professor = p.id_professor
+            JOIN horario_aula h ON dp.id_horario = h.id_horario
+            ORDER BY p.nome, dp.dia_semana, h.hora_inicio
+        """)
+        disponibilidade = cursor.fetchall()
+
+    return render_template('disponibilidade.html',
+        disponibilidades=disponibilidade,
+        disponibilidade_edicao=None)
+
+@app.route('/editar_disponibilidade_professor/<int:id_disponibilidade>')
+def editar_disponibilidade_professor(id_disponibilidade):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT
+                dp.id_disponibilidade,
+                dp.id_professor,
+                dp.dia_semana,
+                dp.id_horario,
+                dp.disponivel,
+                p.nome AS nome_professor,
+                h.hora_inicio,
+                h.hora_fim
+            FROM disponibilidade_professor dp
+            JOIN professor p ON dp.id_professor = p.id_professor
+            JOIN horario_aula h ON dp.id_horario = h.id_horario
+            ORDER BY p.nome, dp.dia_semana, h.hora_inicio
+        """)
+        disponibilidades = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM professor ORDER BY nome")
+        professores = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+        horarios = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT * FROM disponibilidade_professor
+            WHERE id_disponibilidade = ?
+        """, (id_disponibilidade,))
+        disponibilidade_edicao = cursor.fetchone()
+
+    return render_template('disponibilidade.html',
+        disponibilidades=disponibilidades,
+        disponibilidade_edicao=disponibilidade_edicao,
+        professores=professores,
+        horarios=horarios)
+
+@app.route('/atualizar_disponibilidade_professor/<int:id_disponibilidade>', methods=['POST'])
+def atualizar_disponibilidade_professor(id_disponibilidade):
+    erro = None
+
+    id_professor = request.form['id_professor']
+    dia_semana = request.form['dia_semana']
+    id_horario = request.form['id_horario']
+    disponivel = request.form['disponivel']
+
+    try:
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+            cursor.execute("""
+                UPDATE disponibilidade_professor
+                SET id_professor = ?, dia_semana = ?, id_horario = ?, disponivel = ?
+                WHERE id_disponibilidade = ?
+            """, (id_professor, dia_semana, id_horario, disponivel, id_disponibilidade))
+            conexao.commit()
+
+        return redirect(url_for('listar_disponibilidade_professor'))
+
+    except sqlite3.IntegrityError:
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+
+            cursor.execute("""
+                SELECT
+                    dp.id_disponibilidade,
+                    dp.id_professor,
+                    dp.dia_semana,
+                    dp.id_horario,
+                    dp.disponivel,
+                    p.nome AS nome_professor,
+                    h.hora_inicio,
+                    h.hora_fim
+                FROM disponibilidade_professor dp
+                JOIN professor p ON dp.id_professor = p.id_professor
+                JOIN horario_aula h ON dp.id_horario = h.id_horario
+                ORDER BY p.nome, dp.dia_semana, h.hora_inicio
+            """)
+            disponibilidades = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM professor ORDER BY nome")
+            professores = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+            horarios = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT * FROM disponibilidade_professor
+                WHERE id_disponibilidade = ?
+            """, (id_disponibilidade,))
+            disponibilidade_edicao = cursor.fetchone()
+
+        erro = "Já existe um cadastro igual para esse professor, dia e horário."
+
+        return render_template('disponibilidades.html',
+            disponibilidades=disponibilidades,
+            disponibilidade_edicao=disponibilidade_edicao,
+            professores=professores,
+            horarios=horarios,
+            erro=erro)
+
+@app.route('/deletar_disponibilidade_professor/<int:id_disponibilidade>', methods=['POST'])
+def deletar_disponibilidade_professor(id_disponibilidade):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("""
+            DELETE FROM disponibilidade_professor
+            WHERE id_disponibilidade = ?
+        """, (id_disponibilidade,))
+        conexao.commit()
+
+    return redirect(url_for('listar_disponibilidade_professor'))
+
+# =========================
+# Grade - Curricular
+# =========================
+
+@app.route('/cadastrar_grade_curricular', methods=['GET', 'POST'])
+def cadastrar_grade_curricular():
+    erro = None
+
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT
+                t.id_turma,
+                t.nome,
+                t.serie,
+                tr.nome AS nome_turno
+            FROM turma t
+            JOIN turno tr ON t.id_turno = tr.id_turno
+            ORDER BY t.nome
+        """)
+        turmas = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM disciplina ORDER BY nome")
+        disciplinas = cursor.fetchall()
+
+        if request.method == 'POST':
+            id_turma = request.form['id_turma']
+            id_disciplina = request.form['id_disciplina']
+            aulas_semanais = request.form['aulas_semanais']
+
+            try:
+                cursor.execute("""
+                    INSERT INTO grade_curricular (id_turma, id_disciplina, aulas_semanais)
+                    VALUES (?, ?, ?)
+                """, (id_turma, id_disciplina, aulas_semanais))
+                conexao.commit()
+
+                return redirect(url_for('listar_grades_curriculares'))
+
+            except sqlite3.IntegrityError:
+                erro = "Essa disciplina já foi cadastrada para essa turma."
+
+    return render_template('cadastro_grade_curricular.html',
+        turmas=turmas,
+        disciplinas=disciplinas,
+        erro=erro)
+
+@app.route('/grades_curriculares')
+def listar_grades_curriculares():
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT
+                gc.id_grade,
+                gc.id_turma,
+                gc.id_disciplina,
+                gc.aulas_semanais,
+                t.nome AS nome_turma,
+                t.serie,
+                tr.nome AS nome_turno,
+                d.nome AS nome_disciplina,
+                d.sigla
+            FROM grade_curricular gc
+            JOIN turma t ON gc.id_turma = t.id_turma
+            JOIN turno tr ON t.id_turno = tr.id_turno
+            JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
+            ORDER BY t.nome, d.nome
+        """)
+        grades = cursor.fetchall()
+
+    return render_template('grade_curricular.html',
+        grades=grades,
+        grade_edicao=None)
+
+@app.route('/editar_grade_curricular/<int:id_grade>')
+def editar_grade_curricular(id_grade):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT
+                gc.id_grade,
+                gc.id_turma,
+                gc.id_disciplina,
+                gc.aulas_semanais,
+                t.nome AS nome_turma,
+                t.serie,
+                tr.nome AS nome_turno,
+                d.nome AS nome_disciplina,
+                d.sigla
+            FROM grade_curricular gc
+            JOIN turma t ON gc.id_turma = t.id_turma
+            JOIN turno tr ON t.id_turno = tr.id_turno
+            JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
+            ORDER BY t.nome, d.nome
+        """)
+        grades = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT
+                t.id_turma,
+                t.nome,
+                t.serie,
+                tr.nome AS nome_turno
+            FROM turma t
+            JOIN turno tr ON t.id_turno = tr.id_turno
+            ORDER BY t.nome
+        """)
+        turmas = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM disciplina ORDER BY nome")
+        disciplinas = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT * FROM grade_curricular
+            WHERE id_grade = ?
+        """, (id_grade,))
+        grade_edicao = cursor.fetchone()
+
+    return render_template('grade_curricular.html',
+        grades=grades,
+        grade_edicao=grade_edicao,
+        turmas=turmas,
+        disciplinas=disciplinas)
+
+@app.route('/atualizar_grade_curricular/<int:id_grade>', methods=['POST'])
+def atualizar_grade_curricular(id_grade):
+    id_turma = request.form['id_turma']
+    id_disciplina = request.form['id_disciplina']
+    aulas_semanais = request.form['aulas_semanais']
+
+    try:
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+            cursor.execute("""
+                UPDATE grade_curricular
+                SET id_turma = ?, id_disciplina = ?, aulas_semanais = ?
+                WHERE id_grade = ?
+            """, (id_turma, id_disciplina, aulas_semanais, id_grade))
+            conexao.commit()
+
+        return redirect(url_for('listar_grades_curriculares'))
+
+    except sqlite3.IntegrityError:
+        erro = "Já existe essa disciplina cadastrada para essa turma."
+
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+
+            cursor.execute("""
+                SELECT
+                    gc.id_grade,
+                    gc.id_turma,
+                    gc.id_disciplina,
+                    gc.aulas_semanais,
+                    t.nome AS nome_turma,
+                    t.serie,
+                    tr.nome AS nome_turno,
+                    d.nome AS nome_disciplina,
+                    d.sigla
+                FROM grade_curricular gc
+                JOIN turma t ON gc.id_turma = t.id_turma
+                JOIN turno tr ON t.id_turno = tr.id_turno
+                JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
+                ORDER BY t.nome, d.nome
+            """)
+            grades = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT
+                    t.id_turma,
+                    t.nome,
+                    t.serie,
+                    tr.nome AS nome_turno
+                FROM turma t
+                JOIN turno tr ON t.id_turno = tr.id_turno
+                ORDER BY t.nome
+            """)
+            turmas = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM disciplina ORDER BY nome")
+            disciplinas = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT * FROM grade_curricular
+                WHERE id_grade = ?
+            """, (id_grade,))
+            grade_edicao = cursor.fetchone()
+
+        return render_template('grade_curricular.html',
+            grades=grades,
+            grade_edicao=grade_edicao,
+            turmas=turmas,
+            disciplinas=disciplinas,
+            erro=erro)
+    
+@app.route('/deletar_grade_curricular/<int:id_grade>', methods=['POST'])
+def deletar_grade_curricular(id_grade):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("""
+            DELETE FROM grade_curricular
+            WHERE id_grade = ?
+        """, (id_grade,))
+        conexao.commit()
+
+    return redirect(url_for('listar_grades_curriculares'))
+
+
+# =========================
+# Alocação
+# =========================
+
+@app.route('/cadastrar_alocacao', methods=['GET', 'POST'])
+def cadastrar_alocacao():
+    erro = None
+
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT
+                t.id_turma,
+                t.nome,
+                t.serie,
+                tr.nome AS nome_turno
+            FROM turma t
+            JOIN turno tr ON t.id_turno = tr.id_turno
+            ORDER BY t.nome
+        """)
+        turmas = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM disciplina ORDER BY nome")
+        disciplinas = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM professor ORDER BY nome")
+        professores = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM local ORDER BY nome")
+        locais = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+        horarios = cursor.fetchall()
+
+        if request.method == 'POST':
+            id_turma = request.form['id_turma']
+            id_disciplina = request.form['id_disciplina']
+            id_professor = request.form['id_professor']
+            id_local = request.form['id_local']
+            dia_semana = request.form['dia_semana']
+            id_horario = request.form['id_horario']
+
+            try:
+                cursor.execute("""
+                    INSERT INTO alocacao (
+                        id_turma,
+                        id_disciplina,
+                        id_professor,
+                        id_local,
+                        dia_semana,
+                        id_horario
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (
+                    id_turma,
+                    id_disciplina,
+                    id_professor,
+                    id_local,
+                    dia_semana,
+                    id_horario
+                ))
+                conexao.commit()
+
+                return redirect(url_for('listar_alocacoes'))
+
+            except sqlite3.IntegrityError:
+                erro = "Conflito de horário: professor, turma ou local já está ocupado nesse dia e horário."
+
+    return render_template('cadastro_alocacao.html',
+        turmas=turmas,
+        disciplinas=disciplinas,
+        professores=professores,
+        locais=locais,
+        horarios=horarios,
+        erro=erro)
+
+@app.route('/alocacoes')
+def listar_alocacoes():
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT
+                a.id_alocacao,
+                a.id_turma,
+                a.id_disciplina,
+                a.id_professor,
+                a.id_local,
+                a.dia_semana,
+                a.id_horario,
+                t.nome AS nome_turma,
+                t.serie,
+                d.nome AS nome_disciplina,
+                d.sigla,
+                p.nome AS nome_professor,
+                l.nome AS nome_local,
+                h.hora_inicio,
+                h.hora_fim
+            FROM alocacao a
+            JOIN turma t ON a.id_turma = t.id_turma
+            JOIN disciplina d ON a.id_disciplina = d.id_disciplina
+            JOIN professor p ON a.id_professor = p.id_professor
+            JOIN local l ON a.id_local = l.id_local
+            JOIN horario_aula h ON a.id_horario = h.id_horario
+            ORDER BY t.nome, a.dia_semana, h.hora_inicio
+        """)
+        alocacoes = cursor.fetchall()
+
+    return render_template('alocacao.html',
+        alocacoes=alocacoes,
+        alocacao_edicao=None)
+
+@app.route('/editar_alocacao/<int:id_alocacao>')
+def editar_alocacao(id_alocacao):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT
+                a.id_alocacao,
+                a.id_turma,
+                a.id_disciplina,
+                a.id_professor,
+                a.id_local,
+                a.dia_semana,
+                a.id_horario,
+                t.nome AS nome_turma,
+                t.serie,
+                d.nome AS nome_disciplina,
+                d.sigla,
+                p.nome AS nome_professor,
+                l.nome AS nome_local,
+                h.hora_inicio,
+                h.hora_fim
+            FROM alocacao a
+            JOIN turma t ON a.id_turma = t.id_turma
+            JOIN disciplina d ON a.id_disciplina = d.id_disciplina
+            JOIN professor p ON a.id_professor = p.id_professor
+            JOIN local l ON a.id_local = l.id_local
+            JOIN horario_aula h ON a.id_horario = h.id_horario
+            ORDER BY t.nome, a.dia_semana, h.hora_inicio
+        """)
+        alocacoes = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT
+                t.id_turma,
+                t.nome,
+                t.serie,
+                tr.nome AS nome_turno
+            FROM turma t
+            JOIN turno tr ON t.id_turno = tr.id_turno
+            ORDER BY t.nome
+        """)
+        turmas = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM disciplina ORDER BY nome")
+        disciplinas = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM professor ORDER BY nome")
+        professores = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM local ORDER BY nome")
+        locais = cursor.fetchall()
+
+        cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+        horarios = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT * FROM alocacao
+            WHERE id_alocacao = ?
+        """, (id_alocacao,))
+        alocacao_edicao = cursor.fetchone()
+
+    return render_template('alocacao.html',
+        alocacoes=alocacoes,
+        alocacao_edicao=alocacao_edicao,
+        turmas=turmas,
+        disciplinas=disciplinas,
+        professores=professores,
+        locais=locais,
+        horarios=horarios)
+
+@app.route('/atualizar_alocacao/<int:id_alocacao>', methods=['POST'])
+def atualizar_alocacao(id_alocacao):
+    id_turma = request.form['id_turma']
+    id_disciplina = request.form['id_disciplina']
+    id_professor = request.form['id_professor']
+    id_local = request.form['id_local']
+    dia_semana = request.form['dia_semana']
+    id_horario = request.form['id_horario']
+
+    try:
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+            cursor.execute("""
+                UPDATE alocacao
+                SET
+                    id_turma = ?,
+                    id_disciplina = ?,
+                    id_professor = ?,
+                    id_local = ?,
+                    dia_semana = ?,
+                    id_horario = ?
+                WHERE id_alocacao = ?
+            """, (
+                id_turma,
+                id_disciplina,
+                id_professor,
+                id_local,
+                dia_semana,
+                id_horario,
+                id_alocacao
+            ))
+            conexao.commit()
+
+        return redirect(url_for('listar_alocacoes'))
+
+    except sqlite3.IntegrityError:
+        erro = "Conflito de horário: professor, turma ou local já está ocupado nesse dia e horário."
+
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+
+            cursor.execute("""
+                SELECT
+                    a.id_alocacao,
+                    a.id_turma,
+                    a.id_disciplina,
+                    a.id_professor,
+                    a.id_local,
+                    a.dia_semana,
+                    a.id_horario,
+                    t.nome AS nome_turma,
+                    t.serie,
+                    d.nome AS nome_disciplina,
+                    d.sigla,
+                    p.nome AS nome_professor,
+                    l.nome AS nome_local,
+                    h.hora_inicio,
+                    h.hora_fim
+                FROM alocacao a
+                JOIN turma t ON a.id_turma = t.id_turma
+                JOIN disciplina d ON a.id_disciplina = d.id_disciplina
+                JOIN professor p ON a.id_professor = p.id_professor
+                JOIN local l ON a.id_local = l.id_local
+                JOIN horario_aula h ON a.id_horario = h.id_horario
+                ORDER BY t.nome, a.dia_semana, h.hora_inicio
+            """)
+            alocacoes = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT
+                    t.id_turma,
+                    t.nome,
+                    t.serie,
+                    tr.nome AS nome_turno
+                FROM turma t
+                JOIN turno tr ON t.id_turno = tr.id_turno
+                ORDER BY t.nome
+            """)
+            turmas = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM disciplina ORDER BY nome")
+            disciplinas = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM professor ORDER BY nome")
+            professores = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM local ORDER BY nome")
+            locais = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+            horarios = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM alocacao WHERE id_alocacao = ?", (id_alocacao,))
+            alocacao_edicao = cursor.fetchone()
+
+        return render_template('alocacao.html',
+            alocacoes=alocacoes,
+            alocacao_edicao=alocacao_edicao,
+            turmas=turmas,
+            disciplinas=disciplinas,
+            professores=professores,
+            locais=locais,
+            horarios=horarios,
+            erro=erro)
+
+@app.route('/deletar_alocacao/<int:id_alocacao>', methods=['POST'])
+def deletar_alocacao(id_alocacao):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("""
+            DELETE FROM alocacao
+            WHERE id_alocacao = ?
+        """, (id_alocacao,))
+        conexao.commit()
+
+    return redirect(url_for('listar_alocacoes'))
+
+
 if __name__ == "__main__":
     app.run(debug=True)

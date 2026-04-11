@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Disponibilidades dos Professores</title>
+</head>
+<body>
+    <h1>Lista de Disponibilidades dos Professores</h1>
+
+    {% if erro %}
+        <p style="color:red;">{{ erro }}</p>
+    {% endif %}
+
+    <a href="{{ url_for('cadastrar_disponibilidade_professor') }}">
+        <button type="button">Cadastrar Nova Disponibilidade</button>
+    </a>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>ID</th>
+            <th>Professor</th>
+            <th>Dia</th>
+            <th>Horário</th>
+            <th>Disponível</th>
+            <th>Ações</th>
+        </tr>
+
+        {% for disponibilidade in disponibilidades %}
+        <tr>
+            <td>{{ disponibilidade['id_disponibilidade'] }}</td>
+            <td>{{ disponibilidade['nome_professor'] }}</td>
+            <td>{{ disponibilidade['dia_semana'] }}</td>
+            <td>{{ disponibilidade['hora_inicio'] }} às {{ disponibilidade['hora_fim'] }}</td>
+            <td>
+                {% if disponibilidade['disponivel'] == 1 %}
+                    Sim
+                {% else %}
+                    Não
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ url_for('editar_disponibilidade_professor', id_disponibilidade=disponibilidade['id_disponibilidade']) }}">
+                    <button type="button">Editar</button>
+                </a>
+
+                <form action="{{ url_for('deletar_disponibilidade_professor', id_disponibilidade=disponibilidade['id_disponibilidade']) }}" method="POST" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if disponibilidade_edicao %}
+        <hr>
+        <h2>Editar Disponibilidade</h2>
+
+        <form method="POST" action="{{ url_for('atualizar_disponibilidade_professor', id_disponibilidade=disponibilidade_edicao['id_disponibilidade']) }}">
+            <label>Professor:</label><br>
+            <select name="id_professor" required>
+                {% for professor in professores %}
+                    <option value="{{ professor['id_professor'] }}"
+                        {% if professor['id_professor'] == disponibilidade_edicao['id_professor'] %}selected{% endif %}>
+                        {{ professor['nome'] }}
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Dia da semana:</label><br>
+            <select name="dia_semana" required>
+                <option value="segunda" {% if disponibilidade_edicao['dia_semana'] == 'segunda' %}selected{% endif %}>Segunda</option>
+                <option value="terca" {% if disponibilidade_edicao['dia_semana'] == 'terca' %}selected{% endif %}>Terça</option>
+                <option value="quarta" {% if disponibilidade_edicao['dia_semana'] == 'quarta' %}selected{% endif %}>Quarta</option>
+                <option value="quinta" {% if disponibilidade_edicao['dia_semana'] == 'quinta' %}selected{% endif %}>Quinta</option>
+                <option value="sexta" {% if disponibilidade_edicao['dia_semana'] == 'sexta' %}selected{% endif %}>Sexta</option>
+            </select><br><br>
+
+            <label>Horário:</label><br>
+            <select name="id_horario" required>
+                {% for horario in horarios %}
+                    <option value="{{ horario['id_horario'] }}"
+                        {% if horario['id_horario'] == disponibilidade_edicao['id_horario'] %}selected{% endif %}>
+                        {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Disponível?</label><br>
+            <select name="disponivel" required>
+                <option value="1" {% if disponibilidade_edicao['disponivel'] == 1 %}selected{% endif %}>Sim</option>
+                <option value="0" {% if disponibilidade_edicao['disponivel'] == 0 %}selected{% endif %}>Não</option>
+            </select><br><br>
+
+            <button type="submit">Atualizar</button>
+        </form>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>

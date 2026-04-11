@@ -32,7 +32,7 @@
                 </a>
                 
                 <form action="{{ url_for('deletar_local', id_local=local['id_local']) }}" method="POST" style="display:inline;">
-                    <button type="submit">Excluir</button>
+                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
                 </form>
             </td>
         </tr>

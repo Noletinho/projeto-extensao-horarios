@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Grades Curriculares</title>
+</head>
+<body>
+    <h1>Lista de Grades Curriculares</h1>
+
+    {% if erro %}
+        <p style="color:red;">{{ erro }}</p>
+    {% endif %}
+
+    <a href="{{ url_for('cadastrar_grade_curricular') }}">
+        <button type="button">Cadastrar Nova Grade Curricular</button>
+    </a>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>ID</th>
+            <th>Turma</th>
+            <th>Série</th>
+            <th>Turno</th>
+            <th>Disciplina</th>
+            <th>Sigla</th>
+            <th>Aulas Semanais</th>
+            <th>Ações</th>
+        </tr>
+
+        {% for grade in grades %}
+        <tr>
+            <td>{{ grade['id_grade'] }}</td>
+            <td>{{ grade['nome_turma'] }}</td>
+            <td>{{ grade['serie'] }}</td>
+            <td>{{ grade['nome_turno'] }}</td>
+            <td>{{ grade['nome_disciplina'] }}</td>
+            <td>{{ grade['sigla'] }}</td>
+            <td>{{ grade['aulas_semanais'] }}</td>
+            <td>
+                <a href="{{ url_for('editar_grade_curricular', id_grade=grade['id_grade']) }}">
+                    <button type="button">Editar</button>
+                </a>
+
+                <form action="{{ url_for('deletar_grade_curricular', id_grade=grade['id_grade']) }}" method="POST" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir esta grade curricular?')">
+                        Excluir
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if grade_edicao %}
+        <hr>
+        <h2>Editar Grade Curricular</h2>
+
+        <form method="POST" action="{{ url_for('atualizar_grade_curricular', id_grade=grade_edicao['id_grade']) }}">
+            <label>Turma:</label><br>
+            <select name="id_turma" required>
+                {% for turma in turmas %}
+                    <option value="{{ turma['id_turma'] }}"
+                        {% if turma['id_turma'] == grade_edicao['id_turma'] %}selected{% endif %}>
+                        {{ turma['nome'] }} - {{ turma['serie'] }} - {{ turma['nome_turno'] }}
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Disciplina:</label><br>
+            <select name="id_disciplina" required>
+                {% for disciplina in disciplinas %}
+                    <option value="{{ disciplina['id_disciplina'] }}"
+                        {% if disciplina['id_disciplina'] == grade_edicao['id_disciplina'] %}selected{% endif %}>
+                        {{ disciplina['nome'] }} ({{ disciplina['sigla'] }})
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Aulas semanais:</label><br>
+            <input type="number" name="aulas_semanais" min="1" value="{{ grade_edicao['aulas_semanais'] }}" required><br><br>
+
+            <button type="submit">Atualizar</button>
+        </form>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>

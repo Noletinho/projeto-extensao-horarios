@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastrar Grade Curricular</title>
+</head>
+<body>
+    <h1>Cadastrar Grade Curricular</h1>
+
+    {% if erro %}
+        <p style="color:red;">{{ erro }}</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('cadastrar_grade_curricular') }}">
+        <label>Turma:</label><br>
+        <select name="id_turma" required>
+            <option value="">Selecione</option>
+            {% for turma in turmas %}
+                <option value="{{ turma['id_turma'] }}">
+                    {{ turma['nome'] }} - {{ turma['serie'] }} - {{ turma['nome_turno'] }}
+                </option>
+            {% endfor %}
+        </select><br><br>
+
+        <label>Disciplina:</label><br>
+        <select name="id_disciplina" required>
+            <option value="">Selecione</option>
+            {% for disciplina in disciplinas %}
+                <option value="{{ disciplina['id_disciplina'] }}">
+                    {{ disciplina['nome'] }} ({{ disciplina['sigla'] }})
+                </option>
+            {% endfor %}
+        </select><br><br>
+
+        <label>Aulas semanais:</label><br>
+        <input type="number" name="aulas_semanais" min="1" required><br><br>
+
+        <button type="submit">Salvar</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>
