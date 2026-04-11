@@ -7,6 +7,10 @@
 <body>
     <h1>Cadastrar Horário</h1>
 
+    {% if erro %}
+    <p style="color:red;">{{ erro }}</p>
+    {% endif %}
+
     <form method="POST" action="{{ url_for('salvar_horario') }}">
         <label for="hora_inicio">Hora de início:</label><br>
         <input type="time" name="hora_inicio" required><br><br>

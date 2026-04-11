@@ -21,9 +21,10 @@ comandos_sql = [
     CREATE TABLE IF NOT EXISTS turma (
         id_turma INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
-        serie TEXT,
-        id_turno INTEGER NOT NULL,
+        serie TEXT NOT NULL,
+        id_turno INTEGER NOT NULL UNIQUE,
         FOREIGN KEY (id_turno) REFERENCES turno(id_turno)
+        UNIQUE (nome, serie, id_turno)
     )
     """,
     """
@@ -49,7 +50,8 @@ comandos_sql = [
         id_local INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
         tipo TEXT NOT NULL,
-        status TEXT DEFAULT 'ativo' CHECK (status IN ('ativo', 'inativo'))
+        status TEXT DEFAULT 'ativo' CHECK (status IN ('ativo', 'inativo')),
+        UNIQUE(nome)
     )
     """,
     """
@@ -68,7 +70,8 @@ comandos_sql = [
         id_horario INTEGER NOT NULL,
         disponivel INTEGER DEFAULT 1 CHECK (disponivel IN (0, 1)),
         FOREIGN KEY (id_professor) REFERENCES professor(id_professor),
-        FOREIGN KEY (id_horario) REFERENCES horario_aula(id_horario)
+        FOREIGN KEY (id_horario) REFERENCES horario_aula(id_horario),
+        UNIQUE (id_professor, dia_semana, id_horario)
     )
     """,
     """
@@ -78,7 +81,8 @@ comandos_sql = [
         id_disciplina INTEGER NOT NULL,
         aulas_semanais INTEGER NOT NULL,
         FOREIGN KEY (id_turma) REFERENCES turma(id_turma),
-        FOREIGN KEY (id_disciplina) REFERENCES disciplina(id_disciplina)
+        FOREIGN KEY (id_disciplina) REFERENCES disciplina(id_disciplina),
+        UNIQUE (id_turma, id_disciplina)
     )
     """,
     """

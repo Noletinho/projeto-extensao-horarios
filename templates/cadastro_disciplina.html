@@ -6,6 +6,11 @@
 </head>
 <body>
     <h1>Cadastrar Disciplinas</h1>
+
+    {% if erro %}
+    <p style="color:red;">{{ erro }}</p>
+    {% endif %}
+
     <form method="POST" action="{{ url_for('salvar_disciplina') }}">
         <label>Disciplina:</label><br>
         <input type="text" name="nome" required><br><br>

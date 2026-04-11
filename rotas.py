@@ -1,3 +1,4 @@
+import sqlite3
 from db import conectar
 from flask import Flask, render_template, request, redirect, url_for
 
@@ -20,23 +21,30 @@ def cadastrar_professor():
 
 @app.route('/salvar_professor', methods=[ 'POST'])
 def salvar_professor():
+    erro = None
+    
     if request.method == 'POST':
         nome = request.form['nome']
-        cpf = request.form['cpf']
+        cpf = ''.join(filter(str.isdigit, request.form['cpf']))
         email = request.form['email']
         telefone = request.form['telefone']
+        
+        try:
+            with conectar() as conexao:
+                cursor = conexao.cursor()
 
-        with conectar() as conexao:
-            cursor = conexao.cursor()
+                cursor.execute("""
+                INSERT INTO professor (nome, cpf, email, telefone)
+                VALUES (?, ?, ?, ?)
+                """, (nome, cpf, email, telefone))
+                conexao.commit()
 
-            cursor.execute("""
-            INSERT INTO professor (nome, cpf, email, telefone)
-            VALUES (?, ?, ?, ?)
-            """, (nome, cpf, email, telefone))
-            conexao.commit()
+            return redirect(url_for('listar_professores'))
+    
+        except sqlite3.IntegrityError:
+            erro = "CPF já cadastrado."
 
-        return redirect(url_for('listar_professores'))
-    return render_template('cadastro_professor.html')
+    return render_template('cadastro_professor.html', erro=erro)
 
 @app.route('/professores')
 def listar_professores():
@@ -107,23 +115,30 @@ def cadastrar_disciplina():
 
 @app.route('/salvar_disciplina', methods=['GET', 'POST'])
 def salvar_disciplina():
+    erro = None
+
     if request.method == 'POST':
         nome = request.form['nome']
         sigla = request.form['sigla']
         cor = request.form['cor']
         carga_horaria_semanal = request.form['carga_horaria_semanal']
 
-        with conectar() as conexao:
-            cursor = conexao.cursor()
+        try:
+            with conectar() as conexao:
+                cursor = conexao.cursor()
 
-            cursor.execute("""
-            INSERT INTO disciplina (nome, sigla, cor, carga_horaria_semanal)
-            VALUES (?, ?, ?, ?)
-            """, (nome, sigla, cor, carga_horaria_semanal))    
-            conexao.commit()
+                cursor.execute("""
+                INSERT INTO disciplina (nome, sigla, cor, carga_horaria_semanal)
+                VALUES (?, ?, ?, ?)
+                """, (nome, sigla, cor, carga_horaria_semanal))    
+                conexao.commit()
 
-        return redirect(url_for('listar_disciplinas'))
-    return render_template('cadastro_disciplina.html')
+            return redirect(url_for('listar_disciplinas'))
+        
+        except sqlite3.IntegrityError:
+            erro = "Já existe uma disciplina com esse nome ou sigla."
+
+    return render_template('cadastro_disciplina.html', erro=erro)
 
 @app.route('/disciplinas')
 def listar_disciplinas():
@@ -193,20 +208,27 @@ def cadastrar_turno():
 
 @app.route('/salvar_turno', methods=['GET', 'POST'])
 def salvar_turno():
+    erro = None
+
     if request.method == 'POST':
         nome = request.form['nome']
 
-        with conectar() as conexao:
-            cursor = conexao.cursor()
+        try:
+            with conectar() as conexao:
+                cursor = conexao.cursor()
 
-            cursor.execute("""
-            INSERT INTO turno (nome)
-            VALUES (?) 
-            """, (nome,))
-            conexao.commit()
+                cursor.execute("""
+                INSERT INTO turno (nome)
+                VALUES (?) 
+                """, (nome,))
+                conexao.commit()
 
-        return redirect(url_for('listar_turnos'))
-    return render_template('cadastro_turno.html')
+            return redirect(url_for('listar_turnos'))
+        
+        except sqlite3.IntegrityError:
+            erro = "Esse turno já está cadastrado."
+
+    return render_template('cadastro_turno.html', erro=erro)
     
 @app.route('/turnos')
 def listar_turnos():
@@ -264,33 +286,39 @@ def deletar_turno(id_turno):
 
 @app.route('/cadastrar_turma')
 def cadastrar_turma():
-    conexao = conectar()
-    cursor = conexao.cursor()
+    with conectar() as conexao:
+        cursor = conexao.cursor()
 
-    cursor.execute("SELECT id_turno, nome FROM turno")
-    turnos = cursor.fetchall()
+        cursor.execute("SELECT id_turno, nome FROM turno")
+        turnos = cursor.fetchall()
 
-    conexao.close()
     return render_template('cadastro_turma.html', turnos=turnos)
 
 @app.route('/salvar_turma', methods=['GET', 'POST'])
 def salvar_turma():
+    erro = None
+
     if request.method == 'POST':
         nome = request.form['nome']
         serie = request.form['serie']
         id_turno = request.form['id_turno']
 
-        with conectar() as conexao:
-            cursor = conexao.cursor()
+        try:
+            with conectar() as conexao:
+                cursor = conexao.cursor()
 
-            cursor.execute("""
-            INSERT INTO turma (nome, serie, id_turno)
-            VALUES(?, ?, ?)
-            """,(nome, serie, id_turno))
-            conexao.commit()
+                cursor.execute("""
+                INSERT INTO turma (nome, serie, id_turno)
+                VALUES(?, ?, ?)
+                """,(nome, serie, id_turno))
+                conexao.commit()
 
-        return redirect(url_for('listar_turmas'))
-    return render_template('cadastro_turma.html')
+            return redirect(url_for('listar_turmas'))
+        
+        except sqlite3.IntegrityError:
+            erro = "Essa turma já existe."
+
+    return render_template('cadastro_turma.html', erro=erro)
 
 @app.route('/turmas')
 def listar_turmas():
@@ -382,21 +410,28 @@ def cadastrar_local():
 
 @app.route('/salvar_local', methods=['GET', 'POST'])
 def salvar_local():
+    erro = None
+
     if request.method == 'POST':
         nome = request.form['nome']
         tipo = request.form['tipo']
     
-        with conectar() as conexao:
-            cursor = conexao.cursor()
+        try:
+            with conectar() as conexao:
+                cursor = conexao.cursor()
 
-            cursor.execute("""
-                INSERT INTO local (nome, tipo)
-                VALUES (?, ?)
-            """, (nome, tipo))
-            conexao.commit()
+                cursor.execute("""
+                    INSERT INTO local (nome, tipo)
+                    VALUES (?, ?)
+                """, (nome, tipo))
+                conexao.commit()
 
-        return redirect(url_for('listar_locais'))
-    return render_template('cadastro_local.html')
+            return redirect(url_for('listar_locais'))
+        
+        except sqlite3.IntegrityError:
+            erro = "Já existe um local com esse nome."
+
+    return render_template('cadastro_local.html', erro=erro)
 
 
 
@@ -465,21 +500,28 @@ def cadastrar_horario():
 
 @app.route('/salvar_horario', methods=['GET', 'POST'])
 def salvar_horario():
+    erro = None
+
     if request.method == 'POST':
         hora_inicio = request.form['hora_inicio']
         hora_fim = request.form['hora_fim']
 
-        with conectar() as conexao:
-            cursor = conexao.cursor()
+        try:
+            with conectar() as conexao:
+                cursor = conexao.cursor()
 
-            cursor.execute("""
-                INSERT INTO horario_aula (hora_inicio, hora_fim)
-                VALUES (?, ?)
-            """, (hora_inicio, hora_fim))
-            conexao.commit()
+                cursor.execute("""
+                    INSERT INTO horario_aula (hora_inicio, hora_fim)
+                    VALUES (?, ?)
+                """, (hora_inicio, hora_fim))
+                conexao.commit()
 
-        return redirect(url_for('listar_horarios'))
-    return render_template('cadastro_horario.html')
+            return redirect(url_for('listar_horarios'))
+        
+        except sqlite3.IntegrityError:
+            erro = "Esse horário já foi cadastrado."
+
+    return render_template('cadastro_horario.html', erro=erro)
 
 @app.route('/horarios')
 def listar_horarios():
@@ -532,6 +574,141 @@ def deletar_horario(id_horario):
     return redirect(url_for('listar_horarios'))
 
 
+# =========================
+# Professor - Disciplina
+# =========================
+
+@app.route('/cadastrar_professor_disciplina', methods=['GET', 'POST'])
+def cadastrar_professor_disciplina():
+    erro = None
+
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute('SELECT * FROM professor ORDER BY nome')
+        professores = cursor.fetchall()
+
+        cursor.execute('SELECT * FROM disciplina ORDER BY nome')
+        disciplinas = cursor.fetchall()
+
+        try:
+            if request.method == 'POST':
+                id_professor = request.form['id_professor']
+                id_disciplina = request.form['id_disciplina']
+
+                cursor.execute("""
+                    INSERT INTO professor_disciplina (id_professor, id_disciplina)
+                    VALUES (?, ?)
+                """, (id_professor, id_disciplina))
+                conexao.commit()
+
+                return redirect(url_for('listar_professores_disciplinas'))
+            
+        except sqlite3.IntegrityError:
+            erro = "Essa relação entre professor e disciplina já existe."
+
+    return render_template(
+        'cadastro_professor_disciplina.html', erro=erro,
+        professores=professores, disciplinas=disciplinas)
+
+@app.route('/professores_disciplinas')
+def listar_professores_disciplinas():
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+        cursor.execute("""
+            SELECT 
+                pd.id_professor,
+                pd.id_disciplina,
+                p.nome AS nome_professor,
+                d.nome AS nome_disciplina,
+                d.sigla
+            FROM professor_disciplina pd
+            JOIN professor p ON pd.id_professor = p.id_professor
+            JOIN disciplina d ON pd.id_disciplina = d.id_disciplina
+            ORDER BY p.nome, d.nome
+        """)
+        professores_disciplinas = cursor.fetchall()
+
+    return render_template(
+        'professor_disciplina.html',
+        professores_disciplinas=professores_disciplinas,
+        edicao_professor_disciplina=None)
+
+@app.route('/editar_professor_disciplina/<int:id_professor>/<int:id_disciplina>')
+def editar_professor_disciplina(id_professor, id_disciplina):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT 
+                pd.id_professor,
+                pd.id_disciplina,
+                p.nome AS nome_professor,
+                d.nome AS nome_disciplina,
+                d.sigla
+            FROM professor_disciplina pd
+            JOIN professor p ON pd.id_professor = p.id_professor
+            JOIN disciplina d ON pd.id_disciplina = d.id_disciplina
+            ORDER BY p.nome, d.nome
+        """)
+        professores_disciplinas = cursor.fetchall()
+
+        cursor.execute('SELECT * FROM professor ORDER BY nome')
+        professores = cursor.fetchall()
+
+        cursor.execute('SELECT * FROM disciplina ORDER BY nome')
+        disciplinas = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT * FROM professor_disciplina
+            WHERE id_professor = ? AND id_disciplina = ?
+        """,(id_professor, id_disciplina))
+        professor_disciplina_edicao = cursor.fetchone()
+    
+    return render_template(
+        'professor_disciplina.html',
+        professores_disciplinas=professores_disciplinas,
+        professor_disciplina_edicao=professor_disciplina_edicao,
+        professores=professores,
+        disciplinas=disciplinas)   
+
+@app.route('/atualizar_professor_disciplina', methods=['POST'])
+def atualizar_professor_disciplina():
+    id_professor_antigo = request.form['id_professor_antigo']
+    id_disciplina_antigo = request.form['id_disciplina_antiga']
+
+    novo_id_professor = request.form['novo_id_professor']
+    novo_id_disciplina = request.form['novo_id_disciplina']
+
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            UPDATE professor_disciplina
+            SET id_professor = ?, id_disciplina = ?
+            WHERE id_professor = ? AND id_disciplina = ?
+        """, (
+            novo_id_professor,
+            novo_id_disciplina,
+            id_professor_antigo,
+            id_disciplina_antigo
+        ))
+        conexao.commit()
+
+    return redirect(url_for('listar_professor_disciplina'))
+
+@app.route('/deletar_professor_disciplina/<int:id_professor>/<int:id_disciplina>', methods=['POST'])
+def deletar_professor_disciplina(id_professor, id_disciplina):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            DELETE FROM professor_disciplina
+            WHERE id_professor = ? AND id_disciplina = ?
+        """, (id_professor, id_disciplina))
+        conexao.commit()
+
+    return redirect(url_for('listar_professores_disciplinas'))
 
 
 if __name__ == "__main__":

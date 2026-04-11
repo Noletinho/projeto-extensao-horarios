@@ -7,6 +7,10 @@
 <body>
     <h1>Cadastrar Turnos</h1>
 
+    {% if erro %}
+    <p style="color:red;">{{ erro }}</p>
+    {% endif %}
+
     <form method="POST" action="{{ url_for('salvar_turno') }}">
         <label>Turno:</label><br>
         <input type="text" name="nome" required><br><br>

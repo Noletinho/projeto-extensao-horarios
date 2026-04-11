@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Professor x Disciplina</title>
+</head>
+<body>
+    <h1>Lista de Professor x Disciplina</h1>
+
+    <a href="{{ url_for('cadastrar_professor_disciplina') }}">
+        <button type="button">Cadastrar Nova Relação</button>
+    </a>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Professor</th>
+            <th>Disciplina</th>
+            <th>Sigla</th>
+            <th>Ações</th>
+        </tr>
+
+        {% for relacao in professores_disciplinas %}
+        <tr>
+            <td>{{ relacao['nome_professor'] }}</td>
+            <td>{{ relacao['nome_disciplina'] }}</td>
+            <td>{{ relacao['sigla'] }}</td>
+            <td>
+                <a href="{{ url_for('editar_professor_disciplina', id_professor=relacao['id_professor'], id_disciplina=relacao['id_disciplina']) }}">
+                    <button type="button">Editar</button>
+                </a>
+
+                <form action="{{ url_for('deletar_professor_disciplina', id_professor=relacao['id_professor'], id_disciplina=relacao['id_disciplina']) }}" method="POST" style="display:inline;">
+                    <button type="submit">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if professor_disciplina_edicao %}
+        <hr>
+        <h2>Editar Relação Professor x Disciplina</h2>
+
+        <form method="POST" action="{{ url_for('atualizar_professor_disciplina') }}">
+            <input type="hidden" name="id_professor_antigo" value="{{ professor_disciplina_edicao['id_professor'] }}">
+            <input type="hidden" name="id_disciplina_antiga" value="{{ professor_disciplina_edicao['id_disciplina'] }}">
+
+            <label>Professor:</label><br>
+            <select name="id_professor" required>
+                {% for professor in professores %}
+                    <option value="{{ professor['id_professor'] }}"
+                        {% if professor['id_professor'] == professor_disciplina_edicao['id_professor'] %}selected{% endif %}>
+                        {{ professor['nome'] }}
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <label>Disciplina:</label><br>
+            <select name="id_disciplina" required>
+                {% for disciplina in disciplinas %}
+                    <option value="{{ disciplina['id_disciplina'] }}"
+                        {% if disciplina['id_disciplina'] == professor_disciplina_edicao['id_disciplina'] %}selected{% endif %}>
+                        {{ disciplina['nome'] }} ({{ disciplina['sigla'] }})
+                    </option>
+                {% endfor %}
+            </select><br><br>
+
+            <button type="submit">Atualizar</button>
+        </form>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>
