@@ -3,53 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <title>Grades Curriculares</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .topo {
+            margin-bottom: 20px;
+        }
+
+        .topo a {
+            margin-right: 6px;
+        }
+
+        .bloco-serie {
+            margin-bottom: 28px;
+        }
+
+        .bloco-turma {
+            margin-bottom: 18px;
+        }
+
+        .bloco-turma h3 {
+            margin-bottom: 8px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        th, td {
+            border: 1px solid #999;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .acoes form,
+        .acoes a {
+            display: inline-block;
+            margin-right: 5px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Lista de Grades Curriculares</h1>
+    <div class="topo">
+        <h1>Lista de Grades Curriculares - Turno {{ turno['nome'] }}</h1>
 
-    {% if erro %}
-        <p style="color:red;">{{ erro }}</p>
-    {% endif %}
+        {% if erro %}
+            <p style="color:red;">{{ erro }}</p>
+        {% endif %}
 
-    <a href="{{ url_for('cadastrar_grade_curricular') }}">
-        <button type="button">Cadastrar Nova Grade Curricular</button>
-    </a>
+        <a href="{{ url_for('cadastrar_grade_curricular') }}">
+            <button type="button">Cadastrar Grade por Turma</button>
+        </a>
 
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>ID</th>
-            <th>Turma</th>
-            <th>Série</th>
-            <th>Turno</th>
-            <th>Disciplina</th>
-            <th>Sigla</th>
-            <th>Aulas Semanais</th>
-            <th>Ações</th>
-        </tr>
+        <a href="{{ url_for('selecionar_turno_grades') }}">
+            <button type="button">Selecionar Outro Turno</button>
+        </a>
+    </div>
 
-        {% for grade in grades %}
-        <tr>
-            <td>{{ grade['id_grade'] }}</td>
-            <td>{{ grade['nome_turma'] }}</td>
-            <td>{{ grade['serie'] }}</td>
-            <td>{{ grade['nome_turno'] }}</td>
-            <td>{{ grade['nome_disciplina'] }}</td>
-            <td>{{ grade['sigla'] }}</td>
-            <td>{{ grade['aulas_semanais'] }}</td>
-            <td>
-                <a href="{{ url_for('editar_grade_curricular', id_grade=grade['id_grade']) }}">
-                    <button type="button">Editar</button>
-                </a>
+    {% if ordem_series %}
+        {% for serie in ordem_series %}
+            <div class="bloco-serie">
+                <h2>Série: {{ serie }}</h2>
 
-                <form action="{{ url_for('deletar_grade_curricular', id_grade=grade['id_grade']) }}" method="POST" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir esta grade curricular?')">
-                        Excluir
-                    </button>
-                </form>
-            </td>
-        </tr>
+                {% for id_turma, turma in grades_por_serie[serie].items() %}
+                    <div class="bloco-turma">
+                        <h3>Turma: {{ turma['nome_turma'] }}</h3>
+
+                        <table>
+                            <tr>
+                                <th>Disciplina</th>
+                                <th>Sigla</th>
+                                <th>Aulas Semanais</th>
+                                <th>Ações</th>
+                            </tr>
+
+                            {% for grade in turma['disciplinas'] %}
+                            <tr>
+                                <td>{{ grade['nome_disciplina'] }}</td>
+                                <td>{{ grade['sigla'] }}</td>
+                                <td>{{ grade['aulas_semanais'] }}</td>
+                                <td class="acoes">
+                                    <a href="{{ url_for('editar_grade_curricular', id_grade=grade['id_grade']) }}">
+                                        <button type="button">Editar</button>
+                                    </a>
+
+                                    <form action="{{ url_for('deletar_grade_curricular', id_grade=grade['id_grade']) }}" method="POST" style="display:inline;">
+                                        <button type="submit" onclick="return confirm('Tem certeza que deseja excluir esta disciplina da grade curricular?')">
+                                            Excluir
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                {% endfor %}
+            </div>
         {% endfor %}
-    </table>
+    {% else %}
+        <p>Nenhuma grade curricular cadastrada para este turno.</p>
+    {% endif %}
 
     {% if grade_edicao %}
         <hr>

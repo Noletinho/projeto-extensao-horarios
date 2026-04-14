@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Selecionar Turno</title>
+</head>
+<body>
+    <h1>Selecionar Turno para Ver as Alocações</h1>
+
+    {% for turno in turnos %}
+        <p>
+            <a href="{{ url_for('listar_alocacoes_turno', id_turno=turno['id_turno']) }}">
+                <button type="button">{{ turno['nome'] }}</button>
+            </a>
+        </p>
+    {% endfor %}
+
+    <br>
+    <a href="{{ url_for('index') }}">Voltar</a>
+</body>
+</html>

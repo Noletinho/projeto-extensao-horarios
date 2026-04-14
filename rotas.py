@@ -1098,35 +1098,90 @@ def cadastrar_grade_curricular():
         """)
         turmas = cursor.fetchall()
 
-        cursor.execute("SELECT * FROM disciplina ORDER BY nome")
+        cursor.execute("""
+            SELECT
+                id_disciplina,
+                nome,
+                sigla
+            FROM disciplina
+            ORDER BY nome
+        """)
         disciplinas = cursor.fetchall()
 
         if request.method == 'POST':
             id_turma = request.form['id_turma']
-            id_disciplina = request.form['id_disciplina']
-            aulas_semanais = request.form['aulas_semanais']
 
-            try:
-                cursor.execute("""
-                    INSERT INTO grade_curricular (id_turma, id_disciplina, aulas_semanais)
-                    VALUES (?, ?, ?)
-                """, (id_turma, id_disciplina, aulas_semanais))
-                conexao.commit()
+            inseridos = 0
+            repetidos = 0
 
-                return redirect(url_for('listar_grades_curriculares'))
+            for disciplina in disciplinas:
+                campo = f"aulas_semanais_{disciplina['id_disciplina']}"
+                valor = request.form.get(campo, "").strip()
 
-            except sqlite3.IntegrityError:
-                erro = "Essa disciplina já foi cadastrada para essa turma."
+                if valor != "":
+                    try:
+                        aulas_semanais = int(valor)
+                    except ValueError:
+                        erro = "Digite apenas números válidos nas aulas semanais."
+                        return render_template(
+                            'cadastro_grade_curricular.html',
+                            turmas=turmas,
+                            disciplinas=disciplinas,
+                            erro=erro)
+
+                    if aulas_semanais <= 0:
+                        continue
+
+                    cursor.execute("""
+                        SELECT 1
+                        FROM grade_curricular
+                        WHERE id_turma = ? AND id_disciplina = ?
+                    """, (id_turma, disciplina['id_disciplina']))
+                    existe = cursor.fetchone()
+
+                    if existe:
+                        repetidos += 1
+                    else:
+                        cursor.execute("""
+                            INSERT INTO grade_curricular (id_turma, id_disciplina, aulas_semanais)
+                            VALUES (?, ?, ?)
+                        """, (id_turma, disciplina['id_disciplina'], aulas_semanais))
+                        inseridos += 1
+
+            conexao.commit()
+
+            if inseridos > 0:
+                return redirect(url_for('selecionar_turno_grades'))
+
+            if repetidos > 0:
+                erro = "Todas as disciplinas preenchidas já estavam cadastradas para essa turma."
+            else:
+                erro = "Preencha pelo menos uma disciplina com a quantidade de aulas semanais."
 
     return render_template('cadastro_grade_curricular.html',
         turmas=turmas,
         disciplinas=disciplinas,
         erro=erro)
 
-@app.route('/grades_curriculares')
-def listar_grades_curriculares():
+@app.route('/selecionar_turno_grades')
+def selecionar_turno_grades():
     with conectar() as conexao:
         cursor = conexao.cursor()
+        cursor.execute("SELECT * FROM turno ORDER BY nome")
+        turnos = cursor.fetchall()
+
+    return render_template('selecionar_turno_grades.html', turnos=turnos)
+
+@app.route('/grades_curriculares/<int:id_turno>')
+def listar_grades_curriculares(id_turno):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT * FROM turno
+            WHERE id_turno = ?
+        """, (id_turno,))
+        turno = cursor.fetchone()
 
         cursor.execute("""
             SELECT
@@ -1143,12 +1198,41 @@ def listar_grades_curriculares():
             JOIN turma t ON gc.id_turma = t.id_turma
             JOIN turno tr ON t.id_turno = tr.id_turno
             JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
-            ORDER BY t.nome, d.nome
-        """)
-        grades = cursor.fetchall()
+            WHERE tr.id_turno = ?
+            ORDER BY t.serie, t.nome, d.nome
+        """, (id_turno,))
+        registros = cursor.fetchall()
 
-    return render_template('grade_curricular.html',
-        grades=grades,
+    grades_por_serie = {}
+    ordem_series = []
+
+    for registro in registros:
+        serie = registro['serie']
+        id_turma = registro['id_turma']
+
+        if serie not in grades_por_serie:
+            grades_por_serie[serie] = {}
+            ordem_series.append(serie)
+
+        if id_turma not in grades_por_serie[serie]:
+            grades_por_serie[serie][id_turma] = {
+                'id_turma': id_turma,
+                'nome_turma': registro['nome_turma'],
+                'disciplinas': []
+            }
+
+        grades_por_serie[serie][id_turma]['disciplinas'].append({
+            'id_grade': registro['id_grade'],
+            'nome_disciplina': registro['nome_disciplina'],
+            'sigla': registro['sigla'],
+            'aulas_semanais': registro['aulas_semanais']
+        })
+
+    return render_template(
+        'grade_curricular.html',
+        turno=turno,
+        grades_por_serie=grades_por_serie,
+        ordem_series=ordem_series,
         grade_edicao=None)
 
 @app.route('/editar_grade_curricular/<int:id_grade>')
@@ -1156,6 +1240,30 @@ def editar_grade_curricular(id_grade):
     with conectar() as conexao:
         cursor = conexao.cursor()
 
+        # Descobrir a grade e o turno dela
+        cursor.execute("""
+            SELECT
+                gc.*,
+                t.id_turno
+            FROM grade_curricular gc
+            JOIN turma t ON gc.id_turma = t.id_turma
+            WHERE gc.id_grade = ?
+        """, (id_grade,))
+        grade_edicao = cursor.fetchone()
+
+        if not grade_edicao:
+            return redirect(url_for('selecionar_turno_grades'))
+
+        id_turno = grade_edicao['id_turno']
+
+        # Buscar o turno
+        cursor.execute("""
+            SELECT * FROM turno
+            WHERE id_turno = ?
+        """, (id_turno,))
+        turno = cursor.fetchone()
+
+        # Buscar grades só desse turno
         cursor.execute("""
             SELECT
                 gc.id_grade,
@@ -1171,10 +1279,12 @@ def editar_grade_curricular(id_grade):
             JOIN turma t ON gc.id_turma = t.id_turma
             JOIN turno tr ON t.id_turno = tr.id_turno
             JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
-            ORDER BY t.nome, d.nome
-        """)
-        grades = cursor.fetchall()
+            WHERE tr.id_turno = ?
+            ORDER BY t.serie, t.nome, d.nome
+        """, (id_turno,))
+        registros = cursor.fetchall()
 
+        # Turmas para o select da edição
         cursor.execute("""
             SELECT
                 t.id_turma,
@@ -1187,17 +1297,44 @@ def editar_grade_curricular(id_grade):
         """)
         turmas = cursor.fetchall()
 
-        cursor.execute("SELECT * FROM disciplina ORDER BY nome")
+        # Disciplinas para o select da edição
+        cursor.execute("""
+            SELECT *
+            FROM disciplina
+            ORDER BY nome
+        """)
         disciplinas = cursor.fetchall()
 
-        cursor.execute("""
-            SELECT * FROM grade_curricular
-            WHERE id_grade = ?
-        """, (id_grade,))
-        grade_edicao = cursor.fetchone()
+    grades_por_serie = {}
+    ordem_series = []
 
-    return render_template('grade_curricular.html',
-        grades=grades,
+    for registro in registros:
+        serie = registro['serie']
+        id_turma_registro = registro['id_turma']
+
+        if serie not in grades_por_serie:
+            grades_por_serie[serie] = {}
+            ordem_series.append(serie)
+
+        if id_turma_registro not in grades_por_serie[serie]:
+            grades_por_serie[serie][id_turma_registro] = {
+                'id_turma': id_turma_registro,
+                'nome_turma': registro['nome_turma'],
+                'disciplinas': []
+            }
+
+        grades_por_serie[serie][id_turma_registro]['disciplinas'].append({
+            'id_grade': registro['id_grade'],
+            'nome_disciplina': registro['nome_disciplina'],
+            'sigla': registro['sigla'],
+            'aulas_semanais': registro['aulas_semanais']
+        })
+
+    return render_template(
+        'grade_curricular.html',
+        turno=turno,
+        grades_por_serie=grades_por_serie,
+        ordem_series=ordem_series,
         grade_edicao=grade_edicao,
         turmas=turmas,
         disciplinas=disciplinas)
@@ -1218,13 +1355,28 @@ def atualizar_grade_curricular(id_grade):
             """, (id_turma, id_disciplina, aulas_semanais, id_grade))
             conexao.commit()
 
-        return redirect(url_for('listar_grades_curriculares'))
+        return redirect(url_for('selecionar_turno_grades'))
 
     except sqlite3.IntegrityError:
         erro = "Já existe essa disciplina cadastrada para essa turma."
 
         with conectar() as conexao:
             cursor = conexao.cursor()
+
+            cursor.execute("""
+                SELECT
+                    gc.*,
+                    t.id_turno
+                FROM grade_curricular gc
+                JOIN turma t ON gc.id_turma = t.id_turma
+                WHERE gc.id_grade = ?
+            """, (id_grade,))
+            grade_edicao = cursor.fetchone()
+
+            id_turno = grade_edicao['id_turno']
+
+            cursor.execute("SELECT * FROM turno WHERE id_turno = ?", (id_turno,))
+            turno = cursor.fetchone()
 
             cursor.execute("""
                 SELECT
@@ -1241,9 +1393,10 @@ def atualizar_grade_curricular(id_grade):
                 JOIN turma t ON gc.id_turma = t.id_turma
                 JOIN turno tr ON t.id_turno = tr.id_turno
                 JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
-                ORDER BY t.nome, d.nome
-            """)
-            grades = cursor.fetchall()
+                WHERE tr.id_turno = ?
+                ORDER BY t.serie, t.nome, d.nome
+            """, (id_turno,))
+            registros = cursor.fetchall()
 
             cursor.execute("""
                 SELECT
@@ -1260,14 +1413,36 @@ def atualizar_grade_curricular(id_grade):
             cursor.execute("SELECT * FROM disciplina ORDER BY nome")
             disciplinas = cursor.fetchall()
 
-            cursor.execute("""
-                SELECT * FROM grade_curricular
-                WHERE id_grade = ?
-            """, (id_grade,))
-            grade_edicao = cursor.fetchone()
+        grades_por_serie = {}
+        ordem_series = []
 
-        return render_template('grade_curricular.html',
-            grades=grades,
+        for registro in registros:
+            serie = registro['serie']
+            id_turma_registro = registro['id_turma']
+
+            if serie not in grades_por_serie:
+                grades_por_serie[serie] = {}
+                ordem_series.append(serie)
+
+            if id_turma_registro not in grades_por_serie[serie]:
+                grades_por_serie[serie][id_turma_registro] = {
+                    'id_turma': id_turma_registro,
+                    'nome_turma': registro['nome_turma'],
+                    'disciplinas': []
+                }
+
+            grades_por_serie[serie][id_turma_registro]['disciplinas'].append({
+                'id_grade': registro['id_grade'],
+                'nome_disciplina': registro['nome_disciplina'],
+                'sigla': registro['sigla'],
+                'aulas_semanais': registro['aulas_semanais']
+            })
+
+        return render_template(
+            'grade_curricular.html',
+            turno=turno,
+            grades_por_serie=grades_por_serie,
+            ordem_series=ordem_series,
             grade_edicao=grade_edicao,
             turmas=turmas,
             disciplinas=disciplinas,
@@ -1283,7 +1458,7 @@ def deletar_grade_curricular(id_grade):
         """, (id_grade,))
         conexao.commit()
 
-    return redirect(url_for('listar_grades_curriculares'))
+    return redirect(url_for('selecionar_turno_grades'))
 
 
 # =========================
@@ -1363,10 +1538,26 @@ def cadastrar_alocacao():
         horarios=horarios,
         erro=erro)
 
-@app.route('/alocacoes')
-def listar_alocacoes():
+@app.route('/selecionar_turno_alocacoes')
+def selecionar_turno_alocacoes():
     with conectar() as conexao:
         cursor = conexao.cursor()
+        cursor.execute("SELECT * FROM turno ORDER BY nome")
+        turnos = cursor.fetchall()
+
+    return render_template('selecionar_turno_alocacoes.html', turnos=turnos)
+
+@app.route('/alocacoes/<int:id_turno>')
+def listar_alocacoes_turno(id_turno):
+    with conectar() as conexao:
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            SELECT *
+            FROM turno
+            WHERE id_turno = ?
+        """, (id_turno,))
+        turno = cursor.fetchone()
 
         cursor.execute("""
             SELECT
@@ -1381,6 +1572,7 @@ def listar_alocacoes():
                 t.serie,
                 d.nome AS nome_disciplina,
                 d.sigla,
+                d.cor,
                 p.nome AS nome_professor,
                 l.nome AS nome_local,
                 h.hora_inicio,
@@ -1391,12 +1583,56 @@ def listar_alocacoes():
             JOIN professor p ON a.id_professor = p.id_professor
             JOIN local l ON a.id_local = l.id_local
             JOIN horario_aula h ON a.id_horario = h.id_horario
-            ORDER BY t.nome, a.dia_semana, h.hora_inicio
-        """)
-        alocacoes = cursor.fetchall()
+            WHERE t.id_turno = ?
+            ORDER BY
+                t.serie,
+                t.nome,
+                CASE a.dia_semana
+                    WHEN 'segunda' THEN 1
+                    WHEN 'terca' THEN 2
+                    WHEN 'quarta' THEN 3
+                    WHEN 'quinta' THEN 4
+                    WHEN 'sexta' THEN 5
+                END,
+                h.hora_inicio
+        """, (id_turno,))
+        registros = cursor.fetchall()
 
-    return render_template('alocacao.html',
-        alocacoes=alocacoes,
+    alocacoes_por_serie = {}
+    ordem_series = []
+
+    for registro in registros:
+        serie = registro['serie']
+        id_turma = registro['id_turma']
+
+        if serie not in alocacoes_por_serie:
+            alocacoes_por_serie[serie] = {}
+            ordem_series.append(serie)
+
+        if id_turma not in alocacoes_por_serie[serie]:
+            alocacoes_por_serie[serie][id_turma] = {
+                'id_turma': id_turma,
+                'nome_turma': registro['nome_turma'],
+                'itens': []
+            }
+
+        alocacoes_por_serie[serie][id_turma]['itens'].append({
+            'id_alocacao': registro['id_alocacao'],
+            'dia_semana': registro['dia_semana'],
+            'hora_inicio': registro['hora_inicio'],
+            'hora_fim': registro['hora_fim'],
+            'nome_disciplina': registro['nome_disciplina'],
+            'sigla': registro['sigla'],
+            'cor': registro['cor'],
+            'nome_professor': registro['nome_professor'],
+            'nome_local': registro['nome_local']
+        })
+
+    return render_template(
+        'alocacao.html',
+        turno=turno,
+        alocacoes_por_serie=alocacoes_por_serie,
+        ordem_series=ordem_series,
         alocacao_edicao=None)
 
 @app.route('/editar_alocacao/<int:id_alocacao>')
@@ -1406,6 +1642,24 @@ def editar_alocacao(id_alocacao):
 
         cursor.execute("""
             SELECT
+                a.*,
+                t.id_turno
+            FROM alocacao a
+            JOIN turma t ON a.id_turma = t.id_turma
+            WHERE a.id_alocacao = ?
+        """, (id_alocacao,))
+        alocacao_edicao = cursor.fetchone()
+
+        if not alocacao_edicao:
+            return redirect(url_for('selecionar_turno_alocacoes'))
+
+        id_turno = alocacao_edicao['id_turno']
+
+        cursor.execute("SELECT * FROM turno WHERE id_turno = ?", (id_turno,))
+        turno = cursor.fetchone()
+
+        cursor.execute("""
+            SELECT
                 a.id_alocacao,
                 a.id_turma,
                 a.id_disciplina,
@@ -1417,6 +1671,7 @@ def editar_alocacao(id_alocacao):
                 t.serie,
                 d.nome AS nome_disciplina,
                 d.sigla,
+                d.cor,
                 p.nome AS nome_professor,
                 l.nome AS nome_local,
                 h.hora_inicio,
@@ -1427,9 +1682,20 @@ def editar_alocacao(id_alocacao):
             JOIN professor p ON a.id_professor = p.id_professor
             JOIN local l ON a.id_local = l.id_local
             JOIN horario_aula h ON a.id_horario = h.id_horario
-            ORDER BY t.nome, a.dia_semana, h.hora_inicio
-        """)
-        alocacoes = cursor.fetchall()
+            WHERE t.id_turno = ?
+            ORDER BY
+                t.serie,
+                t.nome,
+                CASE a.dia_semana
+                    WHEN 'segunda' THEN 1
+                    WHEN 'terca' THEN 2
+                    WHEN 'quarta' THEN 3
+                    WHEN 'quinta' THEN 4
+                    WHEN 'sexta' THEN 5
+                END,
+                h.hora_inicio
+        """, (id_turno,))
+        registros = cursor.fetchall()
 
         cursor.execute("""
             SELECT
@@ -1455,14 +1721,41 @@ def editar_alocacao(id_alocacao):
         cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
         horarios = cursor.fetchall()
 
-        cursor.execute("""
-            SELECT * FROM alocacao
-            WHERE id_alocacao = ?
-        """, (id_alocacao,))
-        alocacao_edicao = cursor.fetchone()
+    alocacoes_por_serie = {}
+    ordem_series = []
 
-    return render_template('alocacao.html',
-        alocacoes=alocacoes,
+    for registro in registros:
+        serie = registro['serie']
+        id_turma = registro['id_turma']
+
+        if serie not in alocacoes_por_serie:
+            alocacoes_por_serie[serie] = {}
+            ordem_series.append(serie)
+
+        if id_turma not in alocacoes_por_serie[serie]:
+            alocacoes_por_serie[serie][id_turma] = {
+                'id_turma': id_turma,
+                'nome_turma': registro['nome_turma'],
+                'itens': []
+            }
+
+        alocacoes_por_serie[serie][id_turma]['itens'].append({
+            'id_alocacao': registro['id_alocacao'],
+            'dia_semana': registro['dia_semana'],
+            'hora_inicio': registro['hora_inicio'],
+            'hora_fim': registro['hora_fim'],
+            'nome_disciplina': registro['nome_disciplina'],
+            'sigla': registro['sigla'],
+            'cor': registro['cor'],
+            'nome_professor': registro['nome_professor'],
+            'nome_local': registro['nome_local']
+        })
+
+    return render_template(
+        'alocacao.html',
+        turno=turno,
+        alocacoes_por_serie=alocacoes_por_serie,
+        ordem_series=ordem_series,
         alocacao_edicao=alocacao_edicao,
         turmas=turmas,
         disciplinas=disciplinas,
@@ -1503,7 +1796,7 @@ def atualizar_alocacao(id_alocacao):
             ))
             conexao.commit()
 
-        return redirect(url_for('listar_alocacoes'))
+        return redirect(url_for('selecionar_turno_alocacoes'))
 
     except sqlite3.IntegrityError:
         erro = "Conflito de horário: professor, turma ou local já está ocupado nesse dia e horário."
@@ -1585,7 +1878,7 @@ def deletar_alocacao(id_alocacao):
         """, (id_alocacao,))
         conexao.commit()
 
-    return redirect(url_for('listar_alocacoes'))
+    return redirect(url_for('selecionar_turno_alocacoes'))
 
 
 # =========================

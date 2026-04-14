@@ -2,10 +2,31 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Cadastrar Grade Curricular</title>
+    <title>Cadastrar Grade Curricular em Lote</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        th, td {
+            border: 1px solid #999;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        input[type="number"] {
+            width: 90px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Cadastrar Grade Curricular</h1>
+    <h1>Cadastrar Grade Curricular por Turma</h1>
 
     {% if erro %}
         <p style="color:red;">{{ erro }}</p>
@@ -20,22 +41,35 @@
                     {{ turma['nome'] }} - {{ turma['serie'] }} - {{ turma['nome_turno'] }}
                 </option>
             {% endfor %}
-        </select><br><br>
+        </select>
 
-        <label>Disciplina:</label><br>
-        <select name="id_disciplina" required>
-            <option value="">Selecione</option>
+        <br><br>
+
+        <table>
+            <tr>
+                <th>Disciplina</th>
+                <th>Sigla</th>
+                <th>Aulas Semanais</th>
+            </tr>
+
             {% for disciplina in disciplinas %}
-                <option value="{{ disciplina['id_disciplina'] }}">
-                    {{ disciplina['nome'] }} ({{ disciplina['sigla'] }})
-                </option>
+                <tr>
+                    <td>{{ disciplina['nome'] }}</td>
+                    <td>{{ disciplina['sigla'] }}</td>
+                    <td>
+                        <input
+                            type="number"
+                            name="aulas_semanais_{{ disciplina['id_disciplina'] }}"
+                            min="0"
+                            placeholder="0"
+                        >
+                    </td>
+                </tr>
             {% endfor %}
-        </select><br><br>
+        </table>
 
-        <label>Aulas semanais:</label><br>
-        <input type="number" name="aulas_semanais" min="1" required><br><br>
-
-        <button type="submit">Salvar</button>
+        <br>
+        <button type="submit">Salvar Grade</button>
     </form>
 
     <br>

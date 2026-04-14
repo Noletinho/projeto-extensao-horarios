@@ -3,55 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <title>Alocações</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .topo {
+            margin-bottom: 20px;
+        }
+
+        .topo a {
+            margin-right: 6px;
+        }
+
+        .bloco-serie {
+            margin-bottom: 28px;
+        }
+
+        .bloco-turma {
+            margin-bottom: 20px;
+        }
+
+        .bloco-turma h3 {
+            margin-bottom: 8px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        th, td {
+            border: 1px solid #999;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .acoes form,
+        .acoes a {
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .sigla-box {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #000;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h1>Lista de Alocações</h1>
+    <div class="topo">
+        <h1>Lista de Alocações - Turno {{ turno['nome'] }}</h1>
 
-    {% if erro %}
-        <p style="color:red;">{{ erro }}</p>
-    {% endif %}
+        {% if erro %}
+            <p style="color:red;">{{ erro }}</p>
+        {% endif %}
 
-    <a href="{{ url_for('cadastrar_alocacao') }}">
-        <button type="button">Cadastrar Nova Alocação</button>
-    </a>
+        <a href="{{ url_for('cadastrar_alocacao') }}">
+            <button type="button">Cadastrar Alocação</button>
+        </a>
 
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>ID</th>
-            <th>Turma</th>
-            <th>Série</th>
-            <th>Disciplina</th>
-            <th>Professor</th>
-            <th>Local</th>
-            <th>Dia</th>
-            <th>Horário</th>
-            <th>Ações</th>
-        </tr>
+        <a href="{{ url_for('selecionar_turno_alocacoes') }}">
+            <button type="button">Selecionar Outro Turno</button>
+        </a>
+    </div>
 
-        {% for alocacao in alocacoes %}
-        <tr>
-            <td>{{ alocacao['id_alocacao'] }}</td>
-            <td>{{ alocacao['nome_turma'] }}</td>
-            <td>{{ alocacao['serie'] }}</td>
-            <td>{{ alocacao['nome_disciplina'] }}</td>
-            <td>{{ alocacao['nome_professor'] }}</td>
-            <td>{{ alocacao['nome_local'] }}</td>
-            <td>{{ alocacao['dia_semana'] }}</td>
-            <td>{{ alocacao['hora_inicio'] }} às {{ alocacao['hora_fim'] }}</td>
-            <td>
-                <a href="{{ url_for('editar_alocacao', id_alocacao=alocacao['id_alocacao']) }}">
-                    <button type="button">Editar</button>
-                </a>
+    {% if ordem_series %}
+        {% for serie in ordem_series %}
+            <div class="bloco-serie">
+                <h2>Série: {{ serie }}</h2>
 
-                <form action="{{ url_for('deletar_alocacao', id_alocacao=alocacao['id_alocacao']) }}" method="POST" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir esta alocação?')">
-                        Excluir
-                    </button>
-                </form>
-            </td>
-        </tr>
+                {% for id_turma, turma in alocacoes_por_serie[serie].items() %}
+                    <div class="bloco-turma">
+                        <h3>Turma: {{ turma['nome_turma'] }}</h3>
+
+                        <table>
+                            <tr>
+                                <th>Dia</th>
+                                <th>Horário</th>
+                                <th>Disciplina</th>
+                                <th>Professor</th>
+                                <th>Local</th>
+                                <th>Ações</th>
+                            </tr>
+
+                            {% for item in turma['itens'] %}
+                            <tr>
+                                <td>{{ item['dia_semana'] }}</td>
+                                <td>{{ item['hora_inicio'] }} às {{ item['hora_fim'] }}</td>
+                                <td>
+                                    <span class="sigla-box" style="background-color: {{ item['cor'] }};">
+                                        {{ item['sigla'] }}
+                                    </span>
+                                    {{ item['nome_disciplina'] }}
+                                </td>
+                                <td>{{ item['nome_professor'] }}</td>
+                                <td>{{ item['nome_local'] }}</td>
+                                <td class="acoes">
+                                    <a href="{{ url_for('editar_alocacao', id_alocacao=item['id_alocacao']) }}">
+                                        <button type="button">Editar</button>
+                                    </a>
+
+                                    <form action="{{ url_for('deletar_alocacao', id_alocacao=item['id_alocacao']) }}" method="POST" style="display:inline;">
+                                        <button type="submit" onclick="return confirm('Tem certeza que deseja excluir esta alocação?')">
+                                            Excluir
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                {% endfor %}
+            </div>
         {% endfor %}
-    </table>
+    {% else %}
+        <p>Nenhuma alocação cadastrada para este turno.</p>
+    {% endif %}
 
     {% if alocacao_edicao %}
         <hr>
