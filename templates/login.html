@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Sistema de Horários</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .login-wrap {
+            width: 100%;
+            max-width: 380px;
+        }
+        .login-card {
+            background: var(--cor-superficie);
+            border: 1px solid var(--cor-borda);
+            border-radius: var(--raio-borda);
+            padding: 2.4rem 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        .login-titulo {
+            text-align: center;
+            margin: 0 0 0.4rem;
+            font-size: 1.4rem;
+            color: var(--cor-primaria);
+        }
+        .login-subtitulo {
+            text-align: center;
+            color: var(--cor-texto);
+            opacity: 0.55;
+            font-size: 0.87rem;
+            margin: 0 0 1.8rem;
+        }
+        .form-grupo label { font-size: 0.88rem; }
+        .btn-login {
+            width: 100%;
+            margin-top: 0.6rem;
+            padding: 11px;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="fundo-estrelas" aria-hidden="true"></div>
+
+    <div class="login-wrap">
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+            {% for categoria, mensagem in mensagens %}
+                <div class="alerta alerta-{{ categoria }} mb-2">{{ mensagem }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <div class="login-card">
+            <h1 class="login-titulo">🏫 Sistema de Horários</h1>
+            <p class="login-subtitulo">Faça login para continuar</p>
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-grupo">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" required autofocus
+                           placeholder="seu@email.com" autocomplete="username">
+                </div>
+                <div class="form-grupo">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="senha" required
+                           placeholder="••••••••" autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primario btn-login">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        var container = document.getElementById('fundo-estrelas');
+        if (!container) return;
+        var W = window.innerWidth, H = window.innerHeight;
+        var total = Math.max(60, Math.min(Math.round((W * H) / 5800), 220));
+        for (var i = 0; i < total; i++) {
+            var s = document.createElement('div');
+            s.className = 'estrela';
+            var sz = 0.8 + Math.random() * 1.6;
+            s.style.width = sz + 'px';
+            s.style.height = sz + 'px';
+            s.style.left = (Math.random() * 100) + '%';
+            s.style.top = (Math.random() * 100) + '%';
+            var dur = 22 + Math.random() * 28;
+            s.style.setProperty('--dur', dur + 's');
+            s.style.setProperty('--dx', ((Math.random() - 0.5) * 18) + 'px');
+            s.style.setProperty('--dy', ((Math.random() - 0.5) * 18) + 'px');
+            var opA = (0.25 + Math.random() * 0.45).toFixed(2);
+            s.style.setProperty('--op-a', opA);
+            s.style.setProperty('--op-b', (parseFloat(opA) + 0.15 + Math.random() * 0.2).toFixed(2));
+            s.style.animationDelay = '-' + (Math.random() * dur).toFixed(2) + 's';
+            container.appendChild(s);
+        }
+    })();
+    </script>
+</body>
+</html>

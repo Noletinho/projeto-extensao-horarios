@@ -174,6 +174,186 @@ O `<td>` de ações **não recebe** `class="flex-linha"` diretamente. Envolva os
 - A tabela deve usar `<thead>` para repetição de cabeçalho em múltiplas páginas.
 - Botões de ação usam `class="no-print"` para sumir na impressão.
 
+## Animações e Elementos Visuais (Motion.dev)
+
+A aplicação usa **Motion.dev v11.11.13** via CDN ES module para animações. Não requer instalação — carregado em `base.html`.
+
+### Animações Globais (`base.html`)
+
+Aplicadas automaticamente em todas as páginas:
+- Header: slide de cima (`y: [-10, 0]`)
+- Linhas de tabela (`tbody tr`): entrada em cascata da esquerda (`stagger(0.04)`)
+- Cards (`.card`): fade + slide de baixo (`stagger(0.07)`)
+- Título da página (`.cabecalho-pagina h1`): slide da esquerda
+- Alertas: fade + scale
+
+CDN import:
+```javascript
+import { animate, stagger } from "https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm";
+```
+
+### Fundo Decorativo
+
+`<div id="fundo-escola">` em `base.html` (classe `no-print`) recebe ícones escolares gerados via JS puro que sobem lentamente com opacidade ~6%. Não interfere com impressão.
+
+### Ícones e Partículas por Entidade
+
+Cada template de listagem adiciona um `.icone-linha` na primeira célula e spawna **partículas flutuantes** ao hover (usando `animate()` do Motion). Timeout de 120ms evita spam.
+
+| Template | Lógica do ícone |
+|----------|-----------------|
+| `disciplinas.html` | Mapeamento por nome/sigla → 17 categorias (📐 Mat, ⚡ Fís, ⚗️ Qui, 🧬 Bio…) + borda lateral com a cor da disciplina |
+| `professores.html` | Sempre 👨‍🏫 + partículas acadêmicas |
+| `turmas.html` | `data-turno` → ☀️ matutino / 🌅 vespertino / 🌙 noturno |
+| `locais.html` | `data-tipo` → 🔬 lab / 💻 informática / 📚 biblioteca / ⚽ quadra / 🏫 padrão |
+| `horarios_aula.html` | `data-inicio` → ícone por faixa de hora (manhã/tarde/noite) |
+| `turnos.html` | `data-nome` → ☀️ / 🌅 / 🌙 por nome do turno |
+
+### Classes CSS de Animação
+
+- **`.fundo-escola`** — container fixo z-index:-1, não captura eventos
+- **`.item-fundo`** — ícone flutuante; usa `@keyframes flutuar-fundo`
+- **`.icone-linha`** — inline em `td:first-child`; escala 1.4× ao hover
+- **`.particula-hover`** — `position:fixed`, z-index:9999, removida após animação
+
+## Design Visual — Campo Estelar e Animações
+
+### Fundo (`#fundo-estrelas`)
+
+`#fundo-estrelas` em `base.html` gera um campo de estrelas suave via JS puro:
+- Fundo preto `#000` fixo em toda a viewport
+- N estrelas (`.estrela`) calculadas por área da tela: `Math.round(W*H/5800)`, min 60, max 220
+- Cada estrela tem tamanho aleatório (0.8–2.4px), opacidade variável e animação `estrela-deriva`
+- `@keyframes estrela-deriva`: drift suave com `--dx`/`--dy` (±9px) e fade de `--op-a` → `--op-b`
+- Duração por estrela: 22–50 s com `animation-delay` negativo aleatório (sem "flash" inicial)
+
+### Botões Flutuantes (`.btn-float`)
+
+Usado na página inicial (`index.html`) para dar vida aos botões de cadastro:
+- `.btn-float.btn-primario`: `@keyframes flutuar-suave` — sobe/desce 4px, 3.4 s
+- `.btn-float.btn-secundario`: mesma animação, 3.8 s com delay 0.3 s
+- `.btn-float.btn-acento`: `@keyframes flutuar-acento` (glow âmbar), 3.2 s
+- `animation-play-state: paused` no hover — botão congela ao passar o mouse
+
+### Seções do Index (`.secao-flutuante`)
+
+`index.html` não usa `.card` — usa `.secao-flutuante` e `.secao-titulo` para layout limpo:
+```html
+<div class="secao-flutuante">
+    <h2 class="secao-titulo">🗂️ Cadastros Base</h2>
+    <div class="flex-linha mt-1">
+        <a href="..." class="btn btn-primario btn-float">Cadastrar X</a>
+    </div>
+</div>
+```
+
+### Botões gerais — Efeito Shine
+
+Todos os botões têm shine sweep no hover via `::after`:
+- Gradiente diagonal `rgba(255,255,255,0.1)` percorre o botão (`left: -110% → 160%`)
+- Transição `cubic-bezier(0.175, 0.885, 0.32, 1.275)` em `background-color` e `box-shadow`
+- **Sem** `transform` no hover (mantém fluido, sem "pulo")
+
+### Padrão para novos templates com ícones
+
+```html
+{% block scripts_extra %}
+<script type="module">
+import { animate } from "https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm";
+
+function spawnParticulas(particulas, rect) {
+    for (let i = 0; i < 5; i++) {
+        const el = document.createElement('span');
+        el.textContent = particulas[Math.floor(Math.random() * particulas.length)];
+        el.className = 'particula-hover';
+        el.style.left = (rect.left + Math.random() * rect.width) + 'px';
+        el.style.top  = (rect.top  + rect.height / 2) + 'px';
+        el.style.fontSize = (12 + Math.random() * 8) + 'px';
+        document.body.appendChild(el);
+        animate(el,
+            { y:[0, -(40 + Math.random() * 45)], opacity:[0.9, 0], scale:[1, 0.5] },
+            { duration: 0.85 + Math.random() * 0.4, delay: i * 0.08, ease:'easeOut' }
+        ).then(() => el.remove());
+    }
+}
+
+document.querySelectorAll('tbody tr[data-X]').forEach(tr => {
+    /* injetar icone-linha + registrar hover com spawnParticulas */
+});
+</script>
+{% endblock %}
+```
+
+Adicionar `data-*` aos `<tr>` no Jinja2: `<tr data-X="{{ item['campo'] }}">`.
+
+## Autenticação e Controle de Acesso
+
+### Perfis e Permissões
+
+| Funcionalidade | diretor | secretaria | professor |
+|---|---|---|---|
+| Login / logout | ✅ | ✅ | ✅ |
+| Editar próprio perfil | ✅ | ✅ | ✅ |
+| Ver relatório de horários | ✅ | ✅ | ✅ |
+| Listar / CRUD entidades | ✅ | ✅ | ❌ |
+| Gerenciar usuários | ✅ | ❌ | ❌ |
+
+### Tabela `usuario`
+```sql
+CREATE TABLE IF NOT EXISTS usuario (
+    id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    senha_hash TEXT NOT NULL,
+    perfil TEXT NOT NULL CHECK (perfil IN ('diretor', 'secretaria', 'professor')),
+    id_professor INTEGER,
+    primeiro_login INTEGER DEFAULT 1 CHECK (primeiro_login IN (0, 1)),
+    ativo INTEGER DEFAULT 1 CHECK (ativo IN (0, 1)),
+    FOREIGN KEY (id_professor) REFERENCES professor(id_professor)
+);
+```
+
+### Arquivo `auth.py`
+- `usuario_logado()` → dict `{id, nome, perfil, id_professor, primeiro_login}` ou `None`
+- `requer_login` → decorator; redireciona para `/login` se não autenticado
+- `requer_perfil(*perfis)` → decorator; verifica se `session['usuario_perfil']` está nos perfis permitidos
+- Senhas: `werkzeug.security.generate_password_hash` / `check_password_hash`
+
+### Decorators nos blueprints
+```python
+from auth import requer_perfil   # ou requer_login para relatorio
+
+@app.route('/rota')
+@requer_perfil('diretor', 'secretaria')  # todos blueprints exceto relatorio
+def view():
+    ...
+```
+- `relatorio.py` usa apenas `@requer_login`
+- `blueprints/usuarios.py` usa `@requer_perfil('diretor')` em todas as rotas
+
+### Context Processor (rotas.py)
+```python
+@app.context_processor
+def injetar_usuario():
+    return dict(usuario_atual=auth.usuario_logado())
+```
+`usuario_atual` disponível em todos os templates (usado em `base.html` para nav dinâmica).
+
+### Primeiro Login
+Quando `usuario['primeiro_login'] == 1`: redirect automático para `/meu_perfil` após login.
+Ao salvar nova senha em `/meu_perfil`, campo `primeiro_login` é zerado.
+
+### Seeds padrão (criar_banco.py)
+Inseridos somente se tabela `usuario` estiver vazia:
+- `diretor@escola.com` / `diretor123` → perfil diretor
+- `secretaria@escola.com` / `secretaria123` → perfil secretaria
+
+### Rotas de auth (rotas.py)
+- `GET/POST /login` → login
+- `POST /logout` → limpa sessão
+- `GET/POST /meu_perfil` → editar próprio perfil (requer_login)
+- `GET / ` → index (requer_login)
+
 ## Melhorias Futuras (Baixa Prioridade)
 
 - **Paginação nas listagens** — professores, disciplinas e alocações podem crescer muito.
@@ -181,4 +361,4 @@ O `<td>` de ações **não recebe** `class="flex-linha"` diretamente. Envolva os
 
 ## Contexto do Projeto
 
-Projeto de extensão universitária. Interface totalmente em Português. Não há autenticação de usuários.
+Projeto de extensão universitária. Interface totalmente em Português.

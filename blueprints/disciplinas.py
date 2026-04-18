@@ -1,11 +1,13 @@
 import sqlite3
 from db import conectar
+from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
 
 
 def registrar(app):
 
     @app.route('/cadastrar_disciplina')
+    @requer_perfil('diretor', 'secretaria')
     def cadastrar_disciplina():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -14,6 +16,7 @@ def registrar(app):
         return render_template('cadastro_disciplina.html', disciplinas=disciplinas)
 
     @app.route('/salvar_disciplina', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def salvar_disciplina():
         nome = request.form.get('nome', '').strip()
         sigla = request.form.get('sigla', '').strip()
@@ -44,6 +47,7 @@ def registrar(app):
             return redirect(url_for('cadastrar_disciplina'))
 
     @app.route('/disciplinas')
+    @requer_perfil('diretor', 'secretaria')
     def listar_disciplinas():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -52,6 +56,7 @@ def registrar(app):
         return render_template('disciplinas.html', disciplinas=disciplinas)
 
     @app.route('/editar_disciplina/<int:id_disciplina>')
+    @requer_perfil('diretor', 'secretaria')
     def editar_disciplina(id_disciplina):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -62,6 +67,7 @@ def registrar(app):
         return render_template('disciplinas.html', disciplinas=disciplinas, disciplina_edicao=disciplina_edicao)
 
     @app.route('/atualizar_disciplina/<int:id_disciplina>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def atualizar_disciplina(id_disciplina):
         nome = request.form.get('nome', '').strip()
         sigla = request.form.get('sigla', '').strip()
@@ -83,6 +89,7 @@ def registrar(app):
         return redirect(url_for('listar_disciplinas'))
 
     @app.route('/deletar_disciplina/<int:id_disciplina>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def deletar_disciplina(id_disciplina):
         with conectar() as conexao:
             cursor = conexao.cursor()

@@ -1,10 +1,12 @@
 from db import conectar
+from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
 
 
 def registrar(app):
 
     @app.route('/cadastrar_disponibilidade_professor', methods=['GET', 'POST'])
+    @requer_perfil('diretor', 'secretaria')
     def cadastrar_disponibilidade_professor():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -51,6 +53,7 @@ def registrar(app):
                                professores=professores, horarios=horarios)
 
     @app.route('/disponibilidade_professor')
+    @requer_perfil('diretor', 'secretaria')
     def listar_disponibilidade_professor():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -70,6 +73,7 @@ def registrar(app):
                                disponibilidade_edicao=None)
 
     @app.route('/editar_disponibilidade_professor/<int:id_disponibilidade>')
+    @requer_perfil('diretor', 'secretaria')
     def editar_disponibilidade_professor(id_disponibilidade):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -97,6 +101,7 @@ def registrar(app):
                                horarios=horarios)
 
     @app.route('/grade_disponibilidades')
+    @requer_perfil('diretor', 'secretaria')
     def grade_disponibilidades():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -141,6 +146,7 @@ def registrar(app):
                                professores=professores, horarios=horarios)
 
     @app.route('/editar_disponibilidade_dia/<int:id_professor>/<dia_semana>')
+    @requer_perfil('diretor', 'secretaria')
     def editar_disponibilidade_dia(id_professor, dia_semana):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -158,6 +164,7 @@ def registrar(app):
                                horarios=horarios, horarios_selecionados=horarios_selecionados)
 
     @app.route('/atualizar_disponibilidade_professor/<int:id_disponibilidade>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def atualizar_disponibilidade_professor(id_disponibilidade):
         id_professor = request.form['id_professor']
         dia_semana = request.form['dia_semana']
@@ -180,6 +187,7 @@ def registrar(app):
                                     id_disponibilidade=id_disponibilidade))
 
     @app.route('/atualizar_disponibilidade_dia/<int:id_professor>/<dia_semana>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def atualizar_disponibilidade_dia(id_professor, dia_semana):
         horarios_marcados = request.form.getlist('id_horario')
         with conectar() as conexao:
@@ -198,6 +206,7 @@ def registrar(app):
         return redirect(url_for('grade_disponibilidades'))
 
     @app.route('/deletar_disponibilidade_professor/<int:id_disponibilidade>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def deletar_disponibilidade_professor(id_disponibilidade):
         with conectar() as conexao:
             cursor = conexao.cursor()

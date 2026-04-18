@@ -1,11 +1,13 @@
 import sqlite3
 from db import conectar
+from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
 
 
 def registrar(app):
 
     @app.route('/cadastrar_local')
+    @requer_perfil('diretor', 'secretaria')
     def cadastrar_local():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -14,6 +16,7 @@ def registrar(app):
         return render_template('cadastro_local.html', locais=locais)
 
     @app.route('/salvar_local', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def salvar_local():
         nome = request.form.get('nome', '').strip()
         tipo = request.form.get('tipo', '').strip()
@@ -36,6 +39,7 @@ def registrar(app):
             return redirect(url_for('cadastrar_local'))
 
     @app.route('/locais')
+    @requer_perfil('diretor', 'secretaria')
     def listar_locais():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -44,6 +48,7 @@ def registrar(app):
         return render_template('locais.html', locais=locais, local_edicao=None)
 
     @app.route('/editar_local/<int:id_local>')
+    @requer_perfil('diretor', 'secretaria')
     def editar_local(id_local):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -54,6 +59,7 @@ def registrar(app):
         return render_template('locais.html', locais=locais, local_edicao=local_edicao)
 
     @app.route('/atualizar_local/<int:id_local>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def atualizar_local(id_local):
         nome = request.form.get('nome', '').strip()
         tipo = request.form.get('tipo', '').strip()
@@ -73,6 +79,7 @@ def registrar(app):
         return redirect(url_for('listar_locais'))
 
     @app.route('/deletar_local/<int:id_local>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def deletar_local(id_local):
         with conectar() as conexao:
             cursor = conexao.cursor()

@@ -77,3 +77,43 @@
 {% endif %}
 
 {% endblock %}
+
+{% block scripts_extra %}
+<script type="module">
+import { animate } from "https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm";
+
+const INFO = { icone:'👨‍🏫', particulas:['📚','🎓','✏️','📝','🖊️','📋','🏫'] };
+
+function spawnParticulas(particulas, rect) {
+    for (let i = 0; i < 5; i++) {
+        const el = document.createElement('span');
+        el.textContent = particulas[Math.floor(Math.random() * particulas.length)];
+        el.className = 'particula-hover';
+        el.style.left = (rect.left + Math.random() * rect.width) + 'px';
+        el.style.top  = (rect.top  + rect.height / 2) + 'px';
+        el.style.fontSize = (12 + Math.random() * 8) + 'px';
+        document.body.appendChild(el);
+        animate(el,
+            { y:[0, -(40 + Math.random() * 45)], opacity:[0.9, 0], scale:[1, 0.5] },
+            { duration: 0.85 + Math.random() * 0.4, delay: i * 0.08, ease:'easeOut' }
+        ).then(() => el.remove());
+    }
+}
+
+document.querySelectorAll('tbody tr').forEach(tr => {
+    const td = tr.querySelector('td:first-child');
+    if (td) {
+        const icone = document.createElement('span');
+        icone.className = 'icone-linha';
+        icone.textContent = INFO.icone;
+        td.insertBefore(icone, td.firstChild);
+    }
+    let timer;
+    tr.addEventListener('mouseenter', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => spawnParticulas(INFO.particulas, tr.getBoundingClientRect()), 120);
+    });
+    tr.addEventListener('mouseleave', () => clearTimeout(timer));
+});
+</script>
+{% endblock %}

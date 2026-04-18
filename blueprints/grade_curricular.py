@@ -1,11 +1,13 @@
 import sqlite3
 from db import conectar
+from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
 
 
 def registrar(app):
 
     @app.route('/cadastrar_grade_curricular', methods=['GET', 'POST'])
+    @requer_perfil('diretor', 'secretaria')
     def cadastrar_grade_curricular():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -67,6 +69,7 @@ def registrar(app):
                                turmas=turmas, disciplinas=disciplinas)
 
     @app.route('/selecionar_turno_grades')
+    @requer_perfil('diretor', 'secretaria')
     def selecionar_turno_grades():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -75,6 +78,7 @@ def registrar(app):
         return render_template('selecionar_turno_grades.html', turnos=turnos)
 
     @app.route('/grades_curriculares/<int:id_turno>')
+    @requer_perfil('diretor', 'secretaria')
     def listar_grades_curriculares(id_turno):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -99,6 +103,7 @@ def registrar(app):
                                ordem_series=ordem_series, grade_edicao=None)
 
     @app.route('/editar_grade_curricular/<int:id_grade>')
+    @requer_perfil('diretor', 'secretaria')
     def editar_grade_curricular(id_grade):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -139,6 +144,7 @@ def registrar(app):
                                turmas=turmas, disciplinas=disciplinas)
 
     @app.route('/atualizar_grade_curricular/<int:id_grade>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def atualizar_grade_curricular(id_grade):
         id_turma = request.form['id_turma']
         id_disciplina = request.form['id_disciplina']
@@ -159,6 +165,7 @@ def registrar(app):
             return redirect(url_for('editar_grade_curricular', id_grade=id_grade))
 
     @app.route('/deletar_grade_curricular/<int:id_grade>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def deletar_grade_curricular(id_grade):
         with conectar() as conexao:
             cursor = conexao.cursor()

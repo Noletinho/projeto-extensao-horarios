@@ -1,11 +1,13 @@
 import sqlite3
 from db import conectar
+from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
 
 
 def registrar(app):
 
     @app.route('/cadastrar_professor')
+    @requer_perfil('diretor', 'secretaria')
     def cadastrar_professor():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -14,6 +16,7 @@ def registrar(app):
         return render_template('cadastro_professor.html', professores=professores)
 
     @app.route('/salvar_professor', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def salvar_professor():
         nome = request.form.get('nome', '').strip()
         cpf = ''.join(filter(str.isdigit, request.form.get('cpf', '')))
@@ -41,6 +44,7 @@ def registrar(app):
             return redirect(url_for('cadastrar_professor'))
 
     @app.route('/professores')
+    @requer_perfil('diretor', 'secretaria')
     def listar_professores():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -49,6 +53,7 @@ def registrar(app):
         return render_template('professores.html', professores=professores)
 
     @app.route('/editar_professor/<int:id_professor>')
+    @requer_perfil('diretor', 'secretaria')
     def editar_professor(id_professor):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -59,6 +64,7 @@ def registrar(app):
         return render_template('professores.html', professores=professores, professor_edicao=professor_edicao)
 
     @app.route('/atualizar_professor/<int:id_professor>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def atualizar_professor(id_professor):
         nome = request.form.get('nome', '').strip()
         cpf = ''.join(filter(str.isdigit, request.form.get('cpf', '')))
@@ -84,6 +90,7 @@ def registrar(app):
         return redirect(url_for('listar_professores'))
 
     @app.route('/deletar_professor/<int:id_professor>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def deletar_professor(id_professor):
         with conectar() as conexao:
             cursor = conexao.cursor()

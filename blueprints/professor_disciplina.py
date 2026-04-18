@@ -1,11 +1,13 @@
 import sqlite3
 from db import conectar
+from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
 
 
 def registrar(app):
 
     @app.route('/cadastrar_professor_disciplina', methods=['GET', 'POST'])
+    @requer_perfil('diretor', 'secretaria')
     def cadastrar_professor_disciplina():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -45,6 +47,7 @@ def registrar(app):
                                professores=professores, disciplinas=disciplinas, relacoes=relacoes)
 
     @app.route('/professores_disciplinas')
+    @requer_perfil('diretor', 'secretaria')
     def listar_professores_disciplinas():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -63,6 +66,7 @@ def registrar(app):
                                professor_disciplina_edicao=None)
 
     @app.route('/editar_professor_disciplina/<int:id_professor>/<int:id_disciplina>')
+    @requer_perfil('diretor', 'secretaria')
     def editar_professor_disciplina(id_professor, id_disciplina):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -92,6 +96,7 @@ def registrar(app):
                                disciplinas=disciplinas)
 
     @app.route('/atualizar_professor_disciplina', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def atualizar_professor_disciplina():
         id_professor_antigo = request.form['id_professor_antigo']
         id_disciplina_antiga = request.form['id_disciplina_antiga']
@@ -109,6 +114,7 @@ def registrar(app):
         return redirect(url_for('listar_professores_disciplinas'))
 
     @app.route('/deletar_professor_disciplina/<int:id_professor>/<int:id_disciplina>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def deletar_professor_disciplina(id_professor, id_disciplina):
         with conectar() as conexao:
             cursor = conexao.cursor()

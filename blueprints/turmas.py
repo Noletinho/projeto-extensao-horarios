@@ -1,11 +1,13 @@
 import sqlite3
 from db import conectar
+from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
 
 
 def registrar(app):
 
     @app.route('/cadastrar_turma')
+    @requer_perfil('diretor', 'secretaria')
     def cadastrar_turma():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -20,6 +22,7 @@ def registrar(app):
         return render_template('cadastro_turma.html', turnos=turnos, turmas=turmas)
 
     @app.route('/salvar_turma', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def salvar_turma():
         nome = request.form.get('nome', '').strip()
         serie = request.form.get('serie', '').strip()
@@ -49,6 +52,7 @@ def registrar(app):
             return redirect(url_for('cadastrar_turma'))
 
     @app.route('/turmas')
+    @requer_perfil('diretor', 'secretaria')
     def listar_turmas():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -65,6 +69,7 @@ def registrar(app):
         return render_template('turmas.html', turmas=turmas, turnos=turnos, turma_edicao=None)
 
     @app.route('/editar_turma/<int:id_turma>')
+    @requer_perfil('diretor', 'secretaria')
     def editar_turma(id_turma):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -83,6 +88,7 @@ def registrar(app):
         return render_template('turmas.html', turmas=turmas, turnos=turnos, turma_edicao=turma_edicao)
 
     @app.route('/atualizar_turma/<int:id_turma>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def atualizar_turma(id_turma):
         nome = request.form.get('nome', '').strip()
         serie = request.form.get('serie', '').strip()
@@ -102,6 +108,7 @@ def registrar(app):
         return redirect(url_for('listar_turmas'))
 
     @app.route('/deletar_turma/<int:id_turma>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def deletar_turma(id_turma):
         with conectar() as conexao:
             cursor = conexao.cursor()

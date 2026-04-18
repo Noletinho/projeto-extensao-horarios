@@ -2,10 +2,10 @@
 {% block titulo %}Início{% endblock %}
 
 {% block conteudo %}
-<h1>Sistema de Horários Escolares</h1>
+<h1 class="titulo-inicio">🏫 Sistema de Horários Escolares</h1>
 
-<div class="card mt-2">
-    <h2>Cadastros Base</h2>
+<div class="secao-flutuante">
+    <h2 class="secao-titulo">🗂️ Cadastros Base</h2>
     <div class="flex-linha mt-1">
         <a href="{{ url_for('cadastrar_professor') }}" class="btn btn-primario">Cadastrar Professor</a>
         <a href="{{ url_for('listar_professores') }}" class="btn btn-secundario">Listar Professores</a>
@@ -32,8 +32,8 @@
     </div>
 </div>
 
-<div class="card mt-2">
-    <h2>Vínculos</h2>
+<div class="secao-flutuante">
+    <h2 class="secao-titulo">🔗 Vínculos</h2>
     <div class="flex-linha mt-1">
         <a href="{{ url_for('cadastrar_professor_disciplina') }}" class="btn btn-primario">Cadastrar Professor × Disciplina</a>
         <a href="{{ url_for('listar_professores_disciplinas') }}" class="btn btn-secundario">Listar</a>
@@ -45,8 +45,8 @@
     </div>
 </div>
 
-<div class="card mt-2">
-    <h2>Planejamento</h2>
+<div class="secao-flutuante">
+    <h2 class="secao-titulo">📋 Planejamento</h2>
     <div class="flex-linha mt-1">
         <a href="{{ url_for('cadastrar_grade_curricular') }}" class="btn btn-primario">Cadastrar Grade Curricular</a>
         <a href="{{ url_for('selecionar_turno_grades') }}" class="btn btn-secundario">Listar Grades</a>

@@ -1,11 +1,13 @@
 import sqlite3
 from db import conectar
+from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
 
 
 def registrar(app):
 
     @app.route('/cadastrar_alocacao', methods=['GET', 'POST'])
+    @requer_perfil('diretor', 'secretaria')
     def cadastrar_alocacao():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -53,6 +55,7 @@ def registrar(app):
                                locais=locais, horarios=horarios)
 
     @app.route('/selecionar_turno_alocacoes')
+    @requer_perfil('diretor', 'secretaria')
     def selecionar_turno_alocacoes():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -61,6 +64,7 @@ def registrar(app):
         return render_template('selecionar_turno_alocacoes.html', turnos=turnos)
 
     @app.route('/alocacoes/<int:id_turno>')
+    @requer_perfil('diretor', 'secretaria')
     def listar_alocacoes_turno(id_turno):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -96,6 +100,7 @@ def registrar(app):
                                ordem_series=ordem_series, alocacao_edicao=None)
 
     @app.route('/editar_alocacao/<int:id_alocacao>')
+    @requer_perfil('diretor', 'secretaria')
     def editar_alocacao(id_alocacao):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -155,6 +160,7 @@ def registrar(app):
                                professores=professores, locais=locais, horarios=horarios)
 
     @app.route('/atualizar_alocacao/<int:id_alocacao>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def atualizar_alocacao(id_alocacao):
         id_turma = request.form['id_turma']
         id_disciplina = request.form['id_disciplina']
@@ -181,6 +187,7 @@ def registrar(app):
             return redirect(url_for('editar_alocacao', id_alocacao=id_alocacao))
 
     @app.route('/deletar_alocacao/<int:id_alocacao>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def deletar_alocacao(id_alocacao):
         with conectar() as conexao:
             cursor = conexao.cursor()

@@ -103,8 +103,23 @@ comandos_sql = [
         UNIQUE (id_turma, dia_semana, id_horario),
         UNIQUE (id_local, dia_semana, id_horario)
     )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS usuario (
+        id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        senha_hash TEXT NOT NULL,
+        perfil TEXT NOT NULL CHECK (perfil IN ('diretor', 'secretaria', 'professor')),
+        id_professor INTEGER,
+        primeiro_login INTEGER DEFAULT 1 CHECK (primeiro_login IN (0, 1)),
+        ativo INTEGER DEFAULT 1 CHECK (ativo IN (0, 1)),
+        FOREIGN KEY (id_professor) REFERENCES professor(id_professor)
+    )
     """
 ]
+
+from werkzeug.security import generate_password_hash
 
 conexao = sqlite3.connect("escola_horarios.db")
 cursor = conexao.cursor()
@@ -113,6 +128,21 @@ cursor.execute("PRAGMA foreign_keys = ON;")
 
 for comando in comandos_sql:
     cursor.execute(comando)
+
+cursor.execute("SELECT COUNT(*) FROM usuario")
+if cursor.fetchone()[0] == 0:
+    seeds = [
+        ('Diretor', 'diretor@escola.com', generate_password_hash('diretor123'), 'diretor', None),
+        ('Secretaria', 'secretaria@escola.com', generate_password_hash('secretaria123'), 'secretaria', None),
+    ]
+    cursor.executemany("""
+        INSERT INTO usuario (nome, email, senha_hash, perfil, id_professor, primeiro_login)
+        VALUES (?, ?, ?, ?, ?, 0)
+    """, seeds)
+    print("\nUsuários padrão criados:")
+    print("  diretor@escola.com    / diretor123")
+    print("  secretaria@escola.com / secretaria123")
+    print("IMPORTANTE: Troque as senhas após o primeiro login!\n")
 
 conexao.commit()
 conexao.close()

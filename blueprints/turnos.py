@@ -1,11 +1,13 @@
 import sqlite3
 from db import conectar
+from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
 
 
 def registrar(app):
 
     @app.route('/cadastrar_turno')
+    @requer_perfil('diretor', 'secretaria')
     def cadastrar_turno():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -14,6 +16,7 @@ def registrar(app):
         return render_template('cadastro_turno.html', turnos=turnos)
 
     @app.route('/salvar_turno', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def salvar_turno():
         nome = request.form.get('nome', '').strip()
 
@@ -32,6 +35,7 @@ def registrar(app):
             return redirect(url_for('cadastrar_turno'))
 
     @app.route('/turnos')
+    @requer_perfil('diretor', 'secretaria')
     def listar_turnos():
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -40,6 +44,7 @@ def registrar(app):
         return render_template('turnos.html', turnos=turnos)
 
     @app.route('/editar_turno/<int:id_turno>')
+    @requer_perfil('diretor', 'secretaria')
     def editar_turno(id_turno):
         with conectar() as conexao:
             cursor = conexao.cursor()
@@ -50,6 +55,7 @@ def registrar(app):
         return render_template('turnos.html', turnos=turnos, turno_edicao=turno_edicao)
 
     @app.route('/atualizar_turno/<int:id_turno>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def atualizar_turno(id_turno):
         nome = request.form.get('nome', '').strip()
 
@@ -64,6 +70,7 @@ def registrar(app):
         return redirect(url_for('listar_turnos'))
 
     @app.route('/deletar_turno/<int:id_turno>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
     def deletar_turno(id_turno):
         with conectar() as conexao:
             cursor = conexao.cursor()

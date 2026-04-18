@@ -1,14 +1,16 @@
-from flask import Flask, render_template
+from flask import Flask
+import auth
 
 from blueprints import (
-    professores, disciplinas, turnos, turmas, locais,
+    autenticacao, professores, disciplinas, turnos, turmas, locais,
     horarios, professor_disciplina, disponibilidade,
-    grade_curricular, alocacao, relatorio
+    grade_curricular, alocacao, relatorio, usuarios
 )
 
 app = Flask(__name__)
 app.secret_key = 'escola_horarios_chave_secreta_2024'
 
+autenticacao.registrar(app)
 professores.registrar(app)
 disciplinas.registrar(app)
 turnos.registrar(app)
@@ -20,11 +22,12 @@ disponibilidade.registrar(app)
 grade_curricular.registrar(app)
 alocacao.registrar(app)
 relatorio.registrar(app)
+usuarios.registrar(app)
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+@app.context_processor
+def injetar_usuario():
+    return dict(usuario_atual=auth.usuario_logado())
 
 
 if __name__ == "__main__":
