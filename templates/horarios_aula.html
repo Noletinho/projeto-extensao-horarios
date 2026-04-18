@@ -1,59 +1,55 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Horário</title>
-</head>
-<body>
-    <h1>Lista dos Horários das Aulas</h1>
+{% extends "base.html" %}
+{% block titulo %}Horários de Aula{% endblock %}
 
-    <a href="{{ url_for('salvar_horario') }}">
-        <button>Cadastrar Novo Horário</button>
-    </a>
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
+    <h1>Lista de Horários de Aula</h1>
+</div>
+<a href="{{ url_for('cadastrar_horario') }}" class="btn btn-primario mb-2">+ Cadastrar Novo Horário</a>
 
-    <table border="1" cellpadding="8">
+<table>
+    <thead>
         <tr>
-            <th>ID</th>
             <th>Hora Início</th>
             <th>Hora Fim</th>
             <th>Ações</th>
         </tr>
-
+    </thead>
+    <tbody>
         {% for horario in horarios %}
         <tr>
-            <td>{{ horario['id_horario'] }}</td>
             <td>{{ horario['hora_inicio'] }}</td>
             <td>{{ horario['hora_fim'] }}</td>
             <td>
-                <a href="{{ url_for('editar_horario', id_horario=horario['id_horario']) }}">
-                    <button type="button">Editar</button>
-                </a>
-                
-                <form action="{{ url_for('deletar_horario', id_horario=horario['id_horario']) }}" method="POST" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
-                </form>
+                <div class="flex-linha">
+                    <a href="{{ url_for('editar_horario', id_horario=horario['id_horario']) }}#form-edicao" class="btn btn-secundario">Editar</a>
+                    <form action="{{ url_for('deletar_horario', id_horario=horario['id_horario']) }}" method="POST">
+                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                    </form>
+                </div>
             </td>
         </tr>
         {% endfor %}
-    </table>
+    </tbody>
+</table>
 
-    {% if horario_edicao %}
-        <hr>
-        <h2>Editar Horário</h2>
+{% if horario_edicao %}
+<hr>
+<div class="card mt-2" id="form-edicao">
+    <h2>Editar Horário</h2>
+    <form method="POST" action="{{ url_for('atualizar_horario', id_horario=horario_edicao['id_horario']) }}">
+        <div class="form-grupo">
+            <label>Hora Início:</label>
+            <input type="time" name="hora_inicio" value="{{ horario_edicao['hora_inicio'] }}" required>
+        </div>
+        <div class="form-grupo">
+            <label>Hora Fim:</label>
+            <input type="time" name="hora_fim" value="{{ horario_edicao['hora_fim'] }}" required>
+        </div>
+        <button type="submit">Atualizar</button>
+    </form>
+</div>
+{% endif %}
 
-        <form method="POST" action="{{ url_for('atualizar_horario', id_horario=horario_edicao['id_horario']) }}">
-            <label>Hora Início:</label><br>
-            <input type="time" name="hora_inicio" value="{{ horario_edicao['hora_inicio'] }}" required><br><br>
-
-            <label>Hora Fim:</label><br>
-            <input type="time" name="hora_fim" value="{{ horario_edicao['hora_fim'] }}"><br><br>
-
-            <button type="submit">Atualizar</button>
-        </form>
-    {% endif %}
-
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</body>
-</html>
+{% endblock %}

@@ -1,27 +1,46 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Cadastros dos Horários</title>
-</head>
-<body>
-    <h1>Cadastrar Horário</h1>
+{% extends "base.html" %}
+{% block titulo %}Cadastrar Horário{% endblock %}
 
-    {% if erro %}
-    <p style="color:red;">{{ erro }}</p>
-    {% endif %}
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('listar_horarios') }}" class="btn btn-secundario">← Voltar</a>
+    <h1>Cadastrar Horário de Aula</h1>
+</div>
 
-    <form method="POST" action="{{ url_for('salvar_horario') }}">
-        <label for="hora_inicio">Hora de início:</label><br>
-        <input type="time" name="hora_inicio" required><br><br>
+<div class="layout-duplo">
+    <div class="card">
+        <form method="POST" action="{{ url_for('salvar_horario') }}">
+            <div class="form-grupo">
+                <label>Hora de Início <span style="color:var(--cor-erro)">*</span></label>
+                <input type="time" name="hora_inicio" required>
+            </div>
+            <div class="form-grupo">
+                <label>Hora de Fim <span style="color:var(--cor-erro)">*</span></label>
+                <input type="time" name="hora_fim" required>
+            </div>
+            <button type="submit">Salvar</button>
+        </form>
+    </div>
 
-        <label for="hora_fim">Hora de Fim:</label><br>
-        <input type="time" name="hora_fim"><br><br>
-
-        <button type="submit">Salvar</button>
-    </form>
-
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+    <div>
+        <h2>Horários Cadastrados</h2>
+        {% if horarios %}
+        <table class="tabela-lateral">
+            <thead>
+                <tr><th>Início</th><th>Fim</th></tr>
+            </thead>
+            <tbody>
+                {% for h in horarios %}
+                <tr>
+                    <td>{{ h['hora_inicio'] }}</td>
+                    <td>{{ h['hora_fim'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:var(--cor-texto-claro)">Nenhum horário cadastrado ainda.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

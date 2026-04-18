@@ -1,78 +1,60 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Cadastrar Grade Curricular em Lote</title>
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 700px;
-        }
+{% extends "base.html" %}
+{% block titulo %}Cadastrar Grade Curricular{% endblock %}
 
-        th, td {
-            border: 1px solid #999;
-            padding: 8px;
-            text-align: left;
-        }
+{% block estilos_extra %}
+<style>
+    .tabela-grade { max-width: 700px; }
+    .tabela-grade input[type="number"] { width: 90px; margin-bottom: 0; }
+</style>
+{% endblock %}
 
-        th {
-            background-color: #f2f2f2;
-        }
-
-        input[type="number"] {
-            width: 90px;
-        }
-    </style>
-</head>
-<body>
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('selecionar_turno_grades') }}" class="btn btn-secundario">← Voltar</a>
     <h1>Cadastrar Grade Curricular por Turma</h1>
+</div>
 
-    {% if erro %}
-        <p style="color:red;">{{ erro }}</p>
-    {% endif %}
-
+<div class="card">
     <form method="POST" action="{{ url_for('cadastrar_grade_curricular') }}">
-        <label>Turma:</label><br>
-        <select name="id_turma" required>
-            <option value="">Selecione</option>
-            {% for turma in turmas %}
-                <option value="{{ turma['id_turma'] }}">
-                    {{ turma['nome'] }} - {{ turma['serie'] }} - {{ turma['nome_turno'] }}
-                </option>
-            {% endfor %}
-        </select>
+        <div class="form-grupo">
+            <label>Turma:</label>
+            <select name="id_turma" required>
+                <option value="">Selecione</option>
+                {% for turma in turmas %}
+                    <option value="{{ turma['id_turma'] }}">
+                        {{ turma['nome'] }} - {{ turma['serie'] }} - {{ turma['nome_turno'] }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <br><br>
-
-        <table>
-            <tr>
-                <th>Disciplina</th>
-                <th>Sigla</th>
-                <th>Aulas Semanais</th>
-            </tr>
-
-            {% for disciplina in disciplinas %}
+        <table class="tabela-grade mt-2">
+            <thead>
+                <tr>
+                    <th>Disciplina</th>
+                    <th>Sigla</th>
+                    <th>Aulas Semanais</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for disciplina in disciplinas %}
                 <tr>
                     <td>{{ disciplina['nome'] }}</td>
                     <td>{{ disciplina['sigla'] }}</td>
                     <td>
-                        <input
-                            type="number"
-                            name="aulas_semanais_{{ disciplina['id_disciplina'] }}"
-                            min="0"
-                            placeholder="0"
-                        >
+                        <input type="number"
+                               name="aulas_semanais_{{ disciplina['id_disciplina'] }}"
+                               min="0" placeholder="0">
                     </td>
                 </tr>
-            {% endfor %}
+                {% endfor %}
+            </tbody>
         </table>
 
-        <br>
-        <button type="submit">Salvar Grade</button>
+        <div class="mt-2">
+            <button type="submit">Salvar Grade</button>
+        </div>
     </form>
+</div>
 
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+{% endblock %}

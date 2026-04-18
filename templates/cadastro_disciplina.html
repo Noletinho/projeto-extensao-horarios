@@ -1,32 +1,104 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Cadastro das Disciplinas</title>
-</head>
-<body>
-    <h1>Cadastrar Disciplinas</h1>
+{% extends "base.html" %}
+{% block titulo %}Cadastrar Disciplina{% endblock %}
 
-    {% if erro %}
-    <p style="color:red;">{{ erro }}</p>
-    {% endif %}
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('listar_disciplinas') }}" class="btn btn-secundario">← Voltar</a>
+    <h1>Cadastrar Disciplina</h1>
+</div>
 
-    <form method="POST" action="{{ url_for('salvar_disciplina') }}">
-        <label>Disciplina:</label><br>
-        <input type="text" name="nome" required><br><br>
+<div class="layout-duplo">
+    <div class="card">
+        <form method="POST" action="{{ url_for('salvar_disciplina') }}">
+            <div class="form-grupo">
+                <label>Nome <span style="color:var(--cor-erro)">*</span></label>
+                <input type="text" name="nome" required autofocus>
+            </div>
+            <div class="form-grupo">
+                <label>Sigla <span style="color:var(--cor-erro)">*</span></label>
+                <input type="text" name="sigla" required maxlength="8" placeholder="Ex: MAT">
+            </div>
+            <div class="form-grupo">
+                <label>Cor da Disciplina</label>
+                <div class="seletor-cor">
+                    <div class="seletor-cor-linha">
+                        <div class="btn-cor-preview" id="btn-cor-preview" title="Clique para abrir o seletor de cores"></div>
+                        <span class="cor-hex-label" id="hex-label">#4a90d9</span>
+                    </div>
+                    <div class="paleta-cores" id="paleta">
+                        <div class="swatch" data-cor="#e74c3c" style="background:#e74c3c" title="Vermelho"></div>
+                        <div class="swatch" data-cor="#e67e22" style="background:#e67e22" title="Laranja"></div>
+                        <div class="swatch" data-cor="#f1c40f" style="background:#f1c40f" title="Amarelo"></div>
+                        <div class="swatch" data-cor="#2ecc71" style="background:#2ecc71" title="Verde"></div>
+                        <div class="swatch" data-cor="#1abc9c" style="background:#1abc9c" title="Turquesa"></div>
+                        <div class="swatch" data-cor="#3498db" style="background:#3498db" title="Azul"></div>
+                        <div class="swatch" data-cor="#4a90d9" style="background:#4a90d9" title="Azul médio"></div>
+                        <div class="swatch" data-cor="#9b59b6" style="background:#9b59b6" title="Roxo"></div>
+                        <div class="swatch" data-cor="#e91e63" style="background:#e91e63" title="Rosa"></div>
+                        <div class="swatch" data-cor="#795548" style="background:#795548" title="Marrom"></div>
+                        <div class="swatch" data-cor="#607d8b" style="background:#607d8b" title="Azul acinzentado"></div>
+                        <div class="swatch" data-cor="#ff5722" style="background:#ff5722" title="Vermelho-alaranjado"></div>
+                        <div class="swatch" data-cor="#8bc34a" style="background:#8bc34a" title="Verde claro"></div>
+                        <div class="swatch" data-cor="#00bcd4" style="background:#00bcd4" title="Ciano"></div>
+                        <div class="swatch" data-cor="#ff9800" style="background:#ff9800" title="Âmbar"></div>
+                        <div class="swatch" data-cor="#673ab7" style="background:#673ab7" title="Violeta"></div>
+                    </div>
+                    <input type="color" id="cor-input" name="cor" value="#4a90d9" class="input-cor-nativo">
+                    <small style="color:var(--cor-texto-claro)">Clique no círculo para o seletor completo</small>
+                </div>
+            </div>
+            <div class="form-grupo">
+                <label>Aulas por Semana <span style="color:var(--cor-erro)">*</span></label>
+                <input type="number" name="carga_horaria_semanal" min="1" required>
+            </div>
+            <button type="submit">Salvar</button>
+        </form>
+    </div>
 
-        <label>Sigla:</label><br>
-        <input type="text" name="sigla"><br><br>
+    <div>
+        <h2>Disciplinas Cadastradas</h2>
+        {% if disciplinas %}
+        <table class="tabela-lateral">
+            <thead>
+                <tr><th>Cor</th><th>Nome</th><th>Sigla</th><th>Aulas/sem</th></tr>
+            </thead>
+            <tbody>
+                {% for d in disciplinas %}
+                <tr>
+                    <td>
+                        <span style="display:inline-block;width:18px;height:18px;border-radius:50%;background:{{ d['cor'] }};border:1px solid rgba(255,255,255,0.15);vertical-align:middle;"></span>
+                    </td>
+                    <td>{{ d['nome'] }}</td>
+                    <td>{{ d['sigla'] }}</td>
+                    <td>{{ d['carga_horaria_semanal'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:var(--cor-texto-claro)">Nenhuma disciplina cadastrada ainda.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
 
-        <label>Cor:</label><br>
-        <input type="text" name="cor"><br><br>
+{% block scripts_extra %}
+<script>
+    const inputCor = document.getElementById('cor-input');
+    const preview  = document.getElementById('btn-cor-preview');
+    const hexLabel = document.getElementById('hex-label');
+    const swatches = document.querySelectorAll('.swatch');
 
-        <label>Aulas por Semana:</label><br>
-        <input type="number" name="carga_horaria_semanal"><br><br>
+    function aplicarCor(hex) {
+        inputCor.value = hex;
+        preview.style.backgroundColor = hex;
+        hexLabel.textContent = hex.toUpperCase();
+        swatches.forEach(s => s.classList.toggle('ativo', s.dataset.cor === hex.toLowerCase()));
+    }
 
-        <button type="submit">Salvar</button><br><br>
-
-    </form>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+    aplicarCor(inputCor.value);
+    preview.addEventListener('click', () => inputCor.click());
+    inputCor.addEventListener('input', () => aplicarCor(inputCor.value));
+    swatches.forEach(s => s.addEventListener('click', () => aplicarCor(s.dataset.cor)));
+</script>
+{% endblock %}

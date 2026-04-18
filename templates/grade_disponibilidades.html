@@ -1,110 +1,58 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Grade de Disponibilidades</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
+{% extends "base.html" %}
+{% block titulo %}Grade de Disponibilidades{% endblock %}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
+{% block estilos_extra %}
+<style>
+    .tabela-grade { table-layout: fixed; }
+    .tabela-grade .col-professor { width: 160px; font-weight: bold; background: #fafafa; }
+    .bloco-horario {
+        border: 1px solid var(--cor-borda);
+        padding: 4px 6px;
+        margin-bottom: 5px;
+        background: #f9f9f9;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+    .dia-vazio { color: #999; text-align: center; font-size: 0.9rem; }
+    .btn-editar-dia { font-size: 0.78rem; padding: 3px 8px; }
+</style>
+{% endblock %}
 
-        th, td {
-            border: 1px solid #777;
-            padding: 8px;
-            vertical-align: top;
-            text-align: left;
-            word-wrap: break-word;
-        }
+{% block conteudo %}
+<h1>Grade de Disponibilidades dos Professores</h1>
 
-        th {
-            background: #f0f0f0;
-            text-align: center;
-        }
+<div class="flex-linha mb-2">
+    <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="btn btn-primario">Cadastrar Nova Disponibilidade</a>
+    <a href="{{ url_for('listar_disponibilidade_professor') }}" class="btn btn-secundario">Ver Lista Tradicional</a>
+</div>
 
-        .col-professor {
-            width: 160px;
-            font-weight: bold;
-            background: #fafafa;
-        }
-
-        .bloco-horario {
-            border: 1px solid #ccc;
-            padding: 4px 6px;
-            margin-bottom: 5px;
-            background: #f9f9f9;
-            border-radius: 4px;
-        }
-
-        .acoes {
-            margin-top: 4px;
-        }
-
-        .acoes a,
-        .acoes form {
-            display: inline-block;
-            margin-right: 4px;
-        }
-
-        .acoes button {
-            font-size: 11px;
-            padding: 2px 6px;
-            cursor: pointer;
-        }
-
-        .dia-vazio {
-            color: #999;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <h1>Grade de Disponibilidades dos Professores</h1>
-
-    <a href="{{ url_for('cadastrar_disponibilidade_professor') }}">
-        <button type="button">Cadastrar Nova Disponibilidade</button>
-    </a>
-
-    <a href="{{ url_for('listar_disponibilidade_professor') }}">
-        <button type="button">Ver Lista Tradicional</button>
-    </a>
-
-    <br><br>
-
-    <table>
+<table class="tabela-grade">
+    <thead>
         <tr>
             <th class="col-professor">Professor</th>
             {% for dia in dias %}
-                <th>{{ dia|capitalize }}</th>
+                <th>{{ dia | capitalize }}</th>
             {% endfor %}
         </tr>
-
+    </thead>
+    <tbody>
         {% for professor in professores_ordem %}
             <tr>
                 <td class="col-professor">{{ professor }}</td>
-
                 {% for dia in dias %}
                     <td>
-                        <div style="margin-bottom: 8px;">
-                            <a href="{{ url_for('editar_disponibilidade_dia', id_professor=grade[professor]['id_professor'], dia_semana=dia) }}">
-                                <button type="button">Editar dia</button>
-                            </a>
+                        <div style="margin-bottom: 6px;">
+                            <a href="{{ url_for('editar_disponibilidade_dia', id_professor=grade[professor]['id_professor'], dia_semana=dia) }}"
+                               class="btn btn-secundario btn-editar-dia">Editar dia</a>
                         </div>
-
                         {% if grade[professor]['dias'][dia] %}
                             {% for item in grade[professor]['dias'][dia] %}
                                 <div class="bloco-horario">
                                     <strong>{{ item['horario'] }}</strong><br>
-
                                     {% if item['disponivel'] == 1 %}
-                                        Disponível
+                                        <span class="badge badge-ativo">Disponível</span>
                                     {% else %}
-                                        Indisponível
+                                        <span class="badge badge-inativo">Indisponível</span>
                                     {% endif %}
                                 </div>
                             {% endfor %}
@@ -115,52 +63,8 @@
                 {% endfor %}
             </tr>
         {% endfor %}
+    </tbody>
+</table>
 
-    </table>
-{% if disponibilidade_edicao %}
-    <hr>
-    <h2>Editar Disponibilidade</h2>
-
-    <form method="POST" action="{{ url_for('atualizar_disponibilidade_professor', id_disponibilidade=disponibilidade_edicao['id_disponibilidade']) }}">
-        <label>Professor:</label><br>
-        <select name="id_professor" required>
-            {% for professor in professores %}
-                <option value="{{ professor['id_professor'] }}"
-                    {% if professor['id_professor'] == disponibilidade_edicao['id_professor'] %}selected{% endif %}>
-                    {{ professor['nome'] }}
-                </option>
-            {% endfor %}
-        </select><br><br>
-
-        <label>Dia da semana:</label><br>
-        <select name="dia_semana" required>
-            <option value="segunda" {% if disponibilidade_edicao['dia_semana'] == 'segunda' %}selected{% endif %}>Segunda</option>
-            <option value="terca" {% if disponibilidade_edicao['dia_semana'] == 'terca' %}selected{% endif %}>Terça</option>
-            <option value="quarta" {% if disponibilidade_edicao['dia_semana'] == 'quarta' %}selected{% endif %}>Quarta</option>
-            <option value="quinta" {% if disponibilidade_edicao['dia_semana'] == 'quinta' %}selected{% endif %}>Quinta</option>
-            <option value="sexta" {% if disponibilidade_edicao['dia_semana'] == 'sexta' %}selected{% endif %}>Sexta</option>
-        </select><br><br>
-
-        <label>Horário:</label><br>
-        <select name="id_horario" required>
-            {% for horario in horarios %}
-                <option value="{{ horario['id_horario'] }}"
-                    {% if horario['id_horario'] == disponibilidade_edicao['id_horario'] %}selected{% endif %}>
-                    {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
-                </option>
-            {% endfor %}
-        </select><br><br>
-
-        <label>Disponível?</label><br>
-        <select name="disponivel" required>
-            <option value="1" {% if disponibilidade_edicao['disponivel'] == 1 %}selected{% endif %}>Sim</option>
-            <option value="0" {% if disponibilidade_edicao['disponivel'] == 0 %}selected{% endif %}>Não</option>
-        </select><br><br>
-
-        <button type="submit">Atualizar</button>
-    </form>
-{% endif %}
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+<a href="{{ url_for('index') }}" class="link-voltar mt-2">← Voltar</a>
+{% endblock %}

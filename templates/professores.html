@@ -1,74 +1,79 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Professores</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block titulo %}Professores{% endblock %}
+
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
     <h1>Lista de Professores</h1>
+</div>
 
-    <a href="{{ url_for('cadastrar_professor') }}">
-        <button>Cadastrar Novo Professor</button>
-    </a>
+<a href="{{ url_for('cadastrar_professor') }}" class="btn btn-primario mb-2">+ Cadastrar Novo Professor</a>
 
-    <table border="1" cellpadding="8">
+<table>
+    <thead>
         <tr>
-            <th>ID</th>
             <th>Nome</th>
             <th>CPF</th>
             <th>Email</th>
             <th>Telefone</th>
             <th>Status</th>
+            <th>Ações</th>
         </tr>
-
+    </thead>
+    <tbody>
         {% for professor in professores %}
         <tr>
-            <td>{{ professor['id_professor'] }}</td>
             <td>{{ professor['nome'] }}</td>
             <td>{{ professor['cpf'] }}</td>
             <td>{{ professor['email'] }}</td>
             <td>{{ professor['telefone'] }}</td>
-            <td>{{ professor['status'] }}</td>
             <td>
-                <a href="{{ url_for('editar_professor', id_professor=professor[0]) }}">
-                    <button type="button">Editar</button>
-                </a>
-                
-                <form action="{{ url_for('deletar_professor', id_professor=professor[0]) }}" method="POST" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
-                </form>
+                <span class="badge badge-{{ professor['status'] }}">{{ professor['status'] }}</span>
+            </td>
+            <td>
+                <div class="flex-linha">
+                    <a href="{{ url_for('editar_professor', id_professor=professor['id_professor']) }}#form-edicao" class="btn btn-secundario">Editar</a>
+                    <form action="{{ url_for('deletar_professor', id_professor=professor['id_professor']) }}" method="POST">
+                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                    </form>
+                </div>
             </td>
         </tr>
         {% endfor %}
-    </table>
+    </tbody>
+</table>
 
-    {% if professor_edicao %}
-        <hr>
-        <h2>Editar Professor</h2>
-
-        <form method="POST" action="{{ url_for('atualizar_professor', id_professor=professor_edicao['id_professor']) }}">
-            <label>Nome:</label><br>
-            <input type="text" name="nome" value="{{ professor_edicao['nome'] }}" required><br><br>
-
-            <label>CPF:</label><br>
-            <input type="text" name="cpf" value="{{ professor_edicao['cpf'] }}"><br><br>
-
-            <label>Email:</label><br>
-            <input type="email" name="email" value="{{ professor_edicao['email'] }}"><br><br>
-
-            <label>Telefone:</label><br>
-            <input type="text" name="telefone" value="{{ professor_edicao['telefone'] }}"><br><br>
-
-            <label>Status:</label><br>
+{% if professor_edicao %}
+<hr>
+<div class="card mt-2" id="form-edicao">
+    <h2>Editar Professor</h2>
+    <form method="POST" action="{{ url_for('atualizar_professor', id_professor=professor_edicao['id_professor']) }}">
+        <div class="form-grupo">
+            <label>Nome:</label>
+            <input type="text" name="nome" value="{{ professor_edicao['nome'] }}" required>
+        </div>
+        <div class="form-grupo">
+            <label>CPF:</label>
+            <input type="text" name="cpf" value="{{ professor_edicao['cpf'] }}">
+        </div>
+        <div class="form-grupo">
+            <label>Email:</label>
+            <input type="email" name="email" value="{{ professor_edicao['email'] }}">
+        </div>
+        <div class="form-grupo">
+            <label>Telefone:</label>
+            <input type="text" name="telefone" value="{{ professor_edicao['telefone'] }}">
+        </div>
+        <div class="form-grupo">
+            <label>Status:</label>
             <select name="status">
                 <option value="ativo" {% if professor_edicao['status'] == 'ativo' %}selected{% endif %}>Ativo</option>
                 <option value="inativo" {% if professor_edicao['status'] == 'inativo' %}selected{% endif %}>Inativo</option>
-            </select><br><br>
+            </select>
+        </div>
+        <button type="submit">Atualizar</button>
+    </form>
+</div>
+{% endif %}
 
-            <button type="submit">Atualizar</button>
-        </form>
-    {% endif %}
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+{% endblock %}

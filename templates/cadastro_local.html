@@ -1,27 +1,47 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Cadastro de Locais</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block titulo %}Cadastrar Local{% endblock %}
+
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('listar_locais') }}" class="btn btn-secundario">← Voltar</a>
     <h1>Cadastrar Local</h1>
+</div>
 
-    {% if erro %}
-    <p style="color:red;">{{ erro }}</p>
-    {% endif %}
+<div class="layout-duplo">
+    <div class="card">
+        <form method="POST" action="{{ url_for('salvar_local') }}">
+            <div class="form-grupo">
+                <label>Nome <span style="color:var(--cor-erro)">*</span></label>
+                <input type="text" name="nome" required autofocus placeholder="Ex: Sala 101">
+            </div>
+            <div class="form-grupo">
+                <label>Tipo <span style="color:var(--cor-erro)">*</span></label>
+                <input type="text" name="tipo" placeholder="Ex: Sala de aula, Laboratório..." required>
+            </div>
+            <button type="submit">Salvar</button>
+        </form>
+    </div>
 
-    <form method="POST" action="{{ url_for('salvar_local') }}">
-        <label>Nome:</label><br>
-        <input type="text" name="nome" required><br><br>
-
-        <label>Tipo:</label><br>
-        <input type="text" name="tipo"><br><br>
-
-        <button type="submit">Salvar</button>
-    </form>
-
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+    <div>
+        <h2>Locais Cadastrados</h2>
+        {% if locais %}
+        <table class="tabela-lateral">
+            <thead>
+                <tr><th>Nome</th><th>Tipo</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {% for l in locais %}
+                <tr>
+                    <td>{{ l['nome'] }}</td>
+                    <td>{{ l['tipo'] }}</td>
+                    <td><span class="badge badge-{{ l['status'] }}">{{ l['status'] }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:var(--cor-texto-claro)">Nenhum local cadastrado ainda.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

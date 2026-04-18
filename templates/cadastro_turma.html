@@ -1,37 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Cadastro das Turmas</title>
-</head>
-<body>
-    <h1>Cadastrar Turmas</h1>
+{% extends "base.html" %}
+{% block titulo %}Cadastrar Turma{% endblock %}
 
-    {% if erro %}
-    <p style="color:red;">{{ erro }}</p>
-    {% endif %}
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('listar_turmas') }}" class="btn btn-secundario">← Voltar</a>
+    <h1>Cadastrar Turma</h1>
+</div>
 
-    <form method='POST' action="{{ url_for('salvar_turma') }}">
-        <label>Turma:</label>
-        <input type="text" name="nome" required><br><br>
+<div class="layout-duplo">
+    <div class="card">
+        <form method="POST" action="{{ url_for('salvar_turma') }}">
+            <div class="form-grupo">
+                <label>Nome da Turma <span style="color:var(--cor-erro)">*</span></label>
+                <input type="text" name="nome" required autofocus placeholder="Ex: 1A, 2B...">
+            </div>
+            <div class="form-grupo">
+                <label>Série <span style="color:var(--cor-erro)">*</span></label>
+                <input type="text" name="serie" required placeholder="Ex: 1º Ano, 2º Ano...">
+            </div>
+            <div class="form-grupo">
+                <label>Turno <span style="color:var(--cor-erro)">*</span></label>
+                <select name="id_turno" required>
+                    <option value="">Selecione</option>
+                    {% for turno in turnos %}
+                        <option value="{{ turno['id_turno'] }}">{{ turno['nome'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Salvar</button>
+        </form>
+    </div>
 
-        <label>Série:</label>
-        <input type="number" name="serie"><br><br>
-
-        <label for="id_turno">Turno:</label>
-        <select name="id_turno" id="id_turno" required>
-            
-            <option value="">Selecione</option>
-
-            {% for turno in turnos %}
-                <option value="{{ turno['id_turno'] }}">{{ turno['nome'] }}</option>
-            {% endfor %}
-
-        </select>
-
-        <button type="submit">Salvar</button><br><br>
-
-    </form>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+    <div>
+        <h2>Turmas Cadastradas</h2>
+        {% if turmas %}
+        <table class="tabela-lateral">
+            <thead>
+                <tr><th>Nome</th><th>Série</th><th>Turno</th></tr>
+            </thead>
+            <tbody>
+                {% for t in turmas %}
+                <tr>
+                    <td>{{ t['nome'] }}</td>
+                    <td>{{ t['serie'] }}</td>
+                    <td>{{ t['nome_turno'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:var(--cor-texto-claro)">Nenhuma turma cadastrada ainda.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

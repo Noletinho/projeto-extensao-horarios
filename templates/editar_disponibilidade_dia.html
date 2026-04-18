@@ -1,70 +1,44 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Editar Disponibilidade por Dia</title>
-    <style>
-        .caixa-opcoes {
-            border: 1px solid #ccc;
-            padding: 12px;
-            width: fit-content;
-            min-width: 280px;
-        }
+{% extends "base.html" %}
+{% block titulo %}Editar Disponibilidade por Dia{% endblock %}
 
-        .caixa-opcoes label {
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .linha-botoes button {
-            margin-right: 6px;
-        }
-    </style>
-</head>
-<body>
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('grade_disponibilidades') }}" class="btn btn-secundario">← Voltar</a>
     <h1>Editar Disponibilidade por Dia</h1>
+</div>
 
+<div class="card">
     <p><strong>Professor:</strong> {{ professor['nome'] }}</p>
-    <p><strong>Dia:</strong> {{ dia_semana|capitalize }}</p>
+    <p><strong>Dia:</strong> {{ dia_semana | capitalize }}</p>
 
     <form method="POST" action="{{ url_for('atualizar_disponibilidade_dia', id_professor=professor['id_professor'], dia_semana=dia_semana) }}">
-        <div class="linha-botoes">
-            <button type="button" onclick="marcarTodos()">Marcar todos</button>
-            <button type="button" onclick="desmarcarTodos()">Desmarcar todos</button>
+        <div class="linha-botoes mt-2">
+            <button type="button" class="btn btn-secundario" onclick="marcarTodos()">Marcar todos</button>
+            <button type="button" class="btn btn-secundario" onclick="desmarcarTodos()">Desmarcar todos</button>
         </div>
 
-        <br>
-
-        <div class="caixa-opcoes">
+        <div class="caixa-opcoes mt-1">
             {% for horario in horarios %}
                 <label>
-                    <input
-                        type="checkbox"
-                        name="id_horario"
-                        value="{{ horario['id_horario'] }}"
+                    <input type="checkbox" name="id_horario" value="{{ horario['id_horario'] }}"
                         class="horario-check"
-                        {% if horario['id_horario'] in horarios_selecionados %}checked{% endif %}
-                    >
+                        {% if horario['id_horario'] in horarios_selecionados %}checked{% endif %}>
                     {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
                 </label>
             {% endfor %}
         </div>
 
-        <br>
-        <button type="submit">Salvar Alterações</button>
+        <div class="mt-2">
+            <button type="submit">Salvar Alterações</button>
+        </div>
     </form>
+</div>
 
-    <br>
-    <a href="{{ url_for('grade_disponibilidades') }}">Voltar</a>
+{% endblock %}
 
-    <script>
-        function marcarTodos() {
-            document.querySelectorAll('.horario-check').forEach(item => item.checked = true);
-        }
-
-        function desmarcarTodos() {
-            document.querySelectorAll('.horario-check').forEach(item => item.checked = false);
-        }
-    </script>
-</body>
-</html>
+{% block scripts_extra %}
+<script>
+    function marcarTodos() { document.querySelectorAll('.horario-check').forEach(i => i.checked = true); }
+    function desmarcarTodos() { document.querySelectorAll('.horario-check').forEach(i => i.checked = false); }
+</script>
+{% endblock %}

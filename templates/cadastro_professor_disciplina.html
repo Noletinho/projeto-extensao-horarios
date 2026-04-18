@@ -1,41 +1,59 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Cadastrar Professor x Disciplina</title>
-</head>
-<body>
-    <h1>Cadastrar Relação Professor x Disciplina</h1>
+{% extends "base.html" %}
+{% block titulo %}Cadastrar Professor × Disciplina{% endblock %}
 
-    {% if erro %}
-    <p style="color:red;">{{ erro }}</p>
-    {% endif %}
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('listar_professores_disciplinas') }}" class="btn btn-secundario">← Voltar</a>
+    <h1>Cadastrar Relação Professor × Disciplina</h1>
+</div>
 
-    <form method="POST" action="{{ url_for('cadastrar_professor_disciplina') }}">
-        <label>Professor:</label><br>
-        <select name="id_professor" required>
-            <option value="">Selecione</option>
-            {% for professor in professores %}
-                <option value="{{ professor['id_professor'] }}">
-                    {{ professor['nome'] }}
-                </option>
-            {% endfor %}
-        </select><br><br>
+<div class="layout-duplo">
+    <div class="card">
+        <form method="POST" action="{{ url_for('cadastrar_professor_disciplina') }}">
+            <div class="form-grupo">
+                <label>Professor <span style="color:var(--cor-erro)">*</span></label>
+                <select name="id_professor" required>
+                    <option value="">Selecione</option>
+                    {% for professor in professores %}
+                        <option value="{{ professor['id_professor'] }}">{{ professor['nome'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-grupo">
+                <label>Disciplina <span style="color:var(--cor-erro)">*</span></label>
+                <select name="id_disciplina" required>
+                    <option value="">Selecione</option>
+                    {% for disciplina in disciplinas %}
+                        <option value="{{ disciplina['id_disciplina'] }}">
+                            {{ disciplina['nome'] }} ({{ disciplina['sigla'] }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Salvar</button>
+        </form>
+    </div>
 
-        <label>Disciplina:</label><br>
-        <select name="id_disciplina" required>
-            <option value="">Selecione</option>
-            {% for disciplina in disciplinas %}
-                <option value="{{ disciplina['id_disciplina'] }}">
-                    {{ disciplina['nome'] }} ({{ disciplina['sigla'] }})
-                </option>
-            {% endfor %}
-        </select><br><br>
-
-        <button type="submit">Salvar</button>
-    </form>
-
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+    <div>
+        <h2>Relações Cadastradas</h2>
+        {% if relacoes %}
+        <table class="tabela-lateral">
+            <thead>
+                <tr><th>Professor</th><th>Disciplina</th><th>Sigla</th></tr>
+            </thead>
+            <tbody>
+                {% for r in relacoes %}
+                <tr>
+                    <td>{{ r['nome_professor'] }}</td>
+                    <td>{{ r['nome_disciplina'] }}</td>
+                    <td>{{ r['sigla'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:var(--cor-texto-claro)">Nenhuma relação cadastrada ainda.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

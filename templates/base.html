@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}Sistema de Horários{% endblock %} — Escola</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block estilos_extra %}{% endblock %}
+</head>
+<body>
+    <header class="no-print">
+        <h1><a href="{{ url_for('index') }}" style="color:inherit;text-decoration:none;">Sistema de Horários</a></h1>
+        <nav>
+            <a href="{{ url_for('listar_professores') }}">Professores</a>
+            <a href="{{ url_for('listar_disciplinas') }}">Disciplinas</a>
+            <a href="{{ url_for('listar_turmas') }}">Turmas</a>
+            <a href="{{ url_for('selecionar_turno_relatorio') }}">Relatório</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+            {% for categoria, mensagem in mensagens %}
+                <div class="alerta alerta-{{ categoria }} mt-2">{{ mensagem }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        {% block conteudo %}{% endblock %}
+    </div>
+
+    {% block scripts_extra %}{% endblock %}
+</body>
+</html>

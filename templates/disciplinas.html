@@ -1,67 +1,118 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Professores</title>
-</head>
-<body>
-    <h1>Lista de Disciplinas</h1>
+{% extends "base.html" %}
+{% block titulo %}Disciplinas{% endblock %}
 
-    <a href="{{ url_for('cadastrar_disciplina') }}">
-        <button>Cadastrar Nova Disciplina</button>
-    </a>
-    <table border="1" cellpadding="8">
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
+    <h1>Lista de Disciplinas</h1>
+</div>
+
+<a href="{{ url_for('cadastrar_disciplina') }}" class="btn btn-primario mb-2">+ Cadastrar Nova Disciplina</a>
+
+<table>
+    <thead>
         <tr>
-            <th>ID</th>
-            <th>Matéria</th>
+            <th>Nome</th>
             <th>Sigla</th>
             <th>Cor</th>
-            <th>Carga Horária</th>
+            <th>Aulas/Semana</th>
+            <th>Ações</th>
         </tr>
-
+    </thead>
+    <tbody>
         {% for disciplina in disciplinas %}
         <tr>
-            <td>{{ disciplina['id_disciplina'] }}</td>
             <td>{{ disciplina['nome'] }}</td>
             <td>{{ disciplina['sigla'] }}</td>
-            <td>{{ disciplina['cor'] }}</td>
-            <td>{{ disciplina['carga_horaria_semanal'] }}</td>
-
             <td>
-                <a href="{{ url_for('editar_disciplina', id_disciplina=disciplina[0]) }}">
-                    <button type="button">Editar</button>
-                </a>
-                
-                <form action="{{ url_for('deletar_disciplina', id_disciplina=disciplina[0]) }}" method="POST" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
-                </form>
+                <span style="display:inline-block;width:20px;height:20px;background:{{ disciplina['cor'] }};border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span>
+                {{ disciplina['cor'] }}
+            </td>
+            <td>{{ disciplina['carga_horaria_semanal'] }}</td>
+            <td>
+                <div class="flex-linha">
+                    <a href="{{ url_for('editar_disciplina', id_disciplina=disciplina['id_disciplina']) }}#form-edicao" class="btn btn-secundario">Editar</a>
+                    <form action="{{ url_for('deletar_disciplina', id_disciplina=disciplina['id_disciplina']) }}" method="POST">
+                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                    </form>
+                </div>
             </td>
         </tr>
         {% endfor %}
-    </table>
+    </tbody>
+</table>
 
-    {% if disciplina_edicao %}
-        <hr>
-        <h2>Editar Disciplina</h2>
+{% if disciplina_edicao %}
+<hr>
+<div class="card mt-2" id="form-edicao">
+    <h2>Editar Disciplina</h2>
+    <form method="POST" action="{{ url_for('atualizar_disciplina', id_disciplina=disciplina_edicao['id_disciplina']) }}">
+        <div class="form-grupo">
+            <label>Nome:</label>
+            <input type="text" name="nome" value="{{ disciplina_edicao['nome'] }}" required>
+        </div>
+        <div class="form-grupo">
+            <label>Sigla:</label>
+            <input type="text" name="sigla" value="{{ disciplina_edicao['sigla'] }}" required>
+        </div>
+        <div class="form-grupo">
+            <label>Cor da Disciplina</label>
+            <div class="seletor-cor">
+                <div class="seletor-cor-linha">
+                    <div class="btn-cor-preview" id="btn-cor-edit" title="Clique para abrir o seletor de cores"></div>
+                    <span class="cor-hex-label" id="hex-label-edit">{{ disciplina_edicao['cor'] }}</span>
+                </div>
+                <div class="paleta-cores">
+                    <div class="swatch" data-cor="#e74c3c" style="background:#e74c3c"></div>
+                    <div class="swatch" data-cor="#e67e22" style="background:#e67e22"></div>
+                    <div class="swatch" data-cor="#f1c40f" style="background:#f1c40f"></div>
+                    <div class="swatch" data-cor="#2ecc71" style="background:#2ecc71"></div>
+                    <div class="swatch" data-cor="#1abc9c" style="background:#1abc9c"></div>
+                    <div class="swatch" data-cor="#3498db" style="background:#3498db"></div>
+                    <div class="swatch" data-cor="#4a90d9" style="background:#4a90d9"></div>
+                    <div class="swatch" data-cor="#9b59b6" style="background:#9b59b6"></div>
+                    <div class="swatch" data-cor="#e91e63" style="background:#e91e63"></div>
+                    <div class="swatch" data-cor="#795548" style="background:#795548"></div>
+                    <div class="swatch" data-cor="#607d8b" style="background:#607d8b"></div>
+                    <div class="swatch" data-cor="#ff5722" style="background:#ff5722"></div>
+                    <div class="swatch" data-cor="#8bc34a" style="background:#8bc34a"></div>
+                    <div class="swatch" data-cor="#00bcd4" style="background:#00bcd4"></div>
+                    <div class="swatch" data-cor="#ff9800" style="background:#ff9800"></div>
+                    <div class="swatch" data-cor="#673ab7" style="background:#673ab7"></div>
+                </div>
+                <input type="color" id="cor-input-edit" name="cor" value="{{ disciplina_edicao['cor'] }}" class="input-cor-nativo">
+            </div>
+        </div>
+        <div class="form-grupo">
+            <label>Carga Horária Semanal:</label>
+            <input type="number" name="carga_horaria_semanal" value="{{ disciplina_edicao['carga_horaria_semanal'] }}" required>
+        </div>
+        <button type="submit">Atualizar</button>
+    </form>
+</div>
+{% endif %}
 
-        <form method="POST" action="{{ url_for('atualizar_disciplina', id_disciplina=disciplina_edicao['id_disciplina']) }}">
-            <label>Disciplina:</label><br>
-            <input type="text" name="nome" value="{{ disciplina_edicao['nome'] }}" required><br><br>
+{% endblock %}
 
-            <label>Sigla:</label><br>
-            <input type="text" name="sigla" value="{{ disciplina_edicao['sigla'] }}" required><br><br>
+{% block scripts_extra %}
+{% if disciplina_edicao %}
+<script>
+    const inputCorEdit = document.getElementById('cor-input-edit');
+    const previewEdit  = document.getElementById('btn-cor-edit');
+    const hexLabelEdit = document.getElementById('hex-label-edit');
+    const swatchesEdit = document.querySelectorAll('#form-edicao .swatch');
 
-            <label>Cor:</label><br>
-            <input type="text" name="cor" value="{{ disciplina_edicao['cor'] }}" required><br><br>
+    function aplicarCorEdit(hex) {
+        inputCorEdit.value = hex;
+        previewEdit.style.backgroundColor = hex;
+        hexLabelEdit.textContent = hex.toUpperCase();
+        swatchesEdit.forEach(s => s.classList.toggle('ativo', s.dataset.cor === hex.toLowerCase()));
+    }
 
-            <label>Carga Horária:</label><br>
-            <input type="number" name="carga_horaria_semanal" value="{{ disciplina_edicao['carga_horaria_semanal'] }}" required><br><br>
-
-            <button type="submit">Atualizar</button>
-        </form>
-    {% endif %}
-
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+    aplicarCorEdit(inputCorEdit.value);
+    previewEdit.addEventListener('click', () => inputCorEdit.click());
+    inputCorEdit.addEventListener('input', () => aplicarCorEdit(inputCorEdit.value));
+    swatchesEdit.forEach(s => s.addEventListener('click', () => aplicarCorEdit(s.dataset.cor)));
+</script>
+{% endif %}
+{% endblock %}

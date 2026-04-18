@@ -1,91 +1,42 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Alocações</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
+{% extends "base.html" %}
+{% block titulo %}Alocações{% endblock %}
 
-        .topo {
-            margin-bottom: 20px;
-        }
+{% block estilos_extra %}
+<style>
+    .bloco-serie { margin-bottom: 32px; }
+    .bloco-turma { margin-bottom: 20px; }
+    .bloco-turma h3 { margin-bottom: 8px; color: var(--cor-texto); }
+    .tabela-alocacao { max-width: 1000px; }
+    .sigla-box {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
 
-        .topo a {
-            margin-right: 6px;
-        }
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('selecionar_turno_alocacoes') }}" class="btn btn-secundario">← Voltar</a>
+    <h1>Alocações — {{ turno['nome'] }}</h1>
+</div>
 
-        .bloco-serie {
-            margin-bottom: 28px;
-        }
+<div class="flex-linha mb-2">
+    <a href="{{ url_for('cadastrar_alocacao') }}" class="btn btn-primario">Cadastrar Alocação</a>
+    <a href="{{ url_for('selecionar_turno_alocacoes') }}" class="btn btn-secundario">Selecionar Outro Turno</a>
+</div>
 
-        .bloco-turma {
-            margin-bottom: 20px;
-        }
-
-        .bloco-turma h3 {
-            margin-bottom: 8px;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        th, td {
-            border: 1px solid #999;
-            padding: 8px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
-        .acoes form,
-        .acoes a {
-            display: inline-block;
-            margin-right: 5px;
-        }
-
-        .sigla-box {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #000;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <div class="topo">
-        <h1>Lista de Alocações - Turno {{ turno['nome'] }}</h1>
-
-        {% if erro %}
-            <p style="color:red;">{{ erro }}</p>
-        {% endif %}
-
-        <a href="{{ url_for('cadastrar_alocacao') }}">
-            <button type="button">Cadastrar Alocação</button>
-        </a>
-
-        <a href="{{ url_for('selecionar_turno_alocacoes') }}">
-            <button type="button">Selecionar Outro Turno</button>
-        </a>
-    </div>
-
-    {% if ordem_series %}
-        {% for serie in ordem_series %}
-            <div class="bloco-serie">
-                <h2>Série: {{ serie }}</h2>
-
-                {% for id_turma, turma in alocacoes_por_serie[serie].items() %}
-                    <div class="bloco-turma">
-                        <h3>Turma: {{ turma['nome_turma'] }}</h3>
-
-                        <table>
+{% if ordem_series %}
+    {% for serie in ordem_series %}
+        <div class="bloco-serie">
+            <h2>Série: {{ serie }}</h2>
+            {% for id_turma, turma in alocacoes_por_serie[serie].items() %}
+                <div class="bloco-turma">
+                    <h3>Turma: {{ turma['nome_turma'] }}</h3>
+                    <table class="tabela-alocacao">
+                        <thead>
                             <tr>
                                 <th>Dia</th>
                                 <th>Horário</th>
@@ -94,47 +45,45 @@
                                 <th>Local</th>
                                 <th>Ações</th>
                             </tr>
-
+                        </thead>
+                        <tbody>
                             {% for item in turma['itens'] %}
                             <tr>
-                                <td>{{ item['dia_semana'] }}</td>
+                                <td>{{ item['dia_semana'] | capitalize }}</td>
                                 <td>{{ item['hora_inicio'] }} às {{ item['hora_fim'] }}</td>
                                 <td>
-                                    <span class="sigla-box" style="background-color: {{ item['cor'] }};">
-                                        {{ item['sigla'] }}
-                                    </span>
+                                    <span class="sigla-box" style="background-color: {{ item['cor'] }};">{{ item['sigla'] }}</span>
                                     {{ item['nome_disciplina'] }}
                                 </td>
                                 <td>{{ item['nome_professor'] }}</td>
                                 <td>{{ item['nome_local'] }}</td>
-                                <td class="acoes">
-                                    <a href="{{ url_for('editar_alocacao', id_alocacao=item['id_alocacao']) }}">
-                                        <button type="button">Editar</button>
-                                    </a>
-
-                                    <form action="{{ url_for('deletar_alocacao', id_alocacao=item['id_alocacao']) }}" method="POST" style="display:inline;">
-                                        <button type="submit" onclick="return confirm('Tem certeza que deseja excluir esta alocação?')">
-                                            Excluir
-                                        </button>
-                                    </form>
+                                <td>
+                                    <div class="flex-linha">
+                                        <a href="{{ url_for('editar_alocacao', id_alocacao=item['id_alocacao']) }}#form-edicao" class="btn btn-secundario">Editar</a>
+                                        <form action="{{ url_for('deletar_alocacao', id_alocacao=item['id_alocacao']) }}" method="POST">
+                                            <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir esta alocação?')">Excluir</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
-                        </table>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>Nenhuma alocação cadastrada para este turno.</p>
-    {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>Nenhuma alocação cadastrada para este turno.</p>
+{% endif %}
 
-    {% if alocacao_edicao %}
-        <hr>
-        <h2>Editar Alocação</h2>
-
-        <form method="POST" action="{{ url_for('atualizar_alocacao', id_alocacao=alocacao_edicao['id_alocacao']) }}">
-            <label>Turma:</label><br>
+{% if alocacao_edicao %}
+<hr>
+<div class="card mt-2" id="form-edicao">
+    <h2>Editar Alocação</h2>
+    <form method="POST" action="{{ url_for('atualizar_alocacao', id_alocacao=alocacao_edicao['id_alocacao']) }}">
+        <div class="form-grupo">
+            <label>Turma:</label>
             <select name="id_turma" required>
                 {% for turma in turmas %}
                     <option value="{{ turma['id_turma'] }}"
@@ -142,9 +91,10 @@
                         {{ turma['nome'] }} - {{ turma['serie'] }} - {{ turma['nome_turno'] }}
                     </option>
                 {% endfor %}
-            </select><br><br>
-
-            <label>Disciplina:</label><br>
+            </select>
+        </div>
+        <div class="form-grupo">
+            <label>Disciplina:</label>
             <select name="id_disciplina" required>
                 {% for disciplina in disciplinas %}
                     <option value="{{ disciplina['id_disciplina'] }}"
@@ -152,9 +102,10 @@
                         {{ disciplina['nome'] }} ({{ disciplina['sigla'] }})
                     </option>
                 {% endfor %}
-            </select><br><br>
-
-            <label>Professor:</label><br>
+            </select>
+        </div>
+        <div class="form-grupo">
+            <label>Professor:</label>
             <select name="id_professor" required>
                 {% for professor in professores %}
                     <option value="{{ professor['id_professor'] }}"
@@ -162,9 +113,10 @@
                         {{ professor['nome'] }}
                     </option>
                 {% endfor %}
-            </select><br><br>
-
-            <label>Local:</label><br>
+            </select>
+        </div>
+        <div class="form-grupo">
+            <label>Local:</label>
             <select name="id_local" required>
                 {% for local in locais %}
                     <option value="{{ local['id_local'] }}"
@@ -172,18 +124,20 @@
                         {{ local['nome'] }} ({{ local['tipo'] }})
                     </option>
                 {% endfor %}
-            </select><br><br>
-
-            <label>Dia da semana:</label><br>
+            </select>
+        </div>
+        <div class="form-grupo">
+            <label>Dia da Semana:</label>
             <select name="dia_semana" required>
-                <option value="segunda" {% if alocacao_edicao['dia_semana'] == 'segunda' %}selected{% endif %}>Segunda</option>
-                <option value="terca" {% if alocacao_edicao['dia_semana'] == 'terca' %}selected{% endif %}>Terça</option>
-                <option value="quarta" {% if alocacao_edicao['dia_semana'] == 'quarta' %}selected{% endif %}>Quarta</option>
-                <option value="quinta" {% if alocacao_edicao['dia_semana'] == 'quinta' %}selected{% endif %}>Quinta</option>
-                <option value="sexta" {% if alocacao_edicao['dia_semana'] == 'sexta' %}selected{% endif %}>Sexta</option>
-            </select><br><br>
-
-            <label>Horário:</label><br>
+                {% for dia in ['segunda','terca','quarta','quinta','sexta'] %}
+                    <option value="{{ dia }}" {% if alocacao_edicao['dia_semana'] == dia %}selected{% endif %}>
+                        {{ dia | capitalize }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-grupo">
+            <label>Horário:</label>
             <select name="id_horario" required>
                 {% for horario in horarios %}
                     <option value="{{ horario['id_horario'] }}"
@@ -191,13 +145,12 @@
                         {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
                     </option>
                 {% endfor %}
-            </select><br><br>
+            </select>
+        </div>
+        <button type="submit">Atualizar</button>
+    </form>
+</div>
+{% endif %}
 
-            <button type="submit">Atualizar</button>
-        </form>
-    {% endif %}
-
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+<a href="{{ url_for('selecionar_turno_alocacoes') }}" class="link-voltar">← Voltar</a>
+{% endblock %}

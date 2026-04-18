@@ -2,175 +2,342 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Grade Horária por Turno</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade Horária — {{ turno['nome'] }}</title>
     <style>
-        @page {
-            size: A4 landscape;
-            margin: 8mm;
+        /* === VARIÁVEIS === */
+        :root {
+            --bg: #0e1117;
+            --surface: #1a1d2e;
+            --surface-alt: #242840;
+            --border: #2d3452;
+            --text: #e2e8f0;
+            --text-muted: #8892a4;
+            --blue: #5b9bd5;
+            --gold: #f0a500;
         }
+
+        @page { size: A4 landscape; margin: 8mm; }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
-            padding: 8px;
-            font-size: 9px;
-            color: #000;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 13px;
         }
 
-        .acoes {
-            margin-bottom: 8px;
-            text-align: center;
+        /* === BARRA DE AÇÕES === */
+        .barra-acoes {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
         }
 
-        .acoes button {
-            padding: 6px 12px;
-            margin: 0 4px;
+        .barra-titulo {
+            flex: 1;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--blue);
+        }
+
+        .btn-acao {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 600;
             cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.15s;
         }
 
-        .titulo {
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 4px;
+        .btn-imprimir { background: var(--gold); color: #1a1200; }
+        .btn-imprimir:hover { opacity: 0.88; }
+
+        .btn-voltar {
+            background: var(--surface-alt);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-voltar:hover { background: var(--border); }
+
+        /* === ÁREA DO RELATÓRIO === */
+        .relatorio-wrapper {
+            padding: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .subtitulo {
-            text-align: center;
-            font-size: 12px;
-            margin-bottom: 10px;
+        /* === CABEÇALHO DO RELATÓRIO === */
+        .rel-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+            border-radius: 10px;
+            padding: 20px 28px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #2d4f7c;
+        }
+
+        .rel-header-titulo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        .rel-header-subtitulo {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.65);
+            margin-top: 4px;
             text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .rel-header-badge {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* === TABELA === */
+        .tabela-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
+            font-size: 11px;
         }
 
         th, td {
-            border: 1px solid #666;
+            border: 1px solid var(--border);
             text-align: center;
             vertical-align: middle;
-            padding: 2px;
+            padding: 3px;
             word-wrap: break-word;
-        }
-
-        th {
-            background: #f2f2f2;
-            font-weight: bold;
         }
 
         .th-dia {
             font-size: 10px;
-            background: #e6e6e6;
-            height: 24px;
+            font-weight: 700;
+            background: #1e3a5f;
+            color: #7ab3e8;
+            height: 26px;
+            letter-spacing: 1px;
         }
 
         .th-turma {
             font-size: 9px;
-            background: #fafafa;
-            height: 28px;
+            background: var(--surface-alt);
+            color: var(--text);
+            height: 30px;
+            line-height: 1.3;
         }
 
         .col-aula {
             width: 36px;
-            font-weight: bold;
-            background: #f8f8f8;
+            font-weight: 700;
+            background: var(--surface-alt);
+            color: var(--text-muted);
+            font-size: 10px;
         }
 
         .col-hora {
-            width: 62px;
-            font-size: 8px;
-            background: #f8f8f8;
+            width: 65px;
+            font-size: 9px;
+            background: var(--surface-alt);
+            color: var(--text-muted);
+            line-height: 1.4;
         }
 
         .celula {
-            height: 34px;
+            height: 36px;
             font-size: 8px;
-            line-height: 1.15;
-            font-weight: bold;
+            line-height: 1.2;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
         }
 
         .prof {
             display: block;
             font-size: 7px;
-            font-weight: normal;
+            font-weight: 400;
             margin-top: 2px;
+            opacity: 0.9;
         }
 
-        .vazia {
-            background: #fff;
+        .vazia { background: var(--surface); }
+
+        /* === RODAPÉ === */
+        .rodape {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            padding: 16px;
+            margin-top: 8px;
         }
 
+        /* === IMPRESSÃO === */
         @media print {
-            .no-print {
-                display: none;
+            body {
+                background: white;
+                color: #000;
+                font-size: 9px;
             }
 
-            body {
-                padding: 0;
-                margin: 0;
+            .no-print { display: none !important; }
+
+            .relatorio-wrapper { padding: 0; max-width: none; }
+
+            .rel-header {
+                background: #1e3a5f !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                margin-bottom: 8px;
+                border-radius: 0;
+                padding: 10px 14px;
             }
+
+            .tabela-container {
+                background: white;
+                border: none;
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            table { font-size: 8px; }
+
+            th, td { border: 1px solid #aaa; }
+
+            .th-dia {
+                background: #2c5282 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .th-turma {
+                background: #f0f4f8 !important;
+                color: #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .col-aula, .col-hora {
+                background: #f8f8f8 !important;
+                color: #333 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .vazia { background: #fff !important; }
+
+            .celula {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            thead { display: table-header-group; }
+            tr { page-break-inside: avoid; }
         }
     </style>
 </head>
 <body>
-    <div class="acoes no-print">
-        <button onclick="window.print()">Imprimir</button>
-        <a href="{{ url_for('selecionar_turno_relatorio') }}">
-            <button type="button">Voltar</button>
-        </a>
+
+<div class="barra-acoes no-print">
+    <div class="barra-titulo">📋 Grade Horária — {{ turno['nome'] }}</div>
+    <a href="{{ url_for('selecionar_turno_relatorio') }}" class="btn-acao btn-voltar">← Voltar</a>
+    <button class="btn-acao btn-imprimir" onclick="window.print()">🖨 Imprimir / PDF</button>
+</div>
+
+<div class="relatorio-wrapper">
+    <div class="rel-header no-print">
+        <div>
+            <div class="rel-header-titulo">GRADE HORÁRIA</div>
+            <div class="rel-header-subtitulo">{{ turno['nome'] }}</div>
+        </div>
+        <span class="rel-header-badge" id="badge-data">Carregando...</span>
     </div>
 
-    <div class="titulo">GRADE HORÁRIA</div>
-    <div class="subtitulo">{{ turno['nome'] }}</div>
-
-    <table>
-        <tr>
-            <th rowspan="2" class="col-aula">Aula</th>
-            <th rowspan="2" class="col-hora">Horário</th>
-            {% for dia in dias %}
-                <th colspan="{{ turmas|length }}" class="th-dia">{{ dia|upper }}</th>
-            {% endfor %}
-        </tr>
-
-        <tr>
-            {% for dia in dias %}
-                {% for turma in turmas %}
-                    <th class="th-turma">
-                        {{ turma['nome'] }}<br>
-                        {{ turma['serie'] }}
-                    </th>
-                {% endfor %}
-            {% endfor %}
-        </tr>
-
-        {% for horario in horarios %}
-            <tr>
-                <td class="col-aula">{{ loop.index }}ª</td>
-                <td class="col-hora">
-                    {{ horario['hora_inicio'] }}<br>
-                    {{ horario['hora_fim'] }}
-                </td>
-
-                {% for dia in dias %}
-                    {% for turma in turmas %}
-                        {% set chave = (horario['id_horario'], dia, turma['id_turma']) %}
-                        {% set aula = grade.get(chave) %}
-
-                        {% if aula %}
-                            <td class="celula" style="background-color: {{ aula['cor'] }};">
-                                {{ aula['sigla'] }}
-                                <span class="prof">{{ aula['professor'] }}</span>
-                            </td>
-                        {% else %}
-                            <td class="vazia"></td>
-                        {% endif %}
+    <div class="tabela-container">
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2" class="col-aula">Aula</th>
+                    <th rowspan="2" class="col-hora">Horário</th>
+                    {% for dia in dias %}
+                        <th colspan="{{ turmas|length }}" class="th-dia">{{ dia|upper }}</th>
                     {% endfor %}
+                </tr>
+                <tr>
+                    {% for dia in dias %}
+                        {% for turma in turmas %}
+                            <th class="th-turma">
+                                {{ turma['nome'] }}<br>
+                                <span style="opacity:0.65;font-size:8px;">{{ turma['serie'] }}</span>
+                            </th>
+                        {% endfor %}
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for horario in horarios %}
+                    <tr>
+                        <td class="col-aula">{{ loop.index }}ª</td>
+                        <td class="col-hora">
+                            {{ horario['hora_inicio'] }}<br>{{ horario['hora_fim'] }}
+                        </td>
+                        {% for dia in dias %}
+                            {% for turma in turmas %}
+                                {% set chave = (horario['id_horario'], dia, turma['id_turma']) %}
+                                {% set aula = grade.get(chave) %}
+                                {% if aula %}
+                                    <td class="celula" style="background-color: {{ aula['cor'] }};">
+                                        {{ aula['sigla'] }}
+                                        <span class="prof">{{ aula['professor'] }}</span>
+                                    </td>
+                                {% else %}
+                                    <td class="vazia"></td>
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    </tr>
                 {% endfor %}
-            </tr>
-        {% endfor %}
-    </table>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="rodape no-print" id="rodape-data"></div>
+</div>
+
+<script>
+    const agora = new Date();
+    const fmt = agora.toLocaleDateString('pt-BR') + ' às ' +
+                agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('badge-data').textContent = 'Gerado em ' + fmt;
+    document.getElementById('rodape-data').textContent = 'Gerado em: ' + fmt;
+</script>
 </body>
 </html>

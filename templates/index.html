@@ -1,67 +1,62 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Sistema Escolar</title>
-</head>
-<body>
-    <h1>Sistema de Horários</h1>
+{% extends "base.html" %}
+{% block titulo %}Início{% endblock %}
 
-    <a href="{{ url_for('cadastrar_professor') }}">
-    <button>Cadastrar Professores</button></a><br>
-    <a href="{{ url_for('listar_professores') }}">
-    <button>Listar Professores</button></a><br><br>
+{% block conteudo %}
+<h1>Sistema de Horários Escolares</h1>
 
-    <a href="{{ url_for('cadastrar_disciplina') }}">
-    <button>Cadastrar Disciplina</button></a><br>
-    <a href="{{ url_for('listar_disciplinas') }}">
-    <button>Listar Disciplinas</button></a><br><br>
+<div class="card mt-2">
+    <h2>Cadastros Base</h2>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('cadastrar_professor') }}" class="btn btn-primario">Cadastrar Professor</a>
+        <a href="{{ url_for('listar_professores') }}" class="btn btn-secundario">Listar Professores</a>
+    </div>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('cadastrar_disciplina') }}" class="btn btn-primario">Cadastrar Disciplina</a>
+        <a href="{{ url_for('listar_disciplinas') }}" class="btn btn-secundario">Listar Disciplinas</a>
+    </div>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('cadastrar_turno') }}" class="btn btn-primario">Cadastrar Turno</a>
+        <a href="{{ url_for('listar_turnos') }}" class="btn btn-secundario">Listar Turnos</a>
+    </div>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('cadastrar_turma') }}" class="btn btn-primario">Cadastrar Turma</a>
+        <a href="{{ url_for('listar_turmas') }}" class="btn btn-secundario">Listar Turmas</a>
+    </div>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('cadastrar_local') }}" class="btn btn-primario">Cadastrar Local</a>
+        <a href="{{ url_for('listar_locais') }}" class="btn btn-secundario">Listar Locais</a>
+    </div>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('cadastrar_horario') }}" class="btn btn-primario">Cadastrar Horário</a>
+        <a href="{{ url_for('listar_horarios') }}" class="btn btn-secundario">Listar Horários</a>
+    </div>
+</div>
 
-    <a href="{{ url_for('cadastrar_turno') }}">
-    <button>Cadastrar Turno</button></a><br>
-    <a href="{{ url_for('listar_turnos') }}">
-    <button>Listar Turnos</button></a><br><br>
+<div class="card mt-2">
+    <h2>Vínculos</h2>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('cadastrar_professor_disciplina') }}" class="btn btn-primario">Cadastrar Professor × Disciplina</a>
+        <a href="{{ url_for('listar_professores_disciplinas') }}" class="btn btn-secundario">Listar</a>
+    </div>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="btn btn-primario">Cadastrar Disponibilidade</a>
+        <a href="{{ url_for('listar_disponibilidade_professor') }}" class="btn btn-secundario">Lista Tradicional</a>
+        <a href="{{ url_for('grade_disponibilidades') }}" class="btn btn-secundario">Grade de Disponibilidades</a>
+    </div>
+</div>
 
-    <a href="{{ url_for('cadastrar_turma') }}">
-    <button>Cadastrar Turma</button></a><br>
-    <a href="{{ url_for('listar_turmas') }}">
-    <button>Listar Turmas</button></a><br><br>
-
-    <a href="{{ url_for('cadastrar_local') }}">
-    <button>Cadastrar Local</button></a><br>
-    <a href="{{ url_for('listar_locais') }}">
-    <button>Listar Locais</button></a><br><br>
-
-    <a href="{{ url_for('cadastrar_horario')}}">
-    <button>Cadastrar Horário</button></a><br>
-    <a href="{{ url_for('listar_horarios')}}">
-    <button>Listar Horários</button></a><br><br>
-
-    <a href="{{ url_for('cadastrar_professor_disciplina') }}">
-    <button>Cadastrar Professor x Disciplina</button></a><br>
-    <a href="{{ url_for('listar_professores_disciplinas') }}">
-    <button>Listar Professor x Disciplina</button></a><br><br>
-
-    <a href="{{ url_for('cadastrar_disponibilidade_professor') }}">
-    <button>Cadastrar Disponibilidade </button></a><br>
-    <a href="{{ url_for('listar_disponibilidade_professor') }}">
-    <button>Lista Tradicional</button></a><br>
-    <a href="{{ url_for('grade_disponibilidades') }}">
-    <button>Grade de Disponibilidades</button></a><br><br>
-
-    <a href="{{ url_for('cadastrar_grade_curricular') }}">
-    <button>Cadastrar Grade Curricular</button></a><br>
-    <a href="{{url_for('selecionar_turno_grades') }}">
-    <button>Listar Grades Curriculares</button></a><br><br>
-    
-
-    <a href="{{ url_for('cadastrar_alocacao') }}">
-    <button>Cadastrar Alocação</button></a><br>
-    <a href="{{ url_for('selecionar_turno_alocacoes') }}">
-    <button>Alocações por Turno</button></a><br><br>
-
-    <a href="{{ url_for('selecionar_turno_relatorio') }}">
-    <button>Relatório por Turno</button></a>
-
-</body>
-</html>
+<div class="card mt-2">
+    <h2>Planejamento</h2>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('cadastrar_grade_curricular') }}" class="btn btn-primario">Cadastrar Grade Curricular</a>
+        <a href="{{ url_for('selecionar_turno_grades') }}" class="btn btn-secundario">Listar Grades</a>
+    </div>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('cadastrar_alocacao') }}" class="btn btn-primario">Cadastrar Alocação</a>
+        <a href="{{ url_for('selecionar_turno_alocacoes') }}" class="btn btn-secundario">Alocações por Turno</a>
+    </div>
+    <div class="flex-linha mt-1">
+        <a href="{{ url_for('selecionar_turno_relatorio') }}" class="btn btn-acento">Relatório por Turno</a>
+    </div>
+</div>
+{% endblock %}

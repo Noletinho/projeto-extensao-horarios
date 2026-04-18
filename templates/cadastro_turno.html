@@ -1,23 +1,39 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Cadastrar Turnos</title>
-</head>
-<body>
-    <h1>Cadastrar Turnos</h1>
+{% extends "base.html" %}
+{% block titulo %}Cadastrar Turno{% endblock %}
 
-    {% if erro %}
-    <p style="color:red;">{{ erro }}</p>
-    {% endif %}
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('listar_turnos') }}" class="btn btn-secundario">← Voltar</a>
+    <h1>Cadastrar Turno</h1>
+</div>
 
-    <form method="POST" action="{{ url_for('salvar_turno') }}">
-        <label>Turno:</label><br>
-        <input type="text" name="nome" required><br><br>
+<div class="layout-duplo">
+    <div class="card">
+        <form method="POST" action="{{ url_for('salvar_turno') }}">
+            <div class="form-grupo">
+                <label>Nome do Turno <span style="color:var(--cor-erro)">*</span></label>
+                <input type="text" name="nome" required autofocus placeholder="Ex: Matutino, Vespertino...">
+            </div>
+            <button type="submit">Salvar</button>
+        </form>
+    </div>
 
-        <button type="submit">Salvar</button><br><br>
-    </form>
-
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+    <div>
+        <h2>Turnos Cadastrados</h2>
+        {% if turnos %}
+        <table class="tabela-lateral">
+            <thead>
+                <tr><th>Nome</th></tr>
+            </thead>
+            <tbody>
+                {% for t in turnos %}
+                <tr><td>{{ t['nome'] }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:var(--cor-texto-claro)">Nenhum turno cadastrado ainda.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

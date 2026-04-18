@@ -1,69 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Turmas</title>
-</head>
-<body>
-    <h1>Listar Turmas</h1>
+{% extends "base.html" %}
+{% block titulo %}Turmas{% endblock %}
 
-    <a href="{{ url_for('cadastrar_turma') }}">
-        <button>Cadastrar Nova Turma</button>
-    </a>
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
+    <h1>Lista de Turmas</h1>
+</div>
+<a href="{{ url_for('cadastrar_turma') }}" class="btn btn-primario mb-2">+ Cadastrar Nova Turma</a>
 
-    <table border="1" cellpadding="8">
+<table>
+    <thead>
         <tr>
-            <th>ID</th>
-            <th>Turma</th>
+            <th>Nome</th>
             <th>Série</th>
             <th>Turno</th>
             <th>Ações</th>
         </tr>
-
+    </thead>
+    <tbody>
         {% for turma in turmas %}
         <tr>
-            <td>{{ turma['id_turma'] }}</td>
             <td>{{ turma['nome'] }}</td>
             <td>{{ turma['serie'] }}</td>
             <td>{{ turma['nome_turno'] }}</td>
             <td>
-                <a href="{{ url_for('editar_turma', id_turma=turma['id_turma']) }}">
-                    <button type="button">Editar</button>
-                </a>
-
-                <form action="{{ url_for('deletar_turma', id_turma=turma['id_turma']) }}" method="POST" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
-                </form>
+                <div class="flex-linha">
+                    <a href="{{ url_for('editar_turma', id_turma=turma['id_turma']) }}#form-edicao" class="btn btn-secundario">Editar</a>
+                    <form action="{{ url_for('deletar_turma', id_turma=turma['id_turma']) }}" method="POST">
+                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                    </form>
+                </div>
             </td>
         </tr>
         {% endfor %}
-    </table>
+    </tbody>
+</table>
 
-    {% if turma_edicao %}
-        <hr>
-        <h2>Editar Turma</h2>
-
-        <form method='POST' action="{{ url_for('atualizar_turma', id_turma=turma_edicao['id_turma']) }}">
-            <label>Turma:</label>
-            <input type="text" name="nome" value="{{ turma_edicao['nome'] }}"><br><br>
-
+{% if turma_edicao %}
+<hr>
+<div class="card mt-2" id="form-edicao">
+    <h2>Editar Turma</h2>
+    <form method="POST" action="{{ url_for('atualizar_turma', id_turma=turma_edicao['id_turma']) }}">
+        <div class="form-grupo">
+            <label>Nome:</label>
+            <input type="text" name="nome" value="{{ turma_edicao['nome'] }}" required>
+        </div>
+        <div class="form-grupo">
             <label>Série:</label>
-            <input type="text" name="serie" value="{{ turma_edicao['serie'] }}"><br><br>
-
-            <label for="id_turno">Turno:</label>
-            <select name="id_turno" id="id_turno" required>
+            <input type="text" name="serie" value="{{ turma_edicao['serie'] }}">
+        </div>
+        <div class="form-grupo">
+            <label>Turno:</label>
+            <select name="id_turno" required>
                 {% for turno in turnos %}
                     <option value="{{ turno['id_turno'] }}"
                         {% if turma_edicao['id_turno'] == turno['id_turno'] %}selected{% endif %}>
                         {{ turno['nome'] }}
                     </option>
-                 {% endfor %}
-            </select><br><br><br><br>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit">Atualizar</button>
+    </form>
+</div>
+{% endif %}
 
-            <button type="submit">Atualizar</button>
-        </form>
-    {% endif %}
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+{% endblock %}

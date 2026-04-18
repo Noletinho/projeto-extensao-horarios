@@ -1,40 +1,16 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Cadastrar Disponibilidade do Professor</title>
-    <style>
-        .grupo {
-            margin-bottom: 18px;
-        }
+{% extends "base.html" %}
+{% block titulo %}Cadastrar Disponibilidade{% endblock %}
 
-        .caixa-opcoes {
-            border: 1px solid #ccc;
-            padding: 10px;
-            width: fit-content;
-            min-width: 260px;
-        }
-
-        .caixa-opcoes label {
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .linha-botoes button {
-            margin-right: 6px;
-        }
-    </style>
-</head>
-<body>
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('grade_disponibilidades') }}" class="btn btn-secundario">← Voltar</a>
     <h1>Cadastrar Disponibilidade do Professor</h1>
+</div>
 
-    {% if erro %}
-        <p style="color:red;">{{ erro }}</p>
-    {% endif %}
-
+<div class="card">
     <form method="POST" action="{{ url_for('cadastrar_disponibilidade_professor') }}">
-        <div class="grupo">
-            <label>Professor:</label><br>
+        <div class="form-grupo">
+            <label>Professor:</label>
             <select name="id_professor" required>
                 <option value="">Selecione</option>
                 {% for professor in professores %}
@@ -43,11 +19,11 @@
             </select>
         </div>
 
-        <div class="grupo">
-            <label>Dias da semana:</label>
+        <div class="form-grupo">
+            <label>Dias da Semana:</label>
             <div class="linha-botoes">
-                <button type="button" onclick="marcarTodosDias()">Marcar todos</button>
-                <button type="button" onclick="desmarcarTodosDias()">Desmarcar todos</button>
+                <button type="button" class="btn btn-secundario" onclick="marcarTodosDias()">Marcar todos</button>
+                <button type="button" class="btn btn-secundario" onclick="desmarcarTodosDias()">Desmarcar todos</button>
             </div>
             <div class="caixa-opcoes">
                 <label><input type="checkbox" name="dias_semana" value="segunda" class="dia-check"> Segunda</label>
@@ -58,11 +34,11 @@
             </div>
         </div>
 
-        <div class="grupo">
+        <div class="form-grupo">
             <label>Horários:</label>
             <div class="linha-botoes">
-                <button type="button" onclick="marcarTodosHorarios()">Marcar todos</button>
-                <button type="button" onclick="desmarcarTodosHorarios()">Desmarcar todos</button>
+                <button type="button" class="btn btn-secundario" onclick="marcarTodosHorarios()">Marcar todos</button>
+                <button type="button" class="btn btn-secundario" onclick="desmarcarTodosHorarios()">Desmarcar todos</button>
             </div>
             <div class="caixa-opcoes">
                 {% for horario in horarios %}
@@ -74,8 +50,8 @@
             </div>
         </div>
 
-        <div class="grupo">
-            <label>Disponível?</label><br>
+        <div class="form-grupo">
+            <label>Disponível?</label>
             <select name="disponivel" required>
                 <option value="1">Sim</option>
                 <option value="0">Não</option>
@@ -84,26 +60,15 @@
 
         <button type="submit">Salvar</button>
     </form>
+</div>
 
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
+{% endblock %}
 
-    <script>
-        function marcarTodosDias() {
-            document.querySelectorAll('.dia-check').forEach(item => item.checked = true);
-        }
-
-        function desmarcarTodosDias() {
-            document.querySelectorAll('.dia-check').forEach(item => item.checked = false);
-        }
-
-        function marcarTodosHorarios() {
-            document.querySelectorAll('.horario-check').forEach(item => item.checked = true);
-        }
-
-        function desmarcarTodosHorarios() {
-            document.querySelectorAll('.horario-check').forEach(item => item.checked = false);
-        }
-    </script>
-</body>
-</html>
+{% block scripts_extra %}
+<script>
+    function marcarTodosDias() { document.querySelectorAll('.dia-check').forEach(i => i.checked = true); }
+    function desmarcarTodosDias() { document.querySelectorAll('.dia-check').forEach(i => i.checked = false); }
+    function marcarTodosHorarios() { document.querySelectorAll('.horario-check').forEach(i => i.checked = true); }
+    function desmarcarTodosHorarios() { document.querySelectorAll('.horario-check').forEach(i => i.checked = false); }
+</script>
+{% endblock %}

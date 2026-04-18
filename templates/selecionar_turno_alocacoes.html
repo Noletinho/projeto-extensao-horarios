@@ -1,21 +1,18 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Selecionar Turno</title>
-</head>
-<body>
-    <h1>Selecionar Turno para Ver as Alocações</h1>
+{% extends "base.html" %}
+{% block titulo %}Selecionar Turno — Alocações{% endblock %}
 
-    {% for turno in turnos %}
-        <p>
-            <a href="{{ url_for('listar_alocacoes_turno', id_turno=turno['id_turno']) }}">
-                <button type="button">{{ turno['nome'] }}</button>
+{% block conteudo %}
+<h1>Selecionar Turno para Ver as Alocações</h1>
+
+<div class="card mt-2">
+    <div class="flex-linha">
+        {% for turno in turnos %}
+            <a href="{{ url_for('listar_alocacoes_turno', id_turno=turno['id_turno']) }}" class="btn btn-primario">
+                {{ turno['nome'] }}
             </a>
-        </p>
-    {% endfor %}
+        {% endfor %}
+    </div>
+</div>
 
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+<a href="{{ url_for('index') }}" class="link-voltar">← Voltar</a>
+{% endblock %}

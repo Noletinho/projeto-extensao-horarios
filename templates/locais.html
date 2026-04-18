@@ -1,66 +1,64 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Locais</title>
-</head>
-<body>
-    <h1>Lista dos Locais</h1>
+{% extends "base.html" %}
+{% block titulo %}Locais{% endblock %}
 
-    <a href="{{ url_for('cadastrar_local') }}">
-        <button>Cadastrar Novo Local</button>
-    </a>
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
+    <h1>Lista de Locais</h1>
+</div>
+<a href="{{ url_for('cadastrar_local') }}" class="btn btn-primario mb-2">+ Cadastrar Novo Local</a>
 
-    <table border="1" cellpadding="8">
+<table>
+    <thead>
         <tr>
-            <th>ID</th>
             <th>Nome</th>
             <th>Tipo</th>
             <th>Status</th>
             <th>Ações</th>
         </tr>
-
+    </thead>
+    <tbody>
         {% for local in locais %}
         <tr>
-            <td>{{ local['id_local'] }}</td>
             <td>{{ local['nome'] }}</td>
             <td>{{ local['tipo'] }}</td>
-            <td>{{ local['status'] }}</td>
+            <td><span class="badge badge-{{ local['status'] }}">{{ local['status'] }}</span></td>
             <td>
-                <a href="{{ url_for('editar_local', id_local=local['id_local']) }}">
-                    <button type="button">Editar</button>
-                </a>
-                
-                <form action="{{ url_for('deletar_local', id_local=local['id_local']) }}" method="POST" style="display:inline;">
-                    <button type="submit" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
-                </form>
+                <div class="flex-linha">
+                    <a href="{{ url_for('editar_local', id_local=local['id_local']) }}#form-edicao" class="btn btn-secundario">Editar</a>
+                    <form action="{{ url_for('deletar_local', id_local=local['id_local']) }}" method="POST">
+                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                    </form>
+                </div>
             </td>
         </tr>
         {% endfor %}
-    </table>
+    </tbody>
+</table>
 
-    {% if local_edicao %}
-        <hr>
-        <h2>Editar Local</h2>
-
-        <form method="POST" action="{{ url_for('atualizar_local', id_local=local_edicao['id_local']) }}">
-            <label>Nome:</label><br>
-            <input type="text" name="nome" value="{{ local_edicao['nome'] }}" required><br><br>
-
-            <label>Tipo:</label><br>
-            <input type="text" name="tipo" value="{{ local_edicao['tipo'] }}"><br><br>
-
-            <label>Status:</label><br>
+{% if local_edicao %}
+<hr>
+<div class="card mt-2" id="form-edicao">
+    <h2>Editar Local</h2>
+    <form method="POST" action="{{ url_for('atualizar_local', id_local=local_edicao['id_local']) }}">
+        <div class="form-grupo">
+            <label>Nome:</label>
+            <input type="text" name="nome" value="{{ local_edicao['nome'] }}" required>
+        </div>
+        <div class="form-grupo">
+            <label>Tipo:</label>
+            <input type="text" name="tipo" value="{{ local_edicao['tipo'] }}">
+        </div>
+        <div class="form-grupo">
+            <label>Status:</label>
             <select name="status">
                 <option value="ativo" {% if local_edicao['status'] == 'ativo' %}selected{% endif %}>Ativo</option>
                 <option value="inativo" {% if local_edicao['status'] == 'inativo' %}selected{% endif %}>Inativo</option>
-            </select><br><br>
+            </select>
+        </div>
+        <button type="submit">Atualizar</button>
+    </form>
+</div>
+{% endif %}
 
-            <button type="submit">Atualizar</button>
-        </form>
-    {% endif %}
-
-    <br>
-    <a href="{{ url_for('index') }}">Voltar</a>
-</body>
-</html>
+{% endblock %}
