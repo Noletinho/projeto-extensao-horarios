@@ -185,8 +185,7 @@
                         <td class="col-aula">{{ ns.num_aula }}ª</td>
                         <td class="col-hora">{{ horario['hora_inicio'] }}<br>{{ horario['hora_fim'] }}</td>
                         {% for dia in dias %}
-                            {% set chave = (horario['id_horario'], dia) %}
-                            {% set aula = grade.get(chave) %}
+                            {% set aula = grade.get(horario['id_horario'], {}).get(dia) %}
                             {% if aula %}
                                 <td class="celula" style="background-color: {{ aula['cor'] }};">
                                     {{ aula['sigla'] }}

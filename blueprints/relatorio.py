@@ -73,13 +73,16 @@ def _montar_dados_professor(id_professor):
     dias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
     grade = {}
     for a in alocacoes:
-        chave = (a['id_horario'], a['dia_semana'])
-        grade[chave] = {
-            'sigla': a['sigla'],
-            'cor': a['cor'],
+        ih  = a['id_horario']
+        dia = a['dia_semana']
+        if ih not in grade:
+            grade[ih] = {}
+        grade[ih][dia] = {
+            'sigla':          a['sigla'],
+            'cor':            a['cor'],
             'nome_disciplina': a['nome_disciplina'],
-            'turma': f"{a['nome_turma']} – {a['serie']}",
-            'local': a['nome_local'],
+            'turma':          f"{a['nome_turma']} – {a['serie']}",
+            'local':          a['nome_local'],
         }
     return {'professor_nome': professor_nome, 'horarios': horarios, 'dias': dias, 'grade': grade}
 
@@ -112,12 +115,25 @@ def _montar_dados_relatorio(id_turno):
         alocacoes = cursor.fetchall()
 
     dias = ['segunda', 'terca', 'quarta', 'quinta', 'sexta']
+
+    # Garante que o intervalo sempre aparece na 4ª posição (após 3 aulas)
+    regulares = [h for h in horarios if not h['eh_intervalo']]
+    intervalos = [h for h in horarios if h['eh_intervalo']]
+    horarios = regulares[:3] + intervalos + regulares[3:]
+
+    # Dicionário aninhado para evitar problemas de lookup com tupla no Jinja2
     grade = {}
     for a in alocacoes:
-        chave = (a['id_horario'], a['dia_semana'], a['id_turma'])
-        grade[chave] = {
-            'sigla': a['sigla'],
-            'cor': a['cor'],
+        ih  = a['id_horario']
+        dia = a['dia_semana']
+        it  = a['id_turma']
+        if ih not in grade:
+            grade[ih] = {}
+        if dia not in grade[ih]:
+            grade[ih][dia] = {}
+        grade[ih][dia][it] = {
+            'sigla':     a['sigla'],
+            'cor':       a['cor'],
             'professor': a['professor'],
         }
     return turno, turmas, horarios, dias, grade

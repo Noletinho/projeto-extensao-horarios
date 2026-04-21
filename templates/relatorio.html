@@ -366,8 +366,7 @@
                         </td>
                         {% for dia in dias %}
                             {% for turma in turmas %}
-                                {% set chave = (horario['id_horario'], dia, turma['id_turma']) %}
-                                {% set aula = grade.get(chave) %}
+                                {% set aula = grade.get(horario['id_horario'], {}).get(dia, {}).get(turma['id_turma']) %}
                                 {% if aula %}
                                     <td class="celula" style="background-color: {{ aula['cor'] }};">
                                         {{ aula['sigla'] }}
