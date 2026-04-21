@@ -21,7 +21,7 @@ def registrar(app):
             senha = request.form.get('senha', '')
             with conectar() as conexao:
                 cursor = conexao.cursor()
-                cursor.execute("SELECT * FROM usuario WHERE email = ? AND ativo = 1", (email,))
+                cursor.execute("SELECT * FROM usuario WHERE email = %s AND ativo = 1", (email,))
                 usuario = cursor.fetchone()
             if usuario and check_password_hash(usuario['senha_hash'], senha):
                 session.clear()
@@ -64,12 +64,12 @@ def registrar(app):
                 cursor = conexao.cursor()
                 if senha_nova:
                     cursor.execute("""
-                        UPDATE usuario SET nome=?, email=?, senha_hash=?, primeiro_login=0
-                        WHERE id_usuario=?
+                        UPDATE usuario SET nome=%s, email=%s, senha_hash=%s, primeiro_login=0
+                        WHERE id_usuario=%s
                     """, (nome, email, generate_password_hash(senha_nova), u['id']))
                 else:
                     cursor.execute("""
-                        UPDATE usuario SET nome=?, email=? WHERE id_usuario=?
+                        UPDATE usuario SET nome=%s, email=%s WHERE id_usuario=%s
                     """, (nome, email, u['id']))
                 conexao.commit()
 
@@ -80,6 +80,6 @@ def registrar(app):
 
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("SELECT * FROM usuario WHERE id_usuario=?", (u['id'],))
+            cursor.execute("SELECT * FROM usuario WHERE id_usuario=%s", (u['id'],))
             dados_usuario = cursor.fetchone()
         return render_template('meu_perfil.html', dados_usuario=dados_usuario)

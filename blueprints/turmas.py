@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 from db import conectar
 from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
@@ -43,11 +43,11 @@ def registrar(app):
                 cursor = conexao.cursor()
                 cursor.execute("""
                     INSERT INTO turma (nome, serie, id_turno)
-                    VALUES (?, ?, ?)
+                    VALUES (%s, %s, %s)
                 """, (nome, serie, id_turno))
                 conexao.commit()
             return redirect(url_for('listar_turmas'))
-        except sqlite3.IntegrityError:
+        except pymysql.IntegrityError:
             flash("Essa turma já existe.", 'erro')
             return redirect(url_for('cadastrar_turma'))
 
@@ -81,7 +81,7 @@ def registrar(app):
                 ORDER BY turma.nome
             """)
             turmas = cursor.fetchall()
-            cursor.execute("SELECT * FROM turma WHERE id_turma = ?", (id_turma,))
+            cursor.execute("SELECT * FROM turma WHERE id_turma = %s", (id_turma,))
             turma_edicao = cursor.fetchone()
             cursor.execute("SELECT id_turno, nome FROM turno ORDER BY nome")
             turnos = cursor.fetchall()
@@ -101,8 +101,8 @@ def registrar(app):
         with conectar() as conexao:
             cursor = conexao.cursor()
             cursor.execute("""
-                UPDATE turma SET nome = ?, serie = ?, id_turno = ?
-                WHERE id_turma = ?
+                UPDATE turma SET nome = %s, serie = %s, id_turno = %s
+                WHERE id_turma = %s
             """, (nome, serie, id_turno, id_turma))
             conexao.commit()
         return redirect(url_for('listar_turmas'))
@@ -112,6 +112,6 @@ def registrar(app):
     def deletar_turma(id_turma):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute('DELETE FROM turma WHERE id_turma = ?', (id_turma,))
+            cursor.execute('DELETE FROM turma WHERE id_turma = %s', (id_turma,))
             conexao.commit()
         return redirect(url_for('listar_turmas'))

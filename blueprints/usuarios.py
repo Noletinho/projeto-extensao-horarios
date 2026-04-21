@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 from db import conectar
 from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
@@ -37,12 +37,12 @@ def registrar(app):
                 cursor = conexao.cursor()
                 cursor.execute("""
                     INSERT INTO usuario (nome, email, senha_hash, perfil, id_professor, primeiro_login)
-                    VALUES (?, ?, ?, ?, ?, 1)
+                    VALUES (%s, %s, %s, %s, %s, 1)
                 """, (nome, email, generate_password_hash(senha), perfil, id_professor))
                 conexao.commit()
             flash("Usuário cadastrado com sucesso.", 'sucesso')
             return redirect(url_for('listar_usuarios'))
-        except sqlite3.IntegrityError:
+        except pymysql.IntegrityError:
             flash("Já existe um usuário com esse e-mail.", 'erro')
             return redirect(url_for('listar_usuarios'))
 
@@ -55,7 +55,7 @@ def registrar(app):
             usuarios = cursor.fetchall()
             cursor.execute("SELECT * FROM professor ORDER BY nome")
             professores = cursor.fetchall()
-            cursor.execute("SELECT * FROM usuario WHERE id_usuario = ?", (id_usuario,))
+            cursor.execute("SELECT * FROM usuario WHERE id_usuario = %s", (id_usuario,))
             usuario_edicao = cursor.fetchone()
         return render_template('usuarios.html', usuarios=usuarios,
                                professores=professores, usuario_edicao=usuario_edicao)
@@ -77,13 +77,13 @@ def registrar(app):
             cursor = conexao.cursor()
             if senha:
                 cursor.execute("""
-                    UPDATE usuario SET nome=?, email=?, senha_hash=?, perfil=?, id_professor=?
-                    WHERE id_usuario=?
+                    UPDATE usuario SET nome=%s, email=%s, senha_hash=%s, perfil=%s, id_professor=%s
+                    WHERE id_usuario=%s
                 """, (nome, email, generate_password_hash(senha), perfil, id_professor, id_usuario))
             else:
                 cursor.execute("""
-                    UPDATE usuario SET nome=?, email=?, perfil=?, id_professor=?
-                    WHERE id_usuario=?
+                    UPDATE usuario SET nome=%s, email=%s, perfil=%s, id_professor=%s
+                    WHERE id_usuario=%s
                 """, (nome, email, perfil, id_professor, id_usuario))
             conexao.commit()
         flash("Usuário atualizado.", 'sucesso')
@@ -94,7 +94,7 @@ def registrar(app):
     def desativar_usuario(id_usuario):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("UPDATE usuario SET ativo=0 WHERE id_usuario=?", (id_usuario,))
+            cursor.execute("UPDATE usuario SET ativo=0 WHERE id_usuario=%s", (id_usuario,))
             conexao.commit()
         return redirect(url_for('listar_usuarios'))
 
@@ -103,6 +103,6 @@ def registrar(app):
     def ativar_usuario(id_usuario):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("UPDATE usuario SET ativo=1 WHERE id_usuario=?", (id_usuario,))
+            cursor.execute("UPDATE usuario SET ativo=1 WHERE id_usuario=%s", (id_usuario,))
             conexao.commit()
         return redirect(url_for('listar_usuarios'))

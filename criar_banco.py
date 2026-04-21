@@ -1,150 +1,157 @@
-import sqlite3
+import pymysql
+import os
+from urllib.parse import urlparse
+from werkzeug.security import generate_password_hash
+
+url = urlparse(os.environ['DATABASE_URL'])
+conn = pymysql.connect(
+    host=url.hostname,
+    user=url.username,
+    password=url.password or '',
+    database=url.path.lstrip('/'),
+    port=url.port or 3306,
+    charset='utf8mb4',
+)
+cursor = conn.cursor()
 
 comandos_sql = [
     """
     CREATE TABLE IF NOT EXISTS professor (
-        id_professor INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        cpf TEXT UNIQUE,
-        email TEXT,
-        telefone TEXT,
-        status TEXT DEFAULT 'ativo' CHECK (status IN ('ativo', 'inativo'))
-    )
+        id_professor INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(255) NOT NULL,
+        cpf VARCHAR(14) UNIQUE,
+        email VARCHAR(255),
+        telefone VARCHAR(20),
+        status VARCHAR(10) DEFAULT 'ativo' CHECK (status IN ('ativo', 'inativo'))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """,
     """
     CREATE TABLE IF NOT EXISTS turno (
-        id_turno INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL UNIQUE
-    )
+        id_turno INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(100) NOT NULL UNIQUE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """,
     """
     CREATE TABLE IF NOT EXISTS turma (
-        id_turma INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        serie TEXT NOT NULL,
-        id_turno INTEGER NOT NULL,
+        id_turma INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(100) NOT NULL,
+        serie VARCHAR(50) NOT NULL,
+        id_turno INT NOT NULL,
         FOREIGN KEY (id_turno) REFERENCES turno(id_turno),
         UNIQUE (nome, serie, id_turno)
-    )
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """,
     """
     CREATE TABLE IF NOT EXISTS disciplina (
-        id_disciplina INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL UNIQUE,
-        sigla TEXT NOT NULL UNIQUE,
-        cor TEXT NOT NULL,
-        carga_horaria_semanal INTEGER NOT NULL
-    )
+        id_disciplina INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(255) NOT NULL UNIQUE,
+        sigla VARCHAR(20) NOT NULL UNIQUE,
+        cor VARCHAR(20) NOT NULL,
+        carga_horaria_semanal INT NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """,
     """
     CREATE TABLE IF NOT EXISTS professor_disciplina (
-        id_professor INTEGER NOT NULL,
-        id_disciplina INTEGER NOT NULL,
+        id_professor INT NOT NULL,
+        id_disciplina INT NOT NULL,
         PRIMARY KEY (id_professor, id_disciplina),
         FOREIGN KEY (id_professor) REFERENCES professor(id_professor),
         FOREIGN KEY (id_disciplina) REFERENCES disciplina(id_disciplina)
-    )
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """,
     """
-    CREATE TABLE IF NOT EXISTS local (
-        id_local INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        tipo TEXT NOT NULL,
-        status TEXT DEFAULT 'ativo' CHECK (status IN ('ativo', 'inativo')),
-        UNIQUE(nome)
-    )
+    CREATE TABLE IF NOT EXISTS `local` (
+        id_local INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(255) NOT NULL UNIQUE,
+        tipo VARCHAR(50) NOT NULL,
+        status VARCHAR(10) DEFAULT 'ativo' CHECK (status IN ('ativo', 'inativo'))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """,
     """
     CREATE TABLE IF NOT EXISTS horario_aula (
-        id_horario INTEGER PRIMARY KEY AUTOINCREMENT,
-        hora_inicio TEXT NOT NULL,
-        hora_fim TEXT NOT NULL,
+        id_horario INT AUTO_INCREMENT PRIMARY KEY,
+        hora_inicio VARCHAR(10) NOT NULL,
+        hora_fim VARCHAR(10) NOT NULL,
+        eh_intervalo INT DEFAULT 0,
         UNIQUE(hora_inicio, hora_fim)
-    )
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """,
     """
     CREATE TABLE IF NOT EXISTS disponibilidade_professor (
-        id_disponibilidade INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_professor INTEGER NOT NULL,
-        dia_semana TEXT NOT NULL CHECK (dia_semana IN ('segunda', 'terca', 'quarta', 'quinta', 'sexta')),
-        id_horario INTEGER NOT NULL,
-        disponivel INTEGER DEFAULT 1 CHECK (disponivel IN (0, 1)),
+        id_disponibilidade INT AUTO_INCREMENT PRIMARY KEY,
+        id_professor INT NOT NULL,
+        dia_semana VARCHAR(10) NOT NULL CHECK (dia_semana IN ('segunda', 'terca', 'quarta', 'quinta', 'sexta')),
+        id_horario INT NOT NULL,
+        disponivel INT DEFAULT 1 CHECK (disponivel IN (0, 1)),
         FOREIGN KEY (id_professor) REFERENCES professor(id_professor),
         FOREIGN KEY (id_horario) REFERENCES horario_aula(id_horario),
         UNIQUE (id_professor, dia_semana, id_horario)
-    )
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """,
     """
     CREATE TABLE IF NOT EXISTS grade_curricular (
-        id_grade INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_turma INTEGER NOT NULL,
-        id_disciplina INTEGER NOT NULL,
-        aulas_semanais INTEGER NOT NULL,
+        id_grade INT AUTO_INCREMENT PRIMARY KEY,
+        id_turma INT NOT NULL,
+        id_disciplina INT NOT NULL,
+        aulas_semanais INT NOT NULL,
         FOREIGN KEY (id_turma) REFERENCES turma(id_turma),
         FOREIGN KEY (id_disciplina) REFERENCES disciplina(id_disciplina),
         UNIQUE (id_turma, id_disciplina)
-    )
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """,
     """
     CREATE TABLE IF NOT EXISTS alocacao (
-        id_alocacao INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_turma INTEGER NOT NULL,
-        id_disciplina INTEGER NOT NULL,
-        id_professor INTEGER NOT NULL,
-        id_local INTEGER NOT NULL,
-        dia_semana TEXT NOT NULL CHECK (dia_semana IN ('segunda', 'terca', 'quarta', 'quinta', 'sexta')),
-        id_horario INTEGER NOT NULL,
+        id_alocacao INT AUTO_INCREMENT PRIMARY KEY,
+        id_turma INT NOT NULL,
+        id_disciplina INT NOT NULL,
+        id_professor INT NOT NULL,
+        id_local INT NOT NULL,
+        dia_semana VARCHAR(10) NOT NULL CHECK (dia_semana IN ('segunda', 'terca', 'quarta', 'quinta', 'sexta')),
+        id_horario INT NOT NULL,
         FOREIGN KEY (id_turma) REFERENCES turma(id_turma),
         FOREIGN KEY (id_disciplina) REFERENCES disciplina(id_disciplina),
         FOREIGN KEY (id_professor) REFERENCES professor(id_professor),
-        FOREIGN KEY (id_local) REFERENCES local(id_local),
+        FOREIGN KEY (id_local) REFERENCES `local`(id_local),
         FOREIGN KEY (id_horario) REFERENCES horario_aula(id_horario),
         UNIQUE (id_professor, dia_semana, id_horario),
         UNIQUE (id_turma, dia_semana, id_horario),
         UNIQUE (id_local, dia_semana, id_horario)
-    )
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """,
     """
     CREATE TABLE IF NOT EXISTS usuario (
-        id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        senha_hash TEXT NOT NULL,
-        perfil TEXT NOT NULL CHECK (perfil IN ('diretor', 'secretaria', 'professor')),
-        id_professor INTEGER,
-        primeiro_login INTEGER DEFAULT 1 CHECK (primeiro_login IN (0, 1)),
-        ativo INTEGER DEFAULT 1 CHECK (ativo IN (0, 1)),
+        id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        senha_hash VARCHAR(512) NOT NULL,
+        perfil VARCHAR(20) NOT NULL CHECK (perfil IN ('diretor', 'secretaria', 'professor')),
+        id_professor INT,
+        primeiro_login INT DEFAULT 1 CHECK (primeiro_login IN (0, 1)),
+        ativo INT DEFAULT 1 CHECK (ativo IN (0, 1)),
         FOREIGN KEY (id_professor) REFERENCES professor(id_professor)
-    )
-    """
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    """,
 ]
-
-from werkzeug.security import generate_password_hash
-
-conexao = sqlite3.connect("escola_horarios.db")
-cursor = conexao.cursor()
-
-cursor.execute("PRAGMA foreign_keys = ON;")
 
 for comando in comandos_sql:
     cursor.execute(comando)
 
-cursor.execute("SELECT COUNT(*) FROM usuario")
-if cursor.fetchone()[0] == 0:
+cursor.execute("SELECT COUNT(*) AS total FROM usuario")
+if cursor.fetchone()['total'] == 0:
     seeds = [
         ('Diretor', 'diretor@escola.com', generate_password_hash('diretor123'), 'diretor', None),
         ('Secretaria', 'secretaria@escola.com', generate_password_hash('secretaria123'), 'secretaria', None),
     ]
     cursor.executemany("""
         INSERT INTO usuario (nome, email, senha_hash, perfil, id_professor, primeiro_login)
-        VALUES (?, ?, ?, ?, ?, 0)
+        VALUES (%s, %s, %s, %s, %s, 0)
     """, seeds)
     print("\nUsuários padrão criados:")
     print("  diretor@escola.com    / diretor123")
     print("  secretaria@escola.com / secretaria123")
     print("IMPORTANTE: Troque as senhas após o primeiro login!\n")
 
-conexao.commit()
-conexao.close()
+conn.commit()
+conn.close()
 
-print("Banco SQLite criado com sucesso!")
+print("Banco MySQL criado com sucesso!")

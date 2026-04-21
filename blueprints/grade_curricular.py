@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 from db import conectar
 from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
@@ -45,14 +45,14 @@ def registrar(app):
 
                     cursor.execute("""
                         SELECT 1 FROM grade_curricular
-                        WHERE id_turma = ? AND id_disciplina = ?
+                        WHERE id_turma = %s AND id_disciplina = %s
                     """, (id_turma, disciplina['id_disciplina']))
                     if cursor.fetchone():
                         repetidos += 1
                     else:
                         cursor.execute("""
                             INSERT INTO grade_curricular (id_turma, id_disciplina, aulas_semanais)
-                            VALUES (?, ?, ?)
+                            VALUES (%s, %s, %s)
                         """, (id_turma, disciplina['id_disciplina'], aulas_semanais))
                         inseridos += 1
 
@@ -82,7 +82,7 @@ def registrar(app):
     def listar_grades_curriculares(id_turno):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("SELECT * FROM turno WHERE id_turno = ?", (id_turno,))
+            cursor.execute("SELECT * FROM turno WHERE id_turno = %s", (id_turno,))
             turno = cursor.fetchone()
             cursor.execute("""
                 SELECT gc.id_grade, gc.id_turma, gc.id_disciplina, gc.aulas_semanais,
@@ -92,7 +92,7 @@ def registrar(app):
                 JOIN turma t ON gc.id_turma = t.id_turma
                 JOIN turno tr ON t.id_turno = tr.id_turno
                 JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
-                WHERE tr.id_turno = ?
+                WHERE tr.id_turno = %s
                 ORDER BY t.serie, t.nome, d.nome
             """, (id_turno,))
             registros = cursor.fetchall()
@@ -109,14 +109,14 @@ def registrar(app):
             cursor = conexao.cursor()
             cursor.execute("""
                 SELECT gc.*, t.id_turno FROM grade_curricular gc
-                JOIN turma t ON gc.id_turma = t.id_turma WHERE gc.id_grade = ?
+                JOIN turma t ON gc.id_turma = t.id_turma WHERE gc.id_grade = %s
             """, (id_grade,))
             grade_edicao = cursor.fetchone()
             if not grade_edicao:
                 return redirect(url_for('selecionar_turno_grades'))
 
             id_turno = grade_edicao['id_turno']
-            cursor.execute("SELECT * FROM turno WHERE id_turno = ?", (id_turno,))
+            cursor.execute("SELECT * FROM turno WHERE id_turno = %s", (id_turno,))
             turno = cursor.fetchone()
             cursor.execute("""
                 SELECT gc.id_grade, gc.id_turma, gc.id_disciplina, gc.aulas_semanais,
@@ -126,7 +126,7 @@ def registrar(app):
                 JOIN turma t ON gc.id_turma = t.id_turma
                 JOIN turno tr ON t.id_turno = tr.id_turno
                 JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
-                WHERE tr.id_turno = ? ORDER BY t.serie, t.nome, d.nome
+                WHERE tr.id_turno = %s ORDER BY t.serie, t.nome, d.nome
             """, (id_turno,))
             registros = cursor.fetchall()
             cursor.execute("""
@@ -155,12 +155,12 @@ def registrar(app):
                 cursor = conexao.cursor()
                 cursor.execute("""
                     UPDATE grade_curricular
-                    SET id_turma = ?, id_disciplina = ?, aulas_semanais = ?
-                    WHERE id_grade = ?
+                    SET id_turma = %s, id_disciplina = %s, aulas_semanais = %s
+                    WHERE id_grade = %s
                 """, (id_turma, id_disciplina, aulas_semanais, id_grade))
                 conexao.commit()
             return redirect(url_for('selecionar_turno_grades'))
-        except sqlite3.IntegrityError:
+        except pymysql.IntegrityError:
             flash("Já existe essa disciplina cadastrada para essa turma.", 'erro')
             return redirect(url_for('editar_grade_curricular', id_grade=id_grade))
 
@@ -169,7 +169,7 @@ def registrar(app):
     def deletar_grade_curricular(id_grade):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("DELETE FROM grade_curricular WHERE id_grade = ?", (id_grade,))
+            cursor.execute("DELETE FROM grade_curricular WHERE id_grade = %s", (id_grade,))
             conexao.commit()
         return redirect(url_for('selecionar_turno_grades'))
 

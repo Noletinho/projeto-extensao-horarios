@@ -5,6 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Comandos Essenciais
 
 ```bash
+# Configurar variável de ambiente obrigatória antes de qualquer comando
+export DATABASE_URL="mysql://usuario:senha@host:3306/banco"
+
 # Inicializar o banco de dados (apenas uma vez ou para recriar)
 python criar_banco.py
 
@@ -16,9 +19,17 @@ python rotas.py
 pip install -r requirements.txt
 ```
 
+## Variáveis de Ambiente
+
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `DATABASE_URL` | ✅ Sim | URL de conexão MySQL: `mysql://user:pass@host:3306/db` |
+| `SECRET_KEY` | Recomendada | Chave Flask para sessões (padrão hardcoded em dev) |
+| `PORT` | Deploy | Porta HTTP para Railway/Heroku (padrão: 5000) |
+
 ## Arquitetura
 
-Sistema de gerenciamento de horários escolares — Flask monolítico com renderização server-side via Jinja2 e banco SQLite.
+Sistema de gerenciamento de horários escolares — Flask monolítico com renderização server-side via Jinja2 e banco **MySQL**.
 
 ### Camadas
 
@@ -26,11 +37,11 @@ Sistema de gerenciamento de horários escolares — Flask monolítico com render
 |---------------|-----------------|
 | `rotas.py` | Ponto de entrada: cria o app Flask, registra todos os módulos de rotas e define a rota raiz `/` |
 | `blueprints/` | Um módulo por entidade; cada módulo exporta `registrar(app)` que define as rotas diretamente no app |
-| `db.py` | Único utilitário: `conectar()` retorna conexão SQLite com `row_factory = sqlite3.Row` e `PRAGMA foreign_keys = ON` |
-| `criar_banco.py` | Script de criação do schema (executar uma vez) |
+| `db.py` | Único utilitário: `conectar()` retorna `_Conn` wrapping PyMySQL com `RealDictCursor` |
+| `criar_banco.py` | Script de criação do schema MySQL (executar uma vez) |
 | `templates/` | Templates Jinja2; todos herdam de `base.html` exceto `relatorio.html` (layout de impressão) |
 | `static/css/style.css` | Folha de estilos global com variáveis CSS e componentes |
-| `escola_horarios.db` | Banco SQLite (ignorado no git) |
+| `Procfile` | Entry point para deploy (Railway/Heroku): `web: python rotas.py` |
 
 ### Módulos de Rotas (`blueprints/`)
 
@@ -48,7 +59,7 @@ Cada arquivo define uma função `registrar(app)` que registra rotas diretamente
 | `disponibilidade.py` | Disponibilidade do Professor + Grade |
 | `grade_curricular.py` | Grade Curricular |
 | `alocacao.py` | Alocação de Aulas |
-| `relatorio.py` | Relatório de Grade Horária |
+| `relatorio.py` | Relatório de Grade Horária + Horário do Professor (`/meu_horario`) |
 
 ### Modelo de Dados (ordem de dependência)
 
@@ -87,9 +98,17 @@ from db import conectar
 
 with conectar() as conexao:
     cursor = conexao.cursor()
-    cursor.execute("SELECT ... WHERE id = ?", (id,))  # sempre parâmetros posicionais
+    cursor.execute("SELECT ... WHERE id = %s", (id,))  # SEMPRE %s, nunca ?
     conexao.commit()  # apenas em INSERT/UPDATE/DELETE
 ```
+
+**Regras MySQL obrigatórias:**
+- Placeholder: `%s` (nunca `?` — isso é SQLite)
+- Erros de unicidade: capturar `pymysql.IntegrityError` (não `sqlite3.IntegrityError`)
+- Tabela `local` é palavra reservada MySQL — usar backticks `` `local` `` em todas as queries
+- COUNT queries: usar alias `SELECT COUNT(*) AS total` + `fetchone()['total']` (RealDictCursor não suporta índice numérico)
+- Multi-insert com conflito tolerado: usar `SAVEPOINT` + `ROLLBACK TO SAVEPOINT` dentro do loop (MySQL aborta a transação inteira em qualquer erro sem rollback)
+- Conexão fechada automaticamente pelo `_Conn.__exit__` ao sair do bloco `with`
 
 ## Personalização Visual
 
@@ -106,7 +125,25 @@ Todo template herda de `base.html`:
 
 Blocos disponíveis: `titulo`, `conteudo`, `estilos_extra` (CSS no `<head>`), `scripts_extra` (JS antes do `</body>`).
 
-### Tema Noturno
+### Tema Glassmorphism — Biblioteca
+
+O site usa fundo fixo de imagem (`static/img/biblioteca.jpg`) com overlay escuro `rgba(8,5,2,0.60)` via `body::before`. Todos os elementos de superfície (`.card`, `table`, `header`) têm `backdrop-filter: blur(14–20px)` com `background: rgba(...)` semitransparente.
+
+Paleta derivada da imagem (tons âmbar/sépia):
+
+| Variável | Valor | Uso |
+|----------|-------|-----|
+| `--cor-primaria` | `#c9a84c` | Títulos, thead, botão primário (dourado âmbar) |
+| `--cor-secundaria` | `#e8c97a` | Hover/foco |
+| `--cor-acento` | `#d4a843` | Botão de destaque |
+| `--cor-superficie` | `rgba(18,13,8,0.55)` | Cards, tabelas — translúcido |
+| `--cor-superficie-alt` | `rgba(28,20,10,0.60)` | Inputs, hover de rows |
+| `--cor-borda` | `rgba(201,168,76,0.22)` | Bordas (âmbar suave) |
+| `--cor-texto` | `#f0e8d8` | Texto principal (creme quente) |
+
+**Regra:** Nunca usar `background-color` sólido nos elementos de superfície — sempre `rgba(...)` para manter a transparência sobre a imagem de fundo.
+
+### Tema Noturno (legado — substituído)
 
 O site usa tema escuro por padrão. Todas as variáveis CSS são dark:
 
@@ -354,10 +391,54 @@ Inseridos somente se tabela `usuario` estiver vazia:
 - `GET/POST /meu_perfil` → editar próprio perfil (requer_login)
 - `GET / ` → index (requer_login)
 
-## Melhorias Futuras (Baixa Prioridade)
+## Paginação nas Listagens
 
-- **Paginação nas listagens** — professores, disciplinas e alocações podem crescer muito.
-- **Exportar relatório em PDF server-side** — o relatório já tem CSS `@media print`; `weasyprint` tornaria a exportação mais robusta.
+Implementada em `professores` e `disciplinas`: 20 itens por página, via `?pagina=N`.
+
+- Rotas: `LIMIT %s OFFSET %s` com `COUNT(*) AS total` para calcular `total_paginas`
+- Templates: bloco `{% if total_paginas is defined and total_paginas > 1 %}` com botões Anterior/Próxima
+- CSS: `.paginacao` + `.pag-info` em `style.css`
+- Modo edição (editar_professor / editar_disciplina) não pagina — exibe todos para o formulário inline
+
+## Exportação de Relatório em PDF
+
+Rota `GET /baixar_relatorio_pdf/<id_turno>` redireciona para o relatório com instrução de usar a impressão do navegador (Ctrl+P → Salvar como PDF). WeasyPrint foi removido — não funciona no Windows sem GTK runtime.
+
+## Máscara de CPF
+
+- **Diretor**: vê CPF formatado (`XXX.XXX.XXX-XX`) via filtro Jinja2 `{{ cpf|formatar_cpf }}`
+- **Secretaria**: vê `***.***.***-**` (mascarado)
+- Filtro `formatar_cpf` definido em `rotas.py` com `@app.template_filter`
+- Rotas `listar_professores` e `editar_professor` passam `pode_ver_cpf` (bool) ao template
+- No formulário de edição: secretaria vê campo desabilitado + `<input type="hidden">` para preservar o valor
+
+## Intervalo nos Horários
+
+- Coluna `eh_intervalo INTEGER DEFAULT 0` incluída diretamente na tabela `horario_aula` em `criar_banco.py`
+- Formulário de cadastro/edição tem checkbox "É um intervalo?" — quando marcado, oculta campos de hora via JS
+- Relatório: horários com `eh_intervalo=1` renderizam linha `<td colspan="dias×turmas">— INTERVALO —</td>` em vez de células por turma
+- Horários de intervalo não aparecem no select de alocação
+
+## Alocação Multi-Horário
+
+- Select `name="id_horarios" multiple` no formulário de cadastro
+- Backend usa `request.form.getlist('id_horarios')` e itera inserindo uma alocação por horário
+- Conflitos de IntegrityError são contados e reportados via flash sem abortar os demais inseridos
+
+## Horário do Professor (view-only)
+
+- Rota `GET /meu_horario` em `blueprints/relatorio.py`, decorator `@requer_login`
+- Apenas acessível para perfil `professor` com `id_professor` vinculado; outros perfis são redirecionados
+- Função helper `_montar_dados_professor(id_professor)` retorna grade filtrada por professor
+- Template standalone `templates/meu_horario.html` (não herda `base.html`), com botão imprimir
+- Link "Meu Horário" adicionado na nav do `base.html` para perfil professor
+
+## Deploy (Railway)
+
+1. Criar projeto no Railway e adicionar plugin MySQL
+2. Definir variáveis de ambiente: `DATABASE_URL` (auto-preenchida pelo Railway), `SECRET_KEY`
+3. Deploy via GitHub — Railway detecta `Procfile` automaticamente
+4. Após deploy, rodar `python criar_banco.py` uma vez no terminal do Railway para criar o schema
 
 ## Contexto do Projeto
 

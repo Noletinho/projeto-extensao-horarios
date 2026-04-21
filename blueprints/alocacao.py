@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 from db import conectar
 from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
@@ -20,7 +20,7 @@ def registrar(app):
             disciplinas = cursor.fetchall()
             cursor.execute("SELECT * FROM professor ORDER BY nome")
             professores = cursor.fetchall()
-            cursor.execute("SELECT * FROM local ORDER BY nome")
+            cursor.execute("SELECT * FROM `local` ORDER BY nome")
             locais = cursor.fetchall()
             cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
             horarios = cursor.fetchall()
@@ -31,24 +31,33 @@ def registrar(app):
                 id_professor = request.form.get('id_professor', '').strip()
                 id_local = request.form.get('id_local', '').strip()
                 dia_semana = request.form.get('dia_semana', '').strip()
-                id_horario = request.form.get('id_horario', '').strip()
+                ids_horarios = request.form.getlist('id_horarios')
 
-                if not all([id_turma, id_disciplina, id_professor, id_local, dia_semana, id_horario]):
-                    flash("Preencha todos os campos.", 'erro')
+                if not all([id_turma, id_disciplina, id_professor, id_local, dia_semana]) or not ids_horarios:
+                    flash("Preencha todos os campos e selecione ao menos um horário.", 'erro')
                     return render_template('cadastro_alocacao.html', turmas=turmas,
                                            disciplinas=disciplinas, professores=professores,
                                            locais=locais, horarios=horarios)
-                try:
-                    cursor.execute("""
-                        INSERT INTO alocacao
-                            (id_turma, id_disciplina, id_professor, id_local, dia_semana, id_horario)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    """, (id_turma, id_disciplina, id_professor, id_local, dia_semana, id_horario))
-                    conexao.commit()
+                conflitos = 0
+                inseridos = 0
+                for id_horario in ids_horarios:
+                    try:
+                        cursor.execute("SAVEPOINT sp_alocacao")
+                        cursor.execute("""
+                            INSERT INTO alocacao
+                                (id_turma, id_disciplina, id_professor, id_local, dia_semana, id_horario)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                        """, (id_turma, id_disciplina, id_professor, id_local, dia_semana, id_horario))
+                        cursor.execute("RELEASE SAVEPOINT sp_alocacao")
+                        inseridos += 1
+                    except pymysql.IntegrityError:
+                        cursor.execute("ROLLBACK TO SAVEPOINT sp_alocacao")
+                        conflitos += 1
+                conexao.commit()
+                if conflitos:
+                    flash(f"{conflitos} conflito(s) ignorado(s): professor, turma ou local já ocupado(s) no horário.", 'erro')
+                if inseridos:
                     return redirect(url_for('selecionar_turno_alocacoes'))
-                except sqlite3.IntegrityError:
-                    flash("Conflito de horário: professor, turma ou local já está ocupado nesse dia e horário.",
-                          'erro')
 
         return render_template('cadastro_alocacao.html', turmas=turmas,
                                disciplinas=disciplinas, professores=professores,
@@ -68,7 +77,7 @@ def registrar(app):
     def listar_alocacoes_turno(id_turno):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("SELECT * FROM turno WHERE id_turno = ?", (id_turno,))
+            cursor.execute("SELECT * FROM turno WHERE id_turno = %s", (id_turno,))
             turno = cursor.fetchone()
             cursor.execute("""
                 SELECT a.id_alocacao, a.id_turma, a.id_disciplina, a.id_professor,
@@ -82,9 +91,9 @@ def registrar(app):
                 JOIN turma t ON a.id_turma = t.id_turma
                 JOIN disciplina d ON a.id_disciplina = d.id_disciplina
                 JOIN professor p ON a.id_professor = p.id_professor
-                JOIN local l ON a.id_local = l.id_local
+                JOIN `local` l ON a.id_local = l.id_local
                 JOIN horario_aula h ON a.id_horario = h.id_horario
-                WHERE t.id_turno = ?
+                WHERE t.id_turno = %s
                 ORDER BY t.serie, t.nome,
                     CASE a.dia_semana
                         WHEN 'segunda' THEN 1 WHEN 'terca' THEN 2
@@ -106,14 +115,14 @@ def registrar(app):
             cursor = conexao.cursor()
             cursor.execute("""
                 SELECT a.*, t.id_turno FROM alocacao a
-                JOIN turma t ON a.id_turma = t.id_turma WHERE a.id_alocacao = ?
+                JOIN turma t ON a.id_turma = t.id_turma WHERE a.id_alocacao = %s
             """, (id_alocacao,))
             alocacao_edicao = cursor.fetchone()
             if not alocacao_edicao:
                 return redirect(url_for('selecionar_turno_alocacoes'))
 
             id_turno = alocacao_edicao['id_turno']
-            cursor.execute("SELECT * FROM turno WHERE id_turno = ?", (id_turno,))
+            cursor.execute("SELECT * FROM turno WHERE id_turno = %s", (id_turno,))
             turno = cursor.fetchone()
             cursor.execute("""
                 SELECT a.id_alocacao, a.id_turma, a.id_disciplina, a.id_professor,
@@ -127,9 +136,9 @@ def registrar(app):
                 JOIN turma t ON a.id_turma = t.id_turma
                 JOIN disciplina d ON a.id_disciplina = d.id_disciplina
                 JOIN professor p ON a.id_professor = p.id_professor
-                JOIN local l ON a.id_local = l.id_local
+                JOIN `local` l ON a.id_local = l.id_local
                 JOIN horario_aula h ON a.id_horario = h.id_horario
-                WHERE t.id_turno = ?
+                WHERE t.id_turno = %s
                 ORDER BY t.serie, t.nome,
                     CASE a.dia_semana
                         WHEN 'segunda' THEN 1 WHEN 'terca' THEN 2
@@ -147,7 +156,7 @@ def registrar(app):
             disciplinas = cursor.fetchall()
             cursor.execute("SELECT * FROM professor ORDER BY nome")
             professores = cursor.fetchall()
-            cursor.execute("SELECT * FROM local ORDER BY nome")
+            cursor.execute("SELECT * FROM `local` ORDER BY nome")
             locais = cursor.fetchall()
             cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
             horarios = cursor.fetchall()
@@ -174,14 +183,14 @@ def registrar(app):
                 cursor = conexao.cursor()
                 cursor.execute("""
                     UPDATE alocacao
-                    SET id_turma = ?, id_disciplina = ?, id_professor = ?,
-                        id_local = ?, dia_semana = ?, id_horario = ?
-                    WHERE id_alocacao = ?
+                    SET id_turma = %s, id_disciplina = %s, id_professor = %s,
+                        id_local = %s, dia_semana = %s, id_horario = %s
+                    WHERE id_alocacao = %s
                 """, (id_turma, id_disciplina, id_professor, id_local,
                       dia_semana, id_horario, id_alocacao))
                 conexao.commit()
             return redirect(url_for('selecionar_turno_alocacoes'))
-        except sqlite3.IntegrityError:
+        except pymysql.IntegrityError:
             flash("Conflito de horário: professor, turma ou local já está ocupado nesse dia e horário.",
                   'erro')
             return redirect(url_for('editar_alocacao', id_alocacao=id_alocacao))
@@ -191,7 +200,7 @@ def registrar(app):
     def deletar_alocacao(id_alocacao):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("DELETE FROM alocacao WHERE id_alocacao = ?", (id_alocacao,))
+            cursor.execute("DELETE FROM alocacao WHERE id_alocacao = %s", (id_alocacao,))
             conexao.commit()
         return redirect(url_for('selecionar_turno_alocacoes'))
 

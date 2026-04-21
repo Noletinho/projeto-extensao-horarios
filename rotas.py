@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 import auth
 
@@ -8,7 +9,7 @@ from blueprints import (
 )
 
 app = Flask(__name__)
-app.secret_key = 'escola_horarios_chave_secreta_2024'
+app.secret_key = os.environ.get('SECRET_KEY', 'escola_horarios_chave_secreta_2024')
 
 autenticacao.registrar(app)
 professores.registrar(app)
@@ -30,5 +31,15 @@ def injetar_usuario():
     return dict(usuario_atual=auth.usuario_logado())
 
 
+@app.template_filter('formatar_cpf')
+def formatar_cpf(cpf):
+    if not cpf:
+        return '—'
+    c = str(cpf)
+    if len(c) == 11:
+        return f'{c[:3]}.{c[3:6]}.{c[6:9]}-{c[9:]}'
+    return c
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)

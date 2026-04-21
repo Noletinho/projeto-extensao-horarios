@@ -42,6 +42,18 @@
     </tbody>
 </table>
 
+{% if total_paginas is defined and total_paginas > 1 %}
+<div class="paginacao mt-2">
+    {% if pagina > 1 %}
+    <a href="{{ url_for('listar_disciplinas', pagina=pagina-1) }}" class="btn btn-secundario">← Anterior</a>
+    {% endif %}
+    <span class="pag-info">Página {{ pagina }} de {{ total_paginas }} — {{ total }} registros</span>
+    {% if pagina < total_paginas %}
+    <a href="{{ url_for('listar_disciplinas', pagina=pagina+1) }}" class="btn btn-secundario">Próxima →</a>
+    {% endif %}
+</div>
+{% endif %}
+
 {% if disciplina_edicao %}
 <hr>
 <div class="card mt-2" id="form-edicao">
@@ -95,104 +107,14 @@
 {% endblock %}
 
 {% block scripts_extra %}
-<script type="module">
-import { animate } from "https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm";
-
-const MAPA = [
-    { chaves:['mat','matematica','calculo','algebra','estatistica','geometria'],
-      icone:'📐', particulas:['∑','∫','π','√','∞','²','±','x²'] },
-    { chaves:['fis','fisica'],
-      icone:'⚡', particulas:['⚡','λ','Ω','F=ma','v²','∆E'] },
-    { chaves:['qui','quimica'],
-      icone:'⚗️', particulas:['H₂O','CO₂','Na','Fe','O₂','⚗️'] },
-    { chaves:['bio','biologia'],
-      icone:'🧬', particulas:['🍃','🔬','🦠','🌱','🧬'] },
-    { chaves:['cie','ciencias'],
-      icone:'🔬', particulas:['⚗️','🔬','💡','🌡️','🧪'] },
-    { chaves:['geo','geografia'],
-      icone:'🌍', particulas:['🌍','⛰️','🧭','🌊','🗺️'] },
-    { chaves:['hist','historia'],
-      icone:'🏛️', particulas:['📜','🏺','⚔️','👑','🏛️'] },
-    { chaves:['port','portugues','literatura','redacao','escrita'],
-      icone:'📖', particulas:['📖','✍️','"','📝','A','B'] },
-    { chaves:['ing','ingles','english'],
-      icone:'🌐', particulas:['🌐','A','B','✈️','📡','Hi!'] },
-    { chaves:['esp','espanhol'],
-      icone:'🌮', particulas:['🌍','A','¡','🎭','🌹'] },
-    { chaves:['art','artes','artistica'],
-      icone:'🎨', particulas:['🎨','🖌️','✏️','🖼️','🎭'] },
-    { chaves:['edf','educacao fisica','ed fis'],
-      icone:'⚽', particulas:['⚽','🏃','🏋️','🏅','🤸','🏀'] },
-    { chaves:['fil','filosofia'],
-      icone:'💭', particulas:['💭','⚖️','📜','💡','🤔'] },
-    { chaves:['soc','sociologia'],
-      icone:'👥', particulas:['👥','🤝','🏙️','📊','🌐'] },
-    { chaves:['mus','musica'],
-      icone:'🎵', particulas:['🎵','🎸','🎹','♪','🎶'] },
-    { chaves:['inf','informatica','computacao','tecnologia'],
-      icone:'💻', particulas:['💻','{ }','<>','⌨️','🖥️'] },
-    { chaves:['rel','religiao','ensino religioso'],
-      icone:'☮️', particulas:['☮️','✨','🕊️','🌟','💫'] },
-];
-
-function norm(t) {
-    return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'');
-}
-
-function obterIcone(nome, sigla) {
-    const texto = norm(nome + ' ' + sigla);
-    for (const item of MAPA) {
-        if (item.chaves.some(c => texto.includes(norm(c)))) return item;
-    }
-    return { icone:'📚', particulas:['📚','✏️','📝','🎓','🔖'] };
-}
-
-function spawnParticulas(particulas, rect) {
-    for (let i = 0; i < 6; i++) {
-        const el = document.createElement('span');
-        el.textContent = particulas[Math.floor(Math.random() * particulas.length)];
-        el.className = 'particula-hover';
-        el.style.left = (rect.left + Math.random() * rect.width) + 'px';
-        el.style.top  = (rect.top  + rect.height / 2) + 'px';
-        el.style.fontSize = (11 + Math.random() * 9) + 'px';
-        document.body.appendChild(el);
-        animate(el,
-            { y:[0, -(40 + Math.random() * 50)], opacity:[0.9, 0], scale:[1, 0.5] },
-            { duration: 0.85 + Math.random() * 0.5, delay: i * 0.07, ease:'easeOut' }
-        ).then(() => el.remove());
-    }
-}
-
+<script>
 document.querySelectorAll('tbody tr[data-sigla]').forEach(tr => {
-    const info = obterIcone(tr.dataset.nome || '', tr.dataset.sigla || '');
     const cor = tr.dataset.cor;
-
-    const td = tr.querySelector('td:first-child');
-    if (td) {
-        const icone = document.createElement('span');
-        icone.className = 'icone-linha';
-        icone.textContent = info.icone;
-        td.insertBefore(icone, td.firstChild);
-    }
-
-    /* Borda lateral colorida com a cor da disciplina */
     if (cor) {
-        tr.style.setProperty('--cor-linha', cor);
         tr.style.transition = 'box-shadow 0.15s';
-        tr.addEventListener('mouseenter', () => {
-            tr.style.boxShadow = `inset 3px 0 0 ${cor}`;
-        });
-        tr.addEventListener('mouseleave', () => {
-            tr.style.boxShadow = '';
-        });
+        tr.addEventListener('mouseenter', () => { tr.style.boxShadow = `inset 3px 0 0 ${cor}`; });
+        tr.addEventListener('mouseleave', () => { tr.style.boxShadow = ''; });
     }
-
-    let timer;
-    tr.addEventListener('mouseenter', () => {
-        clearTimeout(timer);
-        timer = setTimeout(() => spawnParticulas(info.particulas, tr.getBoundingClientRect()), 120);
-    });
-    tr.addEventListener('mouseleave', () => clearTimeout(timer));
 });
 </script>
 

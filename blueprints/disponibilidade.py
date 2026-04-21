@@ -33,13 +33,13 @@ def registrar(app):
                         for id_horario in horarios_marcados:
                             cursor.execute("""
                                 SELECT 1 FROM disponibilidade_professor
-                                WHERE id_professor = ? AND dia_semana = ? AND id_horario = ?
+                                WHERE id_professor = %s AND dia_semana = %s AND id_horario = %s
                             """, (id_professor, dia, id_horario))
                             if not cursor.fetchone():
                                 cursor.execute("""
                                     INSERT INTO disponibilidade_professor
                                         (id_professor, dia_semana, id_horario, disponivel)
-                                    VALUES (?, ?, ?, ?)
+                                    VALUES (%s, %s, %s, %s)
                                 """, (id_professor, dia, id_horario, disponivel))
                                 inseridos += 1
                     conexao.commit()
@@ -91,7 +91,7 @@ def registrar(app):
             professores = cursor.fetchall()
             cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
             horarios = cursor.fetchall()
-            cursor.execute("SELECT * FROM disponibilidade_professor WHERE id_disponibilidade = ?",
+            cursor.execute("SELECT * FROM disponibilidade_professor WHERE id_disponibilidade = %s",
                            (id_disponibilidade,))
             disponibilidade_edicao = cursor.fetchone()
         return render_template('disponibilidade.html',
@@ -150,13 +150,13 @@ def registrar(app):
     def editar_disponibilidade_dia(id_professor, dia_semana):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("SELECT * FROM professor WHERE id_professor = ?", (id_professor,))
+            cursor.execute("SELECT * FROM professor WHERE id_professor = %s", (id_professor,))
             professor = cursor.fetchone()
             cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
             horarios = cursor.fetchall()
             cursor.execute("""
                 SELECT id_horario FROM disponibilidade_professor
-                WHERE id_professor = ? AND dia_semana = ? AND disponivel = 1
+                WHERE id_professor = %s AND dia_semana = %s AND disponivel = 1
             """, (id_professor, dia_semana))
             horarios_selecionados = [row['id_horario'] for row in cursor.fetchall()]
         return render_template('editar_disponibilidade_dia.html',
@@ -176,8 +176,8 @@ def registrar(app):
                 cursor = conexao.cursor()
                 cursor.execute("""
                     UPDATE disponibilidade_professor
-                    SET id_professor = ?, dia_semana = ?, id_horario = ?, disponivel = ?
-                    WHERE id_disponibilidade = ?
+                    SET id_professor = %s, dia_semana = %s, id_horario = %s, disponivel = %s
+                    WHERE id_disponibilidade = %s
                 """, (id_professor, dia_semana, id_horario, disponivel, id_disponibilidade))
                 conexao.commit()
             return redirect(url_for('grade_disponibilidades'))
@@ -194,13 +194,13 @@ def registrar(app):
             cursor = conexao.cursor()
             cursor.execute("""
                 DELETE FROM disponibilidade_professor
-                WHERE id_professor = ? AND dia_semana = ?
+                WHERE id_professor = %s AND dia_semana = %s
             """, (id_professor, dia_semana))
             for id_horario in horarios_marcados:
                 cursor.execute("""
                     INSERT INTO disponibilidade_professor
                         (id_professor, dia_semana, id_horario, disponivel)
-                    VALUES (?, ?, ?, 1)
+                    VALUES (%s, %s, %s, 1)
                 """, (id_professor, dia_semana, id_horario))
             conexao.commit()
         return redirect(url_for('grade_disponibilidades'))
@@ -211,7 +211,7 @@ def registrar(app):
         with conectar() as conexao:
             cursor = conexao.cursor()
             cursor.execute("""
-                DELETE FROM disponibilidade_professor WHERE id_disponibilidade = ?
+                DELETE FROM disponibilidade_professor WHERE id_disponibilidade = %s
             """, (id_disponibilidade,))
             conexao.commit()
         return redirect(url_for('listar_disponibilidade_professor'))

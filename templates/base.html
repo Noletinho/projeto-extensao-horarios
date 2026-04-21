@@ -8,12 +8,12 @@
     {% block estilos_extra %}{% endblock %}
 </head>
 <body>
-    <div id="fundo-estrelas" class="no-print" aria-hidden="true"></div>
     <header class="no-print">
         <h1><a href="{{ url_for('index') }}" style="color:inherit;text-decoration:none;">Sistema de Horários</a></h1>
         <nav>
             {% if usuario_atual %}
                 {% if usuario_atual['perfil'] == 'professor' %}
+                    <a href="{{ url_for('meu_horario') }}">Meu Horário</a>
                     <a href="{{ url_for('selecionar_turno_relatorio') }}">Relatório</a>
                     <a href="{{ url_for('meu_perfil') }}">Meu Perfil</a>
                 {% else %}
@@ -73,36 +73,5 @@
             { delay: stagger(0.05), duration: 0.28, ease: 'easeOut' });
     </script>
 
-    <!-- Campo Estelar Suave -->
-    <script>
-    (function() {
-        var container = document.getElementById('fundo-estrelas');
-        if (!container) return;
-        var W = window.innerWidth, H = window.innerHeight;
-        var total = Math.round((W * H) / 5800);
-        total = Math.max(60, Math.min(total, 220));
-        for (var i = 0; i < total; i++) {
-            var s = document.createElement('div');
-            s.className = 'estrela';
-            var sz = 0.8 + Math.random() * 1.6;
-            s.style.width  = sz + 'px';
-            s.style.height = sz + 'px';
-            s.style.left = (Math.random() * 100) + '%';
-            s.style.top  = (Math.random() * 100) + '%';
-            var dur  = 22 + Math.random() * 28;
-            var dx   = (Math.random() - 0.5) * 18;
-            var dy   = (Math.random() - 0.5) * 18;
-            var opA  = (0.25 + Math.random() * 0.45).toFixed(2);
-            var opB  = (parseFloat(opA) + 0.15 + Math.random() * 0.2).toFixed(2);
-            s.style.setProperty('--dur', dur + 's');
-            s.style.setProperty('--dx',  dx  + 'px');
-            s.style.setProperty('--dy',  dy  + 'px');
-            s.style.setProperty('--op-a', opA);
-            s.style.setProperty('--op-b', opB);
-            s.style.animationDelay = '-' + (Math.random() * dur).toFixed(2) + 's';
-            container.appendChild(s);
-        }
-    })();
-    </script>
 </body>
 </html>

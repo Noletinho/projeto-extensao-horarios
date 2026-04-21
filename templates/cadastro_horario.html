@@ -3,20 +3,28 @@
 
 {% block conteudo %}
 <div class="cabecalho-pagina">
-    <a href="{{ url_for('listar_horarios') }}" class="btn btn-secundario">← Voltar</a>
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Voltar</a>
     <h1>Cadastrar Horário de Aula</h1>
 </div>
 
 <div class="layout-duplo">
     <div class="card">
-        <form method="POST" action="{{ url_for('salvar_horario') }}">
+        <form method="POST" action="{{ url_for('salvar_horario') }}" id="form-horario">
             <div class="form-grupo">
-                <label>Hora de Início <span style="color:var(--cor-erro)">*</span></label>
-                <input type="time" name="hora_inicio" required>
+                <label>
+                    <input type="checkbox" name="eh_intervalo" id="chk-intervalo" onchange="toggleHoras()">
+                    Este horário é um intervalo
+                </label>
             </div>
-            <div class="form-grupo">
-                <label>Hora de Fim <span style="color:var(--cor-erro)">*</span></label>
-                <input type="time" name="hora_fim" required>
+            <div id="campos-hora">
+                <div class="form-grupo">
+                    <label>Hora de Início <span style="color:var(--cor-erro)">*</span></label>
+                    <input type="time" name="hora_inicio" id="hora_inicio">
+                </div>
+                <div class="form-grupo">
+                    <label>Hora de Fim <span style="color:var(--cor-erro)">*</span></label>
+                    <input type="time" name="hora_fim" id="hora_fim">
+                </div>
             </div>
             <button type="submit">Salvar</button>
         </form>
@@ -27,13 +35,14 @@
         {% if horarios %}
         <table class="tabela-lateral">
             <thead>
-                <tr><th>Início</th><th>Fim</th></tr>
+                <tr><th>Início</th><th>Fim</th><th>Tipo</th></tr>
             </thead>
             <tbody>
                 {% for h in horarios %}
                 <tr>
-                    <td>{{ h['hora_inicio'] }}</td>
-                    <td>{{ h['hora_fim'] }}</td>
+                    <td>{% if h['eh_intervalo'] %}—{% else %}{{ h['hora_inicio'] }}{% endif %}</td>
+                    <td>{% if h['eh_intervalo'] %}—{% else %}{{ h['hora_fim'] }}{% endif %}</td>
+                    <td>{% if h['eh_intervalo'] %}<span class="badge badge-inativo">Intervalo</span>{% else %}Aula{% endif %}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -43,4 +52,17 @@
         {% endif %}
     </div>
 </div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+function toggleHoras() {
+    const isIntervalo = document.getElementById('chk-intervalo').checked;
+    const campos = document.getElementById('campos-hora');
+    campos.style.display = isIntervalo ? 'none' : '';
+    document.getElementById('hora_inicio').required = !isIntervalo;
+    document.getElementById('hora_fim').required = !isIntervalo;
+}
+</script>
 {% endblock %}

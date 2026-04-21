@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 from db import conectar
 from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
@@ -35,11 +35,11 @@ def registrar(app):
                 try:
                     cursor.execute("""
                         INSERT INTO professor_disciplina (id_professor, id_disciplina)
-                        VALUES (?, ?)
+                        VALUES (%s, %s)
                     """, (id_professor, id_disciplina))
                     conexao.commit()
                     return redirect(url_for('listar_professores_disciplinas'))
-                except sqlite3.IntegrityError:
+                except pymysql.IntegrityError:
                     flash("Essa relação entre professor e disciplina já existe.", 'erro')
                     conexao.rollback()
 
@@ -86,7 +86,7 @@ def registrar(app):
             disciplinas = cursor.fetchall()
             cursor.execute("""
                 SELECT * FROM professor_disciplina
-                WHERE id_professor = ? AND id_disciplina = ?
+                WHERE id_professor = %s AND id_disciplina = %s
             """, (id_professor, id_disciplina))
             professor_disciplina_edicao = cursor.fetchone()
         return render_template('professor_disciplina.html',
@@ -107,8 +107,8 @@ def registrar(app):
             cursor = conexao.cursor()
             cursor.execute("""
                 UPDATE professor_disciplina
-                SET id_professor = ?, id_disciplina = ?
-                WHERE id_professor = ? AND id_disciplina = ?
+                SET id_professor = %s, id_disciplina = %s
+                WHERE id_professor = %s AND id_disciplina = %s
             """, (id_professor, id_disciplina, id_professor_antigo, id_disciplina_antiga))
             conexao.commit()
         return redirect(url_for('listar_professores_disciplinas'))
@@ -120,7 +120,7 @@ def registrar(app):
             cursor = conexao.cursor()
             cursor.execute("""
                 DELETE FROM professor_disciplina
-                WHERE id_professor = ? AND id_disciplina = ?
+                WHERE id_professor = %s AND id_disciplina = %s
             """, (id_professor, id_disciplina))
             conexao.commit()
         return redirect(url_for('listar_professores_disciplinas'))

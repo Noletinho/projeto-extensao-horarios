@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 from db import conectar
 from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
@@ -11,7 +11,7 @@ def registrar(app):
     def cadastrar_local():
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("SELECT * FROM local ORDER BY nome")
+            cursor.execute("SELECT * FROM `local` ORDER BY nome")
             locais = cursor.fetchall()
         return render_template('cadastro_local.html', locais=locais)
 
@@ -31,10 +31,10 @@ def registrar(app):
         try:
             with conectar() as conexao:
                 cursor = conexao.cursor()
-                cursor.execute("INSERT INTO local (nome, tipo) VALUES (?, ?)", (nome, tipo))
+                cursor.execute("INSERT INTO `local` (nome, tipo) VALUES (%s, %s)", (nome, tipo))
                 conexao.commit()
             return redirect(url_for('listar_locais'))
-        except sqlite3.IntegrityError:
+        except pymysql.IntegrityError:
             flash("Já existe um local com esse nome.", 'erro')
             return redirect(url_for('cadastrar_local'))
 
@@ -43,7 +43,7 @@ def registrar(app):
     def listar_locais():
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("SELECT * FROM local ORDER BY nome")
+            cursor.execute("SELECT * FROM `local` ORDER BY nome")
             locais = cursor.fetchall()
         return render_template('locais.html', locais=locais, local_edicao=None)
 
@@ -52,9 +52,9 @@ def registrar(app):
     def editar_local(id_local):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute('SELECT * FROM local ORDER BY nome')
+            cursor.execute('SELECT * FROM `local` ORDER BY nome')
             locais = cursor.fetchall()
-            cursor.execute('SELECT * FROM local WHERE id_local = ?', (id_local,))
+            cursor.execute('SELECT * FROM `local` WHERE id_local = %s', (id_local,))
             local_edicao = cursor.fetchone()
         return render_template('locais.html', locais=locais, local_edicao=local_edicao)
 
@@ -72,8 +72,8 @@ def registrar(app):
         with conectar() as conexao:
             cursor = conexao.cursor()
             cursor.execute("""
-                UPDATE local SET nome = ?, tipo = ?, status = ?
-                WHERE id_local = ?
+                UPDATE `local` SET nome = %s, tipo = %s, status = %s
+                WHERE id_local = %s
             """, (nome, tipo, status, id_local))
             conexao.commit()
         return redirect(url_for('listar_locais'))
@@ -83,6 +83,6 @@ def registrar(app):
     def deletar_local(id_local):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute('DELETE FROM local WHERE id_local = ?', (id_local,))
+            cursor.execute('DELETE FROM `local` WHERE id_local = %s', (id_local,))
             conexao.commit()
         return redirect(url_for('listar_locais'))

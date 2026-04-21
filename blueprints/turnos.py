@@ -1,4 +1,4 @@
-import sqlite3
+import pymysql
 from db import conectar
 from auth import requer_perfil
 from flask import render_template, request, redirect, url_for, flash
@@ -27,10 +27,10 @@ def registrar(app):
         try:
             with conectar() as conexao:
                 cursor = conexao.cursor()
-                cursor.execute("INSERT INTO turno (nome) VALUES (?)", (nome,))
+                cursor.execute("INSERT INTO turno (nome) VALUES (%s)", (nome,))
                 conexao.commit()
             return redirect(url_for('listar_turnos'))
-        except sqlite3.IntegrityError:
+        except pymysql.IntegrityError:
             flash("Esse turno já está cadastrado.", 'erro')
             return redirect(url_for('cadastrar_turno'))
 
@@ -50,7 +50,7 @@ def registrar(app):
             cursor = conexao.cursor()
             cursor.execute('SELECT * FROM turno ORDER BY nome')
             turnos = cursor.fetchall()
-            cursor.execute('SELECT * FROM turno WHERE id_turno = ?', (id_turno,))
+            cursor.execute('SELECT * FROM turno WHERE id_turno = %s', (id_turno,))
             turno_edicao = cursor.fetchone()
         return render_template('turnos.html', turnos=turnos, turno_edicao=turno_edicao)
 
@@ -65,7 +65,7 @@ def registrar(app):
 
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute("UPDATE turno SET nome = ? WHERE id_turno = ?", (nome, id_turno))
+            cursor.execute("UPDATE turno SET nome = %s WHERE id_turno = %s", (nome, id_turno))
             conexao.commit()
         return redirect(url_for('listar_turnos'))
 
@@ -74,6 +74,6 @@ def registrar(app):
     def deletar_turno(id_turno):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute('DELETE FROM turno WHERE id_turno = ?', (id_turno,))
+            cursor.execute('DELETE FROM turno WHERE id_turno = %s', (id_turno,))
             conexao.commit()
         return redirect(url_for('listar_turnos'))

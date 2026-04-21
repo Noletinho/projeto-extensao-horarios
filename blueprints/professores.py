@@ -1,6 +1,6 @@
-import sqlite3
+import pymysql
 from db import conectar
-from auth import requer_perfil
+from auth import requer_perfil, usuario_logado
 from flask import render_template, request, redirect, url_for, flash
 
 
@@ -35,22 +35,31 @@ def registrar(app):
                 cursor = conexao.cursor()
                 cursor.execute("""
                     INSERT INTO professor (nome, cpf, email, telefone)
-                    VALUES (?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s)
                 """, (nome, cpf or None, email, telefone))
                 conexao.commit()
             return redirect(url_for('listar_professores'))
-        except sqlite3.IntegrityError:
+        except pymysql.IntegrityError:
             flash("CPF já cadastrado.", 'erro')
             return redirect(url_for('cadastrar_professor'))
 
     @app.route('/professores')
     @requer_perfil('diretor', 'secretaria')
     def listar_professores():
+        pagina = request.args.get('pagina', 1, type=int)
+        por_pagina = 20
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute('SELECT * FROM professor ORDER BY nome')
+            cursor.execute('SELECT COUNT(*) AS total FROM professor')
+            total = cursor.fetchone()['total']
+            cursor.execute('SELECT * FROM professor ORDER BY nome LIMIT %s OFFSET %s',
+                           (por_pagina, (pagina - 1) * por_pagina))
             professores = cursor.fetchall()
-        return render_template('professores.html', professores=professores)
+        total_paginas = max(1, (total + por_pagina - 1) // por_pagina)
+        pode_ver_cpf = usuario_logado()['perfil'] == 'diretor'
+        return render_template('professores.html', professores=professores,
+                               pagina=pagina, total_paginas=total_paginas, total=total,
+                               pode_ver_cpf=pode_ver_cpf)
 
     @app.route('/editar_professor/<int:id_professor>')
     @requer_perfil('diretor', 'secretaria')
@@ -59,9 +68,11 @@ def registrar(app):
             cursor = conexao.cursor()
             cursor.execute('SELECT * FROM professor ORDER BY nome')
             professores = cursor.fetchall()
-            cursor.execute('SELECT * FROM professor WHERE id_professor = ?', (id_professor,))
+            cursor.execute('SELECT * FROM professor WHERE id_professor = %s', (id_professor,))
             professor_edicao = cursor.fetchone()
-        return render_template('professores.html', professores=professores, professor_edicao=professor_edicao)
+        pode_ver_cpf = usuario_logado()['perfil'] == 'diretor'
+        return render_template('professores.html', professores=professores,
+                               professor_edicao=professor_edicao, pode_ver_cpf=pode_ver_cpf)
 
     @app.route('/atualizar_professor/<int:id_professor>', methods=['POST'])
     @requer_perfil('diretor', 'secretaria')
@@ -83,8 +94,8 @@ def registrar(app):
             cursor = conexao.cursor()
             cursor.execute("""
                 UPDATE professor
-                SET nome = ?, cpf = ?, email = ?, telefone = ?, status = ?
-                WHERE id_professor = ?
+                SET nome = %s, cpf = %s, email = %s, telefone = %s, status = %s
+                WHERE id_professor = %s
             """, (nome, cpf or None, email, telefone, status, id_professor))
             conexao.commit()
         return redirect(url_for('listar_professores'))
@@ -94,6 +105,6 @@ def registrar(app):
     def deletar_professor(id_professor):
         with conectar() as conexao:
             cursor = conexao.cursor()
-            cursor.execute('DELETE FROM professor WHERE id_professor = ?', (id_professor,))
+            cursor.execute('DELETE FROM professor WHERE id_professor = %s', (id_professor,))
             conexao.commit()
         return redirect(url_for('listar_professores'))

@@ -13,14 +13,16 @@
         <tr>
             <th>Hora Início</th>
             <th>Hora Fim</th>
+            <th>Tipo</th>
             <th>Ações</th>
         </tr>
     </thead>
     <tbody>
         {% for horario in horarios %}
-        <tr data-inicio="{{ horario['hora_inicio'] }}">
-            <td>{{ horario['hora_inicio'] }}</td>
-            <td>{{ horario['hora_fim'] }}</td>
+        <tr>
+            <td>{% if horario['eh_intervalo'] %}—{% else %}{{ horario['hora_inicio'] }}{% endif %}</td>
+            <td>{% if horario['eh_intervalo'] %}—{% else %}{{ horario['hora_fim'] }}{% endif %}</td>
+            <td>{% if horario['eh_intervalo'] %}<span class="badge badge-inativo">Intervalo</span>{% else %}Aula{% endif %}</td>
             <td>
                 <div class="flex-linha">
                     <a href="{{ url_for('editar_horario', id_horario=horario['id_horario']) }}#form-edicao" class="btn btn-secundario">Editar</a>
@@ -40,12 +42,26 @@
     <h2>Editar Horário</h2>
     <form method="POST" action="{{ url_for('atualizar_horario', id_horario=horario_edicao['id_horario']) }}">
         <div class="form-grupo">
-            <label>Hora Início:</label>
-            <input type="time" name="hora_inicio" value="{{ horario_edicao['hora_inicio'] }}" required>
+            <label>
+                <input type="checkbox" name="eh_intervalo" id="chk-edit-intervalo"
+                    {% if horario_edicao['eh_intervalo'] %}checked{% endif %}
+                    onchange="toggleHorasEdit()">
+                Este horário é um intervalo
+            </label>
         </div>
-        <div class="form-grupo">
-            <label>Hora Fim:</label>
-            <input type="time" name="hora_fim" value="{{ horario_edicao['hora_fim'] }}" required>
+        <div id="campos-hora-edit" {% if horario_edicao['eh_intervalo'] %}style="display:none"{% endif %}>
+            <div class="form-grupo">
+                <label>Hora Início:</label>
+                <input type="time" name="hora_inicio" id="hora_inicio_edit"
+                    value="{% if not horario_edicao['eh_intervalo'] %}{{ horario_edicao['hora_inicio'] }}{% endif %}"
+                    {% if not horario_edicao['eh_intervalo'] %}required{% endif %}>
+            </div>
+            <div class="form-grupo">
+                <label>Hora Fim:</label>
+                <input type="time" name="hora_fim" id="hora_fim_edit"
+                    value="{% if not horario_edicao['eh_intervalo'] %}{{ horario_edicao['hora_fim'] }}{% endif %}"
+                    {% if not horario_edicao['eh_intervalo'] %}required{% endif %}>
+            </div>
         </div>
         <button type="submit">Atualizar</button>
     </form>
@@ -55,48 +71,14 @@
 {% endblock %}
 
 {% block scripts_extra %}
-<script type="module">
-import { animate } from "https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm";
-
-function iconeHorario(horaStr) {
-    const hora = parseInt((horaStr || '00').split(':')[0]);
-    if (hora < 7)  return { icone:'🌙', particulas:['🌙','⭐','🌟','🕐','✨'] };
-    if (hora < 12) return { icone:'☀️', particulas:['☀️','🌤️','⏰','🕐','☕'] };
-    if (hora < 18) return { icone:'🌅', particulas:['🌅','🌤️','⏱️','🕐','🌞'] };
-    return            { icone:'🌙', particulas:['🌙','⭐','🌟','🕑','💫'] };
+<script>
+function toggleHorasEdit() {
+    const isIntervalo = document.getElementById('chk-edit-intervalo').checked;
+    const campos = document.getElementById('campos-hora-edit');
+    campos.style.display = isIntervalo ? 'none' : '';
+    document.getElementById('hora_inicio_edit').required = !isIntervalo;
+    document.getElementById('hora_fim_edit').required = !isIntervalo;
 }
-
-function spawnParticulas(particulas, rect) {
-    for (let i = 0; i < 5; i++) {
-        const el = document.createElement('span');
-        el.textContent = particulas[Math.floor(Math.random() * particulas.length)];
-        el.className = 'particula-hover';
-        el.style.left = (rect.left + Math.random() * rect.width) + 'px';
-        el.style.top  = (rect.top  + rect.height / 2) + 'px';
-        el.style.fontSize = (12 + Math.random() * 8) + 'px';
-        document.body.appendChild(el);
-        animate(el,
-            { y:[0, -(40 + Math.random() * 45)], opacity:[0.9, 0], scale:[1, 0.5] },
-            { duration: 0.85 + Math.random() * 0.4, delay: i * 0.08, ease:'easeOut' }
-        ).then(() => el.remove());
-    }
-}
-
-document.querySelectorAll('tbody tr[data-inicio]').forEach(tr => {
-    const info = iconeHorario(tr.dataset.inicio);
-    const td = tr.querySelector('td:first-child');
-    if (td) {
-        const icone = document.createElement('span');
-        icone.className = 'icone-linha';
-        icone.textContent = info.icone;
-        td.insertBefore(icone, td.firstChild);
-    }
-    let timer;
-    tr.addEventListener('mouseenter', () => {
-        clearTimeout(timer);
-        timer = setTimeout(() => spawnParticulas(info.particulas, tr.getBoundingClientRect()), 120);
-    });
-    tr.addEventListener('mouseleave', () => clearTimeout(timer));
-});
 </script>
 {% endblock %}
+

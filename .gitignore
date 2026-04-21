@@ -1,5 +1,6 @@
 __pycache__/
 *.pyc
+*.pyo
 projeto_facul/
 .venv/
 venv/
@@ -8,3 +9,5 @@ venv/
 *.db-journal
 *.sqlite
 *.sqlite-journal
+.env
+static/img/biblioteca.jpg

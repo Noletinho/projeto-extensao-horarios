@@ -61,13 +61,14 @@
             </select>
         </div>
         <div class="form-grupo">
-            <label>Horário:</label>
-            <select name="id_horario" required>
-                <option value="">Selecione</option>
+            <label>Horários <small style="color:var(--cor-texto-claro)">(Ctrl+clique para selecionar vários)</small></label>
+            <select name="id_horarios" multiple required size="6" style="height:auto">
                 {% for horario in horarios %}
+                    {% if not horario['eh_intervalo'] %}
                     <option value="{{ horario['id_horario'] }}">
                         {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
                     </option>
+                    {% endif %}
                 {% endfor %}
             </select>
         </div>

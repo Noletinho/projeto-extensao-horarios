@@ -19,7 +19,10 @@
 {% endblock %}
 
 {% block conteudo %}
-<h1>Grade de Disponibilidades dos Professores</h1>
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Voltar</a>
+    <h1>Grade de Disponibilidades dos Professores</h1>
+</div>
 
 <div class="flex-linha mb-2">
     <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="btn btn-primario">Cadastrar Nova Disponibilidade</a>
@@ -66,5 +69,4 @@
     </tbody>
 </table>
 
-<a href="{{ url_for('index') }}" class="link-voltar mt-2">← Voltar</a>
 {% endblock %}
