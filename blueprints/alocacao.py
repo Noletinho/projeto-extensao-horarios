@@ -1,3 +1,4 @@
+import json
 import pymysql
 from db import conectar
 from auth import requer_perfil
@@ -6,6 +7,182 @@ from flask import render_template, request, redirect, url_for, flash
 
 def registrar(app):
 
+    # ─── EDITOR DE GRADE COMPLETA POR TURMA ────────────────────────────────
+
+    @app.route('/alocar_turma')
+    @requer_perfil('diretor', 'secretaria')
+    def selecionar_turma_alocacao():
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+            cursor.execute("""
+                SELECT t.id_turma, t.nome, t.serie, tr.nome AS nome_turno,
+                       COUNT(gc.id_grade) AS total_disc,
+                       COUNT(a.id_alocacao) AS total_aloc
+                FROM turma t
+                JOIN turno tr ON t.id_turno = tr.id_turno
+                LEFT JOIN grade_curricular gc ON gc.id_turma = t.id_turma
+                LEFT JOIN alocacao a ON a.id_turma = t.id_turma
+                GROUP BY t.id_turma, t.nome, t.serie, tr.nome
+                ORDER BY tr.nome, t.serie, t.nome
+            """)
+            turmas = cursor.fetchall()
+        return render_template('selecionar_turma_alocacao.html', turmas=turmas)
+
+    @app.route('/alocar_turma/<int:id_turma>', methods=['GET', 'POST'])
+    @requer_perfil('diretor', 'secretaria')
+    def alocar_turma_completa(id_turma):
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+
+            cursor.execute("""
+                SELECT t.*, tr.nome AS nome_turno FROM turma t
+                JOIN turno tr ON t.id_turno = tr.id_turno WHERE t.id_turma = %s
+            """, (id_turma,))
+            turma = cursor.fetchone()
+            if not turma:
+                return redirect(url_for('selecionar_turma_alocacao'))
+
+            # Grade curricular da turma com professor já vinculado
+            cursor.execute("""
+                SELECT gc.id_disciplina, gc.aulas_semanais,
+                       d.nome AS nome_disciplina, d.sigla, d.cor,
+                       p.id_professor, p.nome AS nome_professor,
+                       COUNT(a.id_alocacao) AS ja_alocadas
+                FROM grade_curricular gc
+                JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
+                LEFT JOIN professor_disciplina pd ON pd.id_disciplina = gc.id_disciplina
+                LEFT JOIN professor p ON p.id_professor = pd.id_professor AND p.status = 'ativo'
+                LEFT JOIN alocacao a ON a.id_turma = gc.id_turma
+                                    AND a.id_disciplina = gc.id_disciplina
+                WHERE gc.id_turma = %s
+                GROUP BY gc.id_disciplina, gc.aulas_semanais,
+                         d.nome, d.sigla, d.cor,
+                         p.id_professor, p.nome
+                ORDER BY d.nome
+            """, (id_turma,))
+            grade = cursor.fetchall()
+
+            # Alocações atuais desta turma
+            cursor.execute("""
+                SELECT a.id_alocacao, a.dia_semana, a.id_horario,
+                       a.id_disciplina, a.id_professor,
+                       d.sigla, d.cor, p.nome AS prof_nome
+                FROM alocacao a
+                JOIN disciplina d ON a.id_disciplina = d.id_disciplina
+                JOIN professor p ON a.id_professor = p.id_professor
+                WHERE a.id_turma = %s
+            """, (id_turma,))
+            alocacoes_atuais = {}
+            for a in cursor.fetchall():
+                dia = a['dia_semana']
+                hid = str(a['id_horario'])
+                alocacoes_atuais.setdefault(dia, {})[hid] = {
+                    'id_alocacao':  a['id_alocacao'],
+                    'id_disciplina': a['id_disciplina'],
+                    'sigla': a['sigla'],
+                    'cor':   a['cor'],
+                    'prof':  (a['prof_nome'] or '').split()[0],
+                }
+
+            # Ocupação de TODOS os professores (para detectar conflito)
+            cursor.execute("SELECT id_professor, dia_semana, id_horario FROM alocacao")
+            ocupacao = {}
+            for a in cursor.fetchall():
+                pid = str(a['id_professor'])
+                ocupacao.setdefault(pid, {}).setdefault(a['dia_semana'], []).append(a['id_horario'])
+
+            # Disponibilidades dos professores
+            cursor.execute("""
+                SELECT id_professor, dia_semana, id_horario
+                FROM disponibilidade_professor WHERE disponivel = 1
+            """)
+            disponibilidades = {}
+            for d in cursor.fetchall():
+                pid = str(d['id_professor'])
+                disponibilidades.setdefault(pid, {}).setdefault(d['dia_semana'], []).append(d['id_horario'])
+
+            cursor.execute("SELECT * FROM horario_aula WHERE eh_intervalo = 0 ORDER BY hora_inicio")
+            horarios = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM `local` WHERE status = 'ativo' ORDER BY nome")
+            locais = cursor.fetchall()
+
+            if request.method == 'POST':
+                slots_raw = request.form.get('slots_json', '[]')
+                try:
+                    slots = json.loads(slots_raw)
+                except Exception:
+                    slots = []
+
+                if not slots:
+                    flash("Nenhuma alocação para salvar.", 'erro')
+                else:
+                    inseridos = conflitos = 0
+                    for s in slots:
+                        id_disc = s.get('id_disciplina')
+                        id_prof = s.get('id_professor')
+                        id_loc  = s.get('id_local')
+                        dia     = s.get('dia')
+                        id_hor  = s.get('id_horario')
+                        if not all([id_disc, id_prof, id_loc, dia, id_hor]):
+                            continue
+                        try:
+                            cursor.execute("SAVEPOINT sp")
+                            cursor.execute("""
+                                INSERT INTO alocacao
+                                    (id_turma,id_disciplina,id_professor,id_local,dia_semana,id_horario)
+                                VALUES (%s,%s,%s,%s,%s,%s)
+                            """, (id_turma, id_disc, id_prof, id_loc, dia, id_hor))
+                            cursor.execute("RELEASE SAVEPOINT sp")
+                            inseridos += 1
+                        except pymysql.IntegrityError:
+                            cursor.execute("ROLLBACK TO SAVEPOINT sp")
+                            conflitos += 1
+                    conexao.commit()
+                    if conflitos:
+                        flash(f"{conflitos} conflito(s) ignorado(s): horário já ocupado.", 'erro')
+                    if inseridos:
+                        flash(f"{inseridos} alocação(ões) salvas com sucesso!", 'sucesso')
+                    return redirect(url_for('alocar_turma_completa', id_turma=id_turma))
+
+        grade_json = json.dumps([{
+            'id':          g['id_disciplina'],
+            'nome':        g['nome_disciplina'],
+            'sigla':       g['sigla'],
+            'cor':         g['cor'],
+            'id_professor': g['id_professor'],
+            'nome_professor': g['nome_professor'] or '—',
+            'aulas_semanais': g['aulas_semanais'],
+            'ja_alocadas': g['ja_alocadas'],
+        } for g in grade])
+
+        return render_template('alocar_turma.html',
+            turma=turma, grade=grade, horarios=horarios, locais=locais,
+            grade_json=grade_json,
+            alocacoes_json=json.dumps(alocacoes_atuais),
+            ocupacao_json=json.dumps(ocupacao),
+            disponibilidades_json=json.dumps(disponibilidades),
+            horarios_json=json.dumps([{
+                'id': h['id_horario'],
+                'hora_inicio': h['hora_inicio'],
+                'hora_fim': h['hora_fim'],
+            } for h in horarios]),
+            locais_json=json.dumps([{
+                'id': l['id_local'], 'nome': l['nome']
+            } for l in locais]),
+        )
+
+    @app.route('/deletar_alocacao_turma/<int:id_turma>/<int:id_alocacao>', methods=['POST'])
+    @requer_perfil('diretor', 'secretaria')
+    def deletar_alocacao_turma(id_turma, id_alocacao):
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+            cursor.execute("DELETE FROM alocacao WHERE id_alocacao = %s", (id_alocacao,))
+            conexao.commit()
+        return redirect(url_for('alocar_turma_completa', id_turma=id_turma))
+
+    # ─── CADASTRO INDIVIDUAL (mantido para edições pontuais) ────────────────
+
     @app.route('/cadastrar_alocacao', methods=['GET', 'POST'])
     @requer_perfil('diretor', 'secretaria')
     def cadastrar_alocacao():
@@ -13,55 +190,130 @@ def registrar(app):
             cursor = conexao.cursor()
             cursor.execute("""
                 SELECT t.id_turma, t.nome, t.serie, tr.nome AS nome_turno
-                FROM turma t JOIN turno tr ON t.id_turno = tr.id_turno ORDER BY t.nome
+                FROM turma t JOIN turno tr ON t.id_turno = tr.id_turno
+                ORDER BY tr.nome, t.serie, t.nome
             """)
             turmas = cursor.fetchall()
             cursor.execute("SELECT * FROM disciplina ORDER BY nome")
             disciplinas = cursor.fetchall()
-            cursor.execute("SELECT * FROM professor ORDER BY nome")
+            cursor.execute("SELECT * FROM professor WHERE status = 'ativo' ORDER BY nome")
             professores = cursor.fetchall()
-            cursor.execute("SELECT * FROM `local` ORDER BY nome")
+            cursor.execute("SELECT * FROM `local` WHERE status = 'ativo' ORDER BY nome")
             locais = cursor.fetchall()
-            cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+            cursor.execute("SELECT * FROM horario_aula WHERE eh_intervalo = 0 ORDER BY hora_inicio")
             horarios = cursor.fetchall()
 
+            # Mapa de disponibilidade: {str(id_professor): {dia: [id_horario, ...]}}
+            cursor.execute("""
+                SELECT id_professor, dia_semana, id_horario
+                FROM disponibilidade_professor WHERE disponivel = 1
+            """)
+            disponibilidades = {}
+            for d in cursor.fetchall():
+                pid = str(d['id_professor'])
+                if pid not in disponibilidades:
+                    disponibilidades[pid] = {}
+                dia = d['dia_semana']
+                if dia not in disponibilidades[pid]:
+                    disponibilidades[pid][dia] = []
+                disponibilidades[pid][dia].append(d['id_horario'])
+
+            # Mapa de alocações existentes: {str(id_turma): {dia: {str(id_horario): "SIGLA/Prof"}}}
+            cursor.execute("""
+                SELECT a.id_turma, a.dia_semana, a.id_horario, d.sigla, p.nome AS prof_nome
+                FROM alocacao a
+                JOIN disciplina d ON a.id_disciplina = d.id_disciplina
+                JOIN professor p ON a.id_professor = p.id_professor
+            """)
+            alocacoes_existentes = {}
+            for a in cursor.fetchall():
+                tid = str(a['id_turma'])
+                if tid not in alocacoes_existentes:
+                    alocacoes_existentes[tid] = {}
+                dia = a['dia_semana']
+                if dia not in alocacoes_existentes[tid]:
+                    alocacoes_existentes[tid][dia] = {}
+                primeiro_nome = (a['prof_nome'] or '').split()[0]
+                alocacoes_existentes[tid][dia][str(a['id_horario'])] = f"{a['sigla']} / {primeiro_nome}"
+
+            # Mapa de ocupação do professor: {str(id_professor): {dia: [id_horario, ...]}}
+            cursor.execute("""
+                SELECT a.id_professor, a.dia_semana, a.id_horario
+                FROM alocacao a
+            """)
+            ocupacao_professor = {}
+            for a in cursor.fetchall():
+                pid = str(a['id_professor'])
+                if pid not in ocupacao_professor:
+                    ocupacao_professor[pid] = {}
+                dia = a['dia_semana']
+                if dia not in ocupacao_professor[pid]:
+                    ocupacao_professor[pid][dia] = []
+                ocupacao_professor[pid][dia].append(a['id_horario'])
+
+            horarios_json = json.dumps([
+                {'id': h['id_horario'], 'hora_inicio': h['hora_inicio'], 'hora_fim': h['hora_fim']}
+                for h in horarios
+            ])
+            locais_json = json.dumps([
+                {'id': l['id_local'], 'nome': l['nome'], 'tipo': l['tipo']}
+                for l in locais
+            ])
+
             if request.method == 'POST':
-                id_turma = request.form.get('id_turma', '').strip()
+                id_turma     = request.form.get('id_turma', '').strip()
                 id_disciplina = request.form.get('id_disciplina', '').strip()
                 id_professor = request.form.get('id_professor', '').strip()
-                id_local = request.form.get('id_local', '').strip()
-                dia_semana = request.form.get('dia_semana', '').strip()
-                ids_horarios = request.form.getlist('id_horarios')
+                slots_raw    = request.form.get('slots_json', '[]')
 
-                if not all([id_turma, id_disciplina, id_professor, id_local, dia_semana]) or not ids_horarios:
-                    flash("Preencha todos os campos e selecione ao menos um horário.", 'erro')
-                    return render_template('cadastro_alocacao.html', turmas=turmas,
-                                           disciplinas=disciplinas, professores=professores,
-                                           locais=locais, horarios=horarios)
-                conflitos = 0
-                inseridos = 0
-                for id_horario in ids_horarios:
-                    try:
-                        cursor.execute("SAVEPOINT sp_alocacao")
-                        cursor.execute("""
-                            INSERT INTO alocacao
-                                (id_turma, id_disciplina, id_professor, id_local, dia_semana, id_horario)
-                            VALUES (%s, %s, %s, %s, %s, %s)
-                        """, (id_turma, id_disciplina, id_professor, id_local, dia_semana, id_horario))
-                        cursor.execute("RELEASE SAVEPOINT sp_alocacao")
-                        inseridos += 1
-                    except pymysql.IntegrityError:
-                        cursor.execute("ROLLBACK TO SAVEPOINT sp_alocacao")
-                        conflitos += 1
-                conexao.commit()
-                if conflitos:
-                    flash(f"{conflitos} conflito(s) ignorado(s): professor, turma ou local já ocupado(s) no horário.", 'erro')
-                if inseridos:
-                    return redirect(url_for('selecionar_turno_alocacoes'))
+                try:
+                    slots = json.loads(slots_raw)
+                except (json.JSONDecodeError, ValueError):
+                    slots = []
 
-        return render_template('cadastro_alocacao.html', turmas=turmas,
-                               disciplinas=disciplinas, professores=professores,
-                               locais=locais, horarios=horarios)
+                if not all([id_turma, id_disciplina, id_professor]) or not slots:
+                    flash("Selecione turma, disciplina, professor e ao menos um horário com local.", 'erro')
+                else:
+                    conflitos = 0
+                    inseridos = 0
+                    sem_local = 0
+                    for slot in slots:
+                        dia        = slot.get('dia', '')
+                        id_horario = slot.get('id_horario', '')
+                        id_local   = slot.get('id_local', '')
+                        if not all([dia, id_horario, id_local]):
+                            sem_local += 1
+                            continue
+                        try:
+                            cursor.execute("SAVEPOINT sp_aloc")
+                            cursor.execute("""
+                                INSERT INTO alocacao
+                                    (id_turma, id_disciplina, id_professor, id_local, dia_semana, id_horario)
+                                VALUES (%s, %s, %s, %s, %s, %s)
+                            """, (id_turma, id_disciplina, id_professor, id_local, dia, id_horario))
+                            cursor.execute("RELEASE SAVEPOINT sp_aloc")
+                            inseridos += 1
+                        except pymysql.IntegrityError:
+                            cursor.execute("ROLLBACK TO SAVEPOINT sp_aloc")
+                            conflitos += 1
+                    conexao.commit()
+                    if sem_local:
+                        flash(f"{sem_local} slot(s) ignorado(s) por falta de local selecionado.", 'erro')
+                    if conflitos:
+                        flash(f"{conflitos} conflito(s) ignorado(s): professor, turma ou local já ocupado naquele horário.", 'erro')
+                    if inseridos:
+                        flash(f"{inseridos} alocação(ões) cadastrada(s) com sucesso.", 'sucesso')
+                        return redirect(url_for('selecionar_turno_alocacoes'))
+
+        return render_template('cadastro_alocacao.html',
+                               turmas=turmas, disciplinas=disciplinas,
+                               professores=professores, locais=locais,
+                               horarios=horarios,
+                               disponibilidades_json=json.dumps(disponibilidades),
+                               alocacoes_existentes_json=json.dumps(alocacoes_existentes),
+                               ocupacao_professor_json=json.dumps(ocupacao_professor),
+                               horarios_json=horarios_json,
+                               locais_json=locais_json)
 
     @app.route('/selecionar_turno_alocacoes')
     @requer_perfil('diretor', 'secretaria')
@@ -171,12 +423,12 @@ def registrar(app):
     @app.route('/atualizar_alocacao/<int:id_alocacao>', methods=['POST'])
     @requer_perfil('diretor', 'secretaria')
     def atualizar_alocacao(id_alocacao):
-        id_turma = request.form['id_turma']
+        id_turma      = request.form['id_turma']
         id_disciplina = request.form['id_disciplina']
-        id_professor = request.form['id_professor']
-        id_local = request.form['id_local']
-        dia_semana = request.form['dia_semana']
-        id_horario = request.form['id_horario']
+        id_professor  = request.form['id_professor']
+        id_local      = request.form['id_local']
+        dia_semana    = request.form['dia_semana']
+        id_horario    = request.form['id_horario']
 
         try:
             with conectar() as conexao:
@@ -191,8 +443,7 @@ def registrar(app):
                 conexao.commit()
             return redirect(url_for('selecionar_turno_alocacoes'))
         except pymysql.IntegrityError:
-            flash("Conflito de horário: professor, turma ou local já está ocupado nesse dia e horário.",
-                  'erro')
+            flash("Conflito de horário: professor, turma ou local já está ocupado nesse dia e horário.", 'erro')
             return redirect(url_for('editar_alocacao', id_alocacao=id_alocacao))
 
     @app.route('/deletar_alocacao/<int:id_alocacao>', methods=['POST'])
@@ -209,7 +460,7 @@ def _agregar_alocacoes(registros):
     alocacoes_por_serie = {}
     ordem_series = []
     for r in registros:
-        serie = r['serie']
+        serie    = r['serie']
         id_turma = r['id_turma']
         if serie not in alocacoes_por_serie:
             alocacoes_por_serie[serie] = {}
@@ -219,10 +470,14 @@ def _agregar_alocacoes(registros):
                 'id_turma': id_turma, 'nome_turma': r['nome_turma'], 'itens': []
             }
         alocacoes_por_serie[serie][id_turma]['itens'].append({
-            'id_alocacao': r['id_alocacao'], 'dia_semana': r['dia_semana'],
-            'hora_inicio': r['hora_inicio'], 'hora_fim': r['hora_fim'],
-            'nome_disciplina': r['nome_disciplina'], 'sigla': r['sigla'],
-            'cor': r['cor'], 'nome_professor': r['nome_professor'],
-            'nome_local': r['nome_local']
+            'id_alocacao':     r['id_alocacao'],
+            'dia_semana':      r['dia_semana'],
+            'hora_inicio':     r['hora_inicio'],
+            'hora_fim':        r['hora_fim'],
+            'nome_disciplina': r['nome_disciplina'],
+            'sigla':           r['sigla'],
+            'cor':             r['cor'],
+            'nome_professor':  r['nome_professor'],
+            'nome_local':      r['nome_local'],
         })
     return alocacoes_por_serie, ordem_series

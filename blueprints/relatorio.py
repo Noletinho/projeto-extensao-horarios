@@ -1,6 +1,6 @@
 from db import conectar
 from auth import requer_login, usuario_logado
-from flask import render_template, Response, flash, redirect, url_for
+from flask import render_template, Response, flash, redirect, url_for, request
 
 
 def registrar(app):
@@ -21,6 +21,14 @@ def registrar(app):
             cursor = conexao.cursor()
             cursor.execute("SELECT * FROM turno ORDER BY nome")
             turnos = cursor.fetchall()
+        id_turno = request.args.get('id_turno', type=int)
+        if id_turno:
+            nome_escola = request.args.get('nome_escola', '')
+            data_rel    = request.args.get('data_rel', '')
+            return redirect(url_for('relatorio_horario_turno',
+                                    id_turno=id_turno,
+                                    nome_escola=nome_escola,
+                                    data_rel=data_rel))
         return render_template('selecionar_turno_relatorio.html', turnos=turnos)
 
     @app.route('/relatorio_horario_turno/<int:id_turno>')
@@ -32,15 +40,20 @@ def registrar(app):
         if not turmas:
             flash('Este turno não possui turmas cadastradas.', 'erro')
             return redirect(url_for('selecionar_turno_relatorio'))
+        nome_escola = request.args.get('nome_escola', '')
+        data_rel    = request.args.get('data_rel', '')
         return render_template('relatorio.html',
                                turno=turno, turmas=turmas,
-                               horarios=horarios, dias=dias, grade=grade)
+                               horarios=horarios, dias=dias, grade=grade,
+                               nome_escola=nome_escola, data_rel=data_rel)
 
     @app.route('/baixar_relatorio_pdf/<int:id_turno>')
     @requer_login
     def baixar_relatorio_pdf(id_turno):
         flash("Para salvar em PDF: use o botão 'Imprimir / Salvar PDF' e escolha 'Salvar como PDF' no diálogo de impressão do navegador.", 'erro')
-        return redirect(url_for('relatorio_horario_turno', id_turno=id_turno))
+        return redirect(url_for('relatorio_horario_turno', id_turno=id_turno,
+                                nome_escola=request.args.get('nome_escola', ''),
+                                data_rel=request.args.get('data_rel', '')))
 
 
 def _montar_dados_professor(id_professor):
@@ -131,9 +144,12 @@ def _montar_dados_relatorio(id_turno):
             grade[ih] = {}
         if dia not in grade[ih]:
             grade[ih][dia] = {}
+        nome_prof = a['professor'] or ''
+        primeiro_nome = nome_prof.split()[0] if nome_prof else ''
         grade[ih][dia][it] = {
-            'sigla':     a['sigla'],
-            'cor':       a['cor'],
-            'professor': a['professor'],
+            'sigla':          a['sigla'],
+            'cor':            a['cor'],
+            'professor':      nome_prof,
+            'professor_curto': primeiro_nome,
         }
     return turno, turmas, horarios, dias, grade

@@ -24,8 +24,9 @@
 </div>
 
 <div class="flex-linha mb-2">
-    <a href="{{ url_for('cadastrar_alocacao') }}" class="btn btn-primario">Cadastrar Alocação</a>
-    <a href="{{ url_for('selecionar_turno_alocacoes') }}" class="btn btn-secundario">Selecionar Outro Turno</a>
+    <a href="{{ url_for('selecionar_turma_alocacao') }}" class="btn btn-acento">⚡ Alocar por Grade (recomendado)</a>
+    <a href="{{ url_for('cadastrar_alocacao') }}" class="btn btn-secundario">+ Alocação Individual</a>
+    <a href="{{ url_for('selecionar_turno_alocacoes') }}" class="btn btn-secundario">Outro Turno</a>
 </div>
 
 {% if ordem_series %}

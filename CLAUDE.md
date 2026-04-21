@@ -125,21 +125,28 @@ Todo template herda de `base.html`:
 
 Blocos disponíveis: `titulo`, `conteudo`, `estilos_extra` (CSS no `<head>`), `scripts_extra` (JS antes do `</body>`).
 
-### Tema Glassmorphism — Biblioteca
+### Tema Glassmorphism — Seda Escura (atual)
 
-O site usa fundo fixo de imagem (`static/img/biblioteca.jpg`) com overlay escuro `rgba(8,5,2,0.60)` via `body::before`. Todos os elementos de superfície (`.card`, `table`, `header`) têm `backdrop-filter: blur(14–20px)` com `background: rgba(...)` semitransparente.
+O site usa fundo fixo de imagem (`static/img/seda.jpg`) — seda preta abstrata — com overlay escuro `rgba(4,5,4,0.55)` via `body::before`. Todos os elementos de superfície (`.card`, `table`, `header`) têm `backdrop-filter: blur(16px)` com `background: rgba(...)` semitransparente.
 
-Paleta derivada da imagem (tons âmbar/sépia):
+Paleta derivada (#6A6E79 slate + #040504 preto) + acento crimson da logo:
 
 | Variável | Valor | Uso |
 |----------|-------|-----|
-| `--cor-primaria` | `#c9a84c` | Títulos, thead, botão primário (dourado âmbar) |
-| `--cor-secundaria` | `#e8c97a` | Hover/foco |
-| `--cor-acento` | `#d4a843` | Botão de destaque |
-| `--cor-superficie` | `rgba(18,13,8,0.55)` | Cards, tabelas — translúcido |
-| `--cor-superficie-alt` | `rgba(28,20,10,0.60)` | Inputs, hover de rows |
-| `--cor-borda` | `rgba(201,168,76,0.22)` | Bordas (âmbar suave) |
-| `--cor-texto` | `#f0e8d8` | Texto principal (creme quente) |
+| `--cor-primaria` | `#8A9BB0` | Títulos, thead, botão primário (slate azul) |
+| `--cor-secundaria` | `#A8BCCE` | Hover/foco |
+| `--cor-acento` | `#B83222` | Botão de destaque (crimson da logo) |
+| `--cor-superficie` | `rgba(8,9,12,0.62)` | Cards, tabelas — translúcido |
+| `--cor-superficie-alt` | `rgba(15,16,22,0.70)` | Inputs, hover de rows |
+| `--cor-borda` | `rgba(106,110,121,0.28)` | Bordas (slate suave) |
+| `--cor-texto` | `#ECEEF4` | Texto principal (branco frio) |
+
+Logo da escola: `static/img/logo.png` — exibida no header do `base.html` e no cabeçalho do `relatorio.html` (com fundo branco arredondado).
+
+Paleta do relatório de impressão (cores da logo):
+- Crimson escuro `#7B1818` → `--crim` (header, coluna dia, separadores)
+- Crimson médio `#9B2020` → `--crim2` (cabeçalho de turmas)
+- Laranja `#C8601A` → `--laranja` (badge de turno, bordas de intervalo)
 
 **Regra:** Nunca usar `background-color` sólido nos elementos de superfície — sempre `rgba(...)` para manter a transparência sobre a imagem de fundo.
 
@@ -400,6 +407,17 @@ Implementada em `professores` e `disciplinas`: 20 itens por página, via `?pagin
 - CSS: `.paginacao` + `.pag-info` em `style.css`
 - Modo edição (editar_professor / editar_disciplina) não pagina — exibe todos para o formulário inline
 
+## Relatório de Grade Horária — Layout Visual
+
+O relatório (`templates/relatorio.html`) usa layout de impressão com fundo branco e células coloridas por disciplina.
+
+- Tela de seleção (`selecionar_turno_relatorio.html`) tem campos opcionais: **nome da escola** e **data do relatório** — enviados via GET para a rota do relatório
+- Parâmetros `nome_escola` e `data_rel` são query strings em `/relatorio_horario_turno/<id_turno>`
+- `_montar_dados_relatorio` inclui `professor_curto` (primeiro nome) além de `professor` (nome completo)
+- `relatorio.html` é standalone (não herda `base.html`), fundo branco, `@page A4 landscape`
+- Células mostram `sigla` (linha 1) + `professor_curto` (linha 2) com `background-color` da disciplina
+- `print-color-adjust: exact` garante que as cores aparecem ao imprimir/salvar PDF
+
 ## Exportação de Relatório em PDF
 
 Rota `GET /baixar_relatorio_pdf/<id_turno>` redireciona para o relatório com instrução de usar a impressão do navegador (Ctrl+P → Salvar como PDF). WeasyPrint foi removido — não funciona no Windows sem GTK runtime.
@@ -419,11 +437,25 @@ Rota `GET /baixar_relatorio_pdf/<id_turno>` redireciona para o relatório com in
 - Relatório: horários com `eh_intervalo=1` renderizam linha `<td colspan="dias×turmas">— INTERVALO —</td>` em vez de células por turma
 - Horários de intervalo não aparecem no select de alocação
 
-## Alocação Multi-Horário
+## Alocação — Grade Visual de Disponibilidade
 
-- Select `name="id_horarios" multiple` no formulário de cadastro
-- Backend usa `request.form.getlist('id_horarios')` e itera inserindo uma alocação por horário
-- Conflitos de IntegrityError são contados e reportados via flash sem abortar os demais inseridos
+O formulário `cadastro_alocacao.html` usa uma grade visual interativa gerada por JavaScript:
+
+**Fluxo:**
+1. Usuário seleciona Turma + Disciplina + Professor
+2. A grade aparece automaticamente: linhas = horários, colunas = dias da semana
+3. Cada célula mostra o status:
+   - Verde: professor disponível e turma livre → checkbox + seletor de local
+   - Âmbar: professor disponível mas turma já tem outra alocação nesse slot → aviso + permite alocar
+   - Vermelho: professor já está alocado nesse slot (outro lugar) → bloqueado
+   - Cinza: professor sem disponibilidade cadastrada → bloqueado
+4. Cada célula selecionada tem seu **próprio seletor de local** — permite locais diferentes por dia (ex: Ed. Física na Quadra na segunda e Sala na quarta)
+5. Se houver apenas 1 local cadastrado, é pré-selecionado automaticamente
+
+**Backend (`blueprints/alocacao.py`):**
+- Passa ao template: `disponibilidades_json`, `alocacoes_existentes_json`, `ocupacao_professor_json`, `horarios_json`, `locais_json`
+- POST recebe `slots_json`: array JSON `[{dia, id_horario, id_local}, ...]`
+- Insere uma alocação por slot, usando SAVEPOINT para conflitos individuais
 
 ## Horário do Professor (view-only)
 

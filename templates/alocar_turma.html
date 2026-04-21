@@ -1,0 +1,715 @@
+{% extends "base.html" %}
+{% block titulo %}Alocar Grade — {{ turma['serie'] }}ª {{ turma['nome'] }}{% endblock %}
+
+{% block estilos_extra %}
+<style>
+/* ── LAYOUT PRINCIPAL ── */
+.editor-wrap {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .editor-wrap { grid-template-columns: 1fr; }
+}
+
+/* ── PAINEL ESQUERDO: DISCIPLINAS ── */
+.painel-disc {
+    background: var(--cor-superficie);
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-borda);
+    backdrop-filter: blur(var(--blur-glass));
+    overflow: hidden;
+    position: sticky;
+    top: 72px;
+}
+
+.painel-disc-header {
+    padding: 10px 14px;
+    background: rgba(106,110,121,0.15);
+    border-bottom: 1px solid var(--cor-borda);
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--cor-primaria);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.disc-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(106,110,121,.10);
+    transition: background .15s;
+    user-select: none;
+}
+
+.disc-item:hover { background: rgba(106,110,121,.10); }
+
+.disc-item.ativa {
+    background: rgba(106,110,121,.22);
+    box-shadow: inset 3px 0 0 var(--cor-primaria);
+}
+
+.disc-item.completa { opacity: .45; cursor: default; }
+
+.disc-chip {
+    width: 10px;
+    height: 32px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.disc-info { flex: 1; min-width: 0; }
+.disc-nome { font-size: .82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.disc-prof { font-size: .72rem; opacity: .65; }
+
+.disc-progresso {
+    font-size: .72rem;
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--cor-primaria);
+}
+
+.disc-progresso.completo { color: var(--cor-sucesso); }
+.disc-progresso.excedido { color: var(--cor-erro); }
+
+/* Barra de progresso mínima */
+.prog-bar {
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(106,110,121,.2);
+    margin-top: 3px;
+}
+.prog-bar-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+
+/* ── PAINEL DIREITO: GRADE DE HORÁRIOS ── */
+.painel-grade { overflow-x: auto; }
+
+.grade-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.grade-titulo { font-size: .95rem; font-weight: 700; color: var(--cor-primaria); }
+
+.grade-legenda {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: .72rem;
+    opacity: .75;
+}
+
+.leg { display: flex; align-items: center; gap: 5px; }
+.leg-box { width: 12px; height: 12px; border-radius: 2px; }
+
+/* ── TABELA DA GRADE ── */
+.grade-table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 520px;
+    font-size: .8rem;
+    background: var(--cor-superficie);
+    backdrop-filter: blur(var(--blur-glass));
+    border-radius: var(--raio-borda);
+    overflow: hidden;
+    border: 1px solid var(--cor-borda);
+}
+
+.grade-table th {
+    background: rgba(106,110,121,.18);
+    color: var(--cor-primaria);
+    padding: 8px 6px;
+    text-align: center;
+    font-weight: 700;
+    font-size: .78rem;
+    border: 1px solid rgba(106,110,121,.15);
+}
+
+.th-hora {
+    text-align: left !important;
+    padding-left: 10px !important;
+    min-width: 72px;
+}
+
+.grade-table td {
+    border: 1px solid rgba(106,110,121,.12);
+    padding: 0;
+    text-align: center;
+    vertical-align: middle;
+    height: 46px;
+    position: relative;
+}
+
+/* Célula vazia (clicável quando disciplina ativa) */
+.cell-vazia {
+    cursor: default;
+    background: transparent;
+    transition: background .15s;
+}
+
+.modo-ativo .cell-disponivel {
+    cursor: pointer;
+    background: rgba(74,222,128,.06);
+}
+
+.modo-ativo .cell-disponivel:hover {
+    background: rgba(74,222,128,.18) !important;
+}
+
+.cell-bloqueada {
+    background: rgba(100,100,100,.06);
+    cursor: not-allowed;
+}
+
+/* Célula com alocação existente (salva no banco) */
+.cell-salva {
+    cursor: pointer;
+}
+
+.cell-salva:hover { filter: brightness(1.1); }
+
+/* Célula com alocação pendente (ainda não salva) */
+.cell-pendente {
+    cursor: pointer;
+    outline: 2px dashed rgba(255,255,255,.5);
+    outline-offset: -2px;
+}
+
+.cell-pendente:hover { filter: brightness(1.15); }
+
+/* Conteúdo interno de uma célula alocada */
+.cell-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 2px 4px;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,.5);
+    font-size: .72rem;
+    line-height: 1.2;
+}
+
+.cell-sigla { font-weight: 900; font-size: .78rem; }
+.cell-prof  { font-size: .62rem; opacity: .85; }
+
+/* Hora da coluna */
+.td-hora {
+    font-size: .72rem;
+    color: var(--cor-texto);
+    opacity: .6;
+    padding: 0 10px;
+    text-align: left;
+    white-space: nowrap;
+    background: rgba(106,110,121,.08) !important;
+}
+
+/* Seletor de local flutuante */
+.sel-local-popup {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--cor-superficie-alt);
+    border: 1px solid var(--cor-borda);
+    border-radius: 6px;
+    padding: 6px;
+    z-index: 200;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,.5);
+    display: none;
+}
+
+.sel-local-popup.visivel { display: block; }
+
+.sel-local-popup select {
+    font-size: .75rem;
+    padding: 4px 6px;
+    background: var(--cor-superficie-alt);
+    color: var(--cor-texto);
+    border: 1px solid var(--cor-borda);
+    border-radius: 4px;
+    width: 130px;
+}
+
+/* Botão de remover dentro da célula */
+.btn-remover-slot {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(0,0,0,.4);
+    color: #fff;
+    border: none;
+    font-size: 9px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    opacity: 0;
+    transition: opacity .15s;
+}
+
+td:hover .btn-remover-slot { opacity: 1; }
+
+/* Barra de ações inferior */
+.barra-salvar {
+    position: sticky;
+    bottom: 0;
+    background: rgba(8,9,12,.90);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--cor-borda);
+    padding: 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 16px;
+    z-index: 50;
+    flex-wrap: wrap;
+}
+
+#status-pendentes {
+    font-size: .85rem;
+    color: var(--cor-primaria);
+    font-weight: 600;
+}
+
+/* Seletor de local padrão */
+.local-padrao-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .82rem;
+}
+
+.local-padrao-wrap label { opacity: .7; margin: 0; }
+
+/* Dica de disciplina ativa */
+.hint-ativa {
+    font-size: .78rem;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('selecionar_turma_alocacao') }}" class="btn btn-secundario">←</a>
+    <h1>Grade — {{ turma['serie'] }}ª {{ turma['nome'] }} &nbsp;<small style="font-weight:400;font-size:.7em;opacity:.6;">{{ turma['nome_turno'] }}</small></h1>
+</div>
+
+<form method="POST" id="form-grade">
+    <input type="hidden" name="slots_json" id="slots-json" value="[]">
+
+    <div class="editor-wrap">
+
+        <!-- ── PAINEL DE DISCIPLINAS ── -->
+        <aside class="painel-disc">
+            <div class="painel-disc-header">
+                <span>Disciplinas da Grade</span>
+                <span id="resumo-grade" style="font-weight:400;opacity:.7;"></span>
+            </div>
+            {% for d in grade %}
+            <div class="disc-item {% if d['ja_alocadas'] >= d['aulas_semanais'] %}completa{% endif %}"
+                 id="disc-{{ d['id_disciplina'] }}"
+                 data-id="{{ d['id_disciplina'] }}"
+                 data-prof="{{ d['id_professor'] }}"
+                 data-prof-nome="{{ (d['nome_professor'] or '').split()[0] }}"
+                 data-sigla="{{ d['sigla'] }}"
+                 data-cor="{{ d['cor'] }}"
+                 data-semanais="{{ d['aulas_semanais'] }}"
+                 onclick="selectDisc(this)">
+                <div class="disc-chip" style="background:{{ d['cor'] }};"></div>
+                <div class="disc-info">
+                    <div class="disc-nome" title="{{ d['nome_disciplina'] }}">{{ d['nome_disciplina'] }}</div>
+                    <div class="disc-prof">{{ d['nome_professor'] or '—' }}</div>
+                    <div class="prog-bar">
+                        <div class="prog-bar-fill" id="prog-bar-{{ d['id_disciplina'] }}"
+                             style="background:{{ d['cor'] }};width:{{ [((d['ja_alocadas'] / d['aulas_semanais']) * 100)|int, 100]|min }}%;"></div>
+                    </div>
+                </div>
+                <div class="disc-progresso {% if d['ja_alocadas'] >= d['aulas_semanais'] %}completo{% elif d['ja_alocadas'] > d['aulas_semanais'] %}excedido{% endif %}"
+                     id="prog-{{ d['id_disciplina'] }}">
+                    {{ d['ja_alocadas'] }}/{{ d['aulas_semanais'] }}
+                </div>
+            </div>
+            {% endfor %}
+        </aside>
+
+        <!-- ── GRADE DE HORÁRIOS ── -->
+        <div class="painel-grade">
+            <div class="grade-header">
+                <div>
+                    <div class="grade-titulo" id="hint-disciplina">← Selecione uma disciplina para começar</div>
+                </div>
+                <div class="grade-legenda">
+                    <span class="leg"><span class="leg-box" style="background:rgba(74,222,128,.3);border:1px solid #4ade80;"></span> Disponível</span>
+                    <span class="leg"><span class="leg-box" style="background:rgba(248,113,113,.25);"></span> Prof. ocupado</span>
+                    <span class="leg"><span class="leg-box" style="background:rgba(255,255,255,.08);border:1px dashed #888;"></span> Sem disponib.</span>
+                    <span class="leg"><span class="leg-box" style="outline:2px dashed #fff;"></span> Pendente (não salvo)</span>
+                </div>
+            </div>
+
+            <!-- Seletor de local padrão -->
+            <div class="local-padrao-wrap mb-2">
+                <label for="local-padrao">Local padrão:</label>
+                <select id="local-padrao" style="padding:5px 8px;font-size:.82rem;">
+                    {% for l in locais %}
+                    <option value="{{ l['id_local'] }}">{{ l['nome'] }}</option>
+                    {% endfor %}
+                </select>
+                <span style="font-size:.75rem;opacity:.55;">(pode alterar por célula ao clicar nela)</span>
+            </div>
+
+            <table class="grade-table" id="grade-table">
+                <thead>
+                    <tr>
+                        <th class="th-hora">Horário</th>
+                        <th>Segunda</th>
+                        <th>Terça</th>
+                        <th>Quarta</th>
+                        <th>Quinta</th>
+                        <th>Sexta</th>
+                    </tr>
+                </thead>
+                <tbody id="grade-tbody">
+                    {% for h in horarios %}
+                    <tr>
+                        <td class="td-hora">
+                            {{ h['hora_inicio'] }}<br>
+                            <span style="font-size:.65rem;opacity:.6;">{{ h['hora_fim'] }}</span>
+                        </td>
+                        {% for dia in ['segunda','terca','quarta','quinta','sexta'] %}
+                        <td id="td_{{ dia }}_{{ h['id_horario'] }}"
+                            data-dia="{{ dia }}"
+                            data-hor="{{ h['id_horario'] }}"
+                            class="cell-vazia"
+                            onclick="clickCell(this)">
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ── BARRA INFERIOR ── -->
+    <div class="barra-salvar">
+        <button type="submit" class="btn btn-primario" id="btn-salvar" disabled>Salvar Alocações</button>
+        <span id="status-pendentes">Nenhuma alteração pendente</span>
+        <div style="flex:1;"></div>
+        <a href="{{ url_for('selecionar_turma_alocacao') }}" class="btn btn-secundario">← Voltar</a>
+    </div>
+</form>
+
+<!-- Popup de local (reutilizado) -->
+<div id="local-popup" class="sel-local-popup">
+    <div style="font-size:.7rem;opacity:.6;margin-bottom:4px;">Alterar local:</div>
+    <select id="local-popup-sel" onchange="aplicarLocalPopup()">
+        {% for l in locais %}
+        <option value="{{ l['id_local'] }}">{{ l['nome'] }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+const DIAS = ['segunda','terca','quarta','quinta','sexta'];
+
+const gradeDisc    = {{ grade_json|safe }};
+const alocSalvas   = {{ alocacoes_json|safe }};
+const ocupacao     = {{ ocupacao_json|safe }};
+const disponib     = {{ disponibilidades_json|safe }};
+const horariosLst  = {{ horarios_json|safe }};
+const locaisLst    = {{ locais_json|safe }};
+
+// Estado
+let discAtiva = null;   // objeto da grade
+let pendentes = {};     // "dia|hid" -> {id_disciplina, id_professor, id_local, dia, id_horario, sigla, cor, prof}
+let popupCelula = null; // célula com popup aberto
+
+// ─── Inicialização ───────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    renderTodasCelulas();
+    atualizarResumo();
+
+    // Fechar popup ao clicar fora
+    document.addEventListener('click', e => {
+        const popup = document.getElementById('local-popup');
+        if (popupCelula && !popupCelula.contains(e.target) && !popup.contains(e.target)) {
+            fecharPopup();
+        }
+    });
+});
+
+// ─── Selecionar disciplina ────────────────────────────────────────────────
+function selectDisc(el) {
+    const id = parseInt(el.dataset.id);
+    const disc = gradeDisc.find(d => d.id === id);
+    if (!disc) return;
+
+    // Toggle: clicando na mesma desativa
+    if (discAtiva && discAtiva.id === id) {
+        discAtiva = null;
+        document.querySelectorAll('.disc-item').forEach(d => d.classList.remove('ativa'));
+        document.getElementById('hint-disciplina').textContent = '← Selecione uma disciplina para começar';
+        document.getElementById('hint-disciplina').style.color = '';
+        document.getElementById('grade-table').classList.remove('modo-ativo');
+        renderTodasCelulas();
+        return;
+    }
+
+    discAtiva = disc;
+    document.querySelectorAll('.disc-item').forEach(d => d.classList.remove('ativa'));
+    el.classList.add('ativa');
+
+    const falta = disc.aulas_semanais - contarAlocadas(disc.id);
+    document.getElementById('hint-disciplina').innerHTML =
+        `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${disc.cor};margin-right:6px;"></span>
+         <strong>${disc.nome}</strong> &nbsp;—&nbsp; ${disc.nome_professor || '—'} &nbsp;|&nbsp;
+         faltam <strong>${Math.max(0,falta)}</strong> aula(s)`;
+    document.getElementById('hint-disciplina').style.color = 'var(--cor-texto)';
+    document.getElementById('grade-table').classList.add('modo-ativo');
+
+    renderTodasCelulas();
+}
+
+// ─── Click em célula ─────────────────────────────────────────────────────
+function clickCell(td) {
+    const dia = td.dataset.dia;
+    const hid = td.dataset.hor;
+    const key = `${dia}|${hid}`;
+
+    // Célula com alocação salva: abrir popup de local ou remover
+    if (td.classList.contains('cell-salva')) {
+        // Não faz nada inline — usuário usa o X para deletar
+        return;
+    }
+
+    // Célula com pendente: abrir popup para trocar local
+    if (td.classList.contains('cell-pendente')) {
+        if (popupCelula === td) { fecharPopup(); return; }
+        abrirPopup(td, key);
+        return;
+    }
+
+    // Célula disponível: alocar disciplina ativa
+    if (!discAtiva) return;
+    if (!td.classList.contains('cell-disponivel')) return;
+
+    const localId = document.getElementById('local-padrao').value;
+    pendentes[key] = {
+        id_disciplina:  discAtiva.id,
+        id_professor:   discAtiva.id_professor,
+        id_local:       localId,
+        dia, id_horario: hid,
+        sigla: discAtiva.sigla,
+        cor:   discAtiva.cor,
+        prof:  (discAtiva.nome_professor || '').split(' ')[0],
+    };
+
+    renderCelula(td, dia, hid);
+    atualizarProgresso(discAtiva.id);
+    atualizarBotaoSalvar();
+}
+
+// ─── Remover pendente ─────────────────────────────────────────────────────
+function removerPendente(dia, hid, event) {
+    event.stopPropagation();
+    const key = `${dia}|${hid}`;
+    const slot = pendentes[key];
+    const discId = slot ? slot.id_disciplina : null;
+    delete pendentes[key];
+    const td = document.getElementById(`td_${dia}_${hid}`);
+    if (td) renderCelula(td, dia, hid);
+    if (discId) atualizarProgresso(discId);
+    atualizarBotaoSalvar();
+    fecharPopup();
+}
+
+// ─── Popup de local ───────────────────────────────────────────────────────
+function abrirPopup(td, key) {
+    fecharPopup();
+    popupCelula = td;
+    const popup = document.getElementById('local-popup');
+    const sel   = document.getElementById('local-popup-sel');
+
+    // Posicionar dentro da célula
+    td.appendChild(popup);
+    sel.value = pendentes[key]?.id_local || locaisLst[0]?.id || '';
+    popup.dataset.key = key;
+    popup.classList.add('visivel');
+}
+
+function fecharPopup() {
+    const popup = document.getElementById('local-popup');
+    popup.classList.remove('visivel');
+    document.body.appendChild(popup); // mover de volta para body
+    popupCelula = null;
+}
+
+function aplicarLocalPopup() {
+    const popup = document.getElementById('local-popup');
+    const key   = popup.dataset.key;
+    if (pendentes[key]) {
+        pendentes[key].id_local = document.getElementById('local-popup-sel').value;
+    }
+    fecharPopup();
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────
+function renderTodasCelulas() {
+    document.querySelectorAll('#grade-tbody td[data-dia]').forEach(td => {
+        renderCelula(td, td.dataset.dia, td.dataset.hor);
+    });
+}
+
+function renderCelula(td, dia, hid) {
+    const key   = `${dia}|${hid}`;
+    const salva = alocSalvas[dia]?.[String(hid)];
+    const pend  = pendentes[key];
+
+    td.className = '';
+    td.innerHTML = '';
+
+    if (salva) {
+        td.classList.add('cell-salva');
+        td.style.background = salva.cor;
+        td.innerHTML = `
+            <div class="cell-content">
+                <span class="cell-sigla">${salva.sigla}</span>
+                <span class="cell-prof">${salva.prof}</span>
+            </div>
+            <form method="POST" action="/deletar_alocacao_turma/${turmaId}/${salva.id_alocacao}"
+                  style="position:absolute;top:1px;right:1px;"
+                  onsubmit="return confirm('Remover esta alocação?')">
+                <button type="submit" class="btn-remover-slot" title="Remover">✕</button>
+            </form>`;
+        return;
+    }
+
+    if (pend) {
+        td.classList.add('cell-pendente');
+        td.style.background = pend.cor;
+        td.innerHTML = `
+            <div class="cell-content">
+                <span class="cell-sigla">${pend.sigla}</span>
+                <span class="cell-prof">${pend.prof}</span>
+            </div>
+            <button type="button" class="btn-remover-slot" title="Remover"
+                    onclick="removerPendente('${dia}','${hid}',event)">✕</button>`;
+        return;
+    }
+
+    td.style.background = '';
+
+    if (!discAtiva) {
+        td.classList.add('cell-vazia');
+        return;
+    }
+
+    const pid  = String(discAtiva.id_professor);
+    const hNum = parseInt(hid);
+
+    const temDisponib = (disponib[pid]?.[dia] || []).includes(hNum);
+    const profOcupado = (ocupacao[pid]?.[dia]  || []).includes(hNum);
+
+    if (!temDisponib) {
+        td.classList.add('cell-vazia', 'cell-bloqueada');
+    } else if (profOcupado) {
+        td.classList.add('cell-vazia', 'cell-bloqueada');
+        td.style.background = 'rgba(248,113,113,.12)';
+    } else {
+        td.classList.add('cell-disponivel');
+        td.style.background = 'rgba(74,222,128,.07)';
+    }
+}
+
+// ─── Progresso ────────────────────────────────────────────────────────────
+function contarAlocadas(discId) {
+    let n = 0;
+    // Já salvas
+    for (const dia of DIAS) {
+        for (const hid of Object.keys(alocSalvas[dia] || {})) {
+            if (alocSalvas[dia][hid].id_disciplina === discId) n++;
+        }
+    }
+    // Pendentes
+    for (const k of Object.keys(pendentes)) {
+        if (pendentes[k].id_disciplina === discId) n++;
+    }
+    return n;
+}
+
+function atualizarProgresso(discId) {
+    const disc = gradeDisc.find(d => d.id === discId);
+    if (!disc) return;
+
+    const total    = contarAlocadas(discId);
+    const semanais = disc.aulas_semanais;
+    const pct      = Math.min(100, Math.round((total / semanais) * 100));
+
+    const prog = document.getElementById(`prog-${discId}`);
+    const bar  = document.getElementById(`prog-bar-${discId}`);
+    const item = document.getElementById(`disc-${discId}`);
+
+    if (prog) {
+        prog.textContent = `${total}/${semanais}`;
+        prog.className = 'disc-progresso' + (total >= semanais ? ' completo' : total > semanais ? ' excedido' : '');
+    }
+    if (bar) bar.style.width = pct + '%';
+    if (item) {
+        if (total >= semanais) item.classList.add('completa');
+        else item.classList.remove('completa');
+    }
+}
+
+function atualizarResumo() {
+    const total    = gradeDisc.length;
+    const completas = gradeDisc.filter(d => contarAlocadas(d.id) >= d.aulas_semanais).length;
+    document.getElementById('resumo-grade').textContent = `${completas}/${total} completas`;
+}
+
+function atualizarBotaoSalvar() {
+    const n = Object.keys(pendentes).length;
+    const btn = document.getElementById('btn-salvar');
+    const status = document.getElementById('status-pendentes');
+    btn.disabled = n === 0;
+    status.textContent = n === 0
+        ? 'Nenhuma alteração pendente'
+        : `${n} slot(s) novo(s) — clique em Salvar`;
+    // Atualizar todos os progressos
+    gradeDisc.forEach(d => atualizarProgresso(d.id));
+    atualizarResumo();
+}
+
+// ─── Submit ───────────────────────────────────────────────────────────────
+document.getElementById('form-grade').addEventListener('submit', e => {
+    const slots = Object.values(pendentes);
+    if (!slots.length) { e.preventDefault(); return; }
+    document.getElementById('slots-json').value = JSON.stringify(slots);
+});
+
+const turmaId = {{ turma['id_turma'] }};
+</script>
+{% endblock %}

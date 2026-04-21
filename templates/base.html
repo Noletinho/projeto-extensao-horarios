@@ -9,7 +9,12 @@
 </head>
 <body>
     <header class="no-print">
-        <h1><a href="{{ url_for('index') }}" style="color:inherit;text-decoration:none;">Sistema de Horários</a></h1>
+        <h1>
+            <a href="{{ url_for('index') }}" style="color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px;">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" style="height:38px;width:auto;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5));">
+                <span>Sistema de Horários</span>
+            </a>
+        </h1>
         <nav>
             {% if usuario_atual %}
                 {% if usuario_atual['perfil'] == 'professor' %}

@@ -1,23 +1,23 @@
 /* ========================================
-   SISTEMA DE HORÁRIOS ESCOLARES — Tema Glassmorphism / Biblioteca
+   SISTEMA DE HORÁRIOS ESCOLARES — Tema Glassmorphism / Seda Escura
    ======================================== */
 
 :root {
-    --cor-primaria:       #c9a84c;
-    --cor-secundaria:     #e8c97a;
-    --cor-acento:         #d4a843;
-    --cor-fundo:          #0d0a06;
-    --cor-superficie:     rgba(18, 13, 8, 0.55);
-    --cor-superficie-alt: rgba(28, 20, 10, 0.60);
-    --cor-texto:          #f0e8d8;
-    --cor-texto-claro:    #b0a090;
-    --cor-borda:          rgba(201, 168, 76, 0.22);
+    --cor-primaria:       #8A9BB0;
+    --cor-secundaria:     #A8BCCE;
+    --cor-acento:         #B83222;
+    --cor-fundo:          #040504;
+    --cor-superficie:     rgba(8, 9, 12, 0.62);
+    --cor-superficie-alt: rgba(15, 16, 22, 0.70);
+    --cor-texto:          #ECEEF4;
+    --cor-texto-claro:    #8890A0;
+    --cor-borda:          rgba(106, 110, 121, 0.28);
     --cor-sucesso:        #6ed88a;
     --cor-erro:           #f87171;
-    --cor-header:         rgba(10, 7, 4, 0.70);
+    --cor-header:         rgba(4, 5, 4, 0.82);
     --raio-borda:         8px;
-    --sombra:             0 4px 20px rgba(0,0,0,0.55);
-    --blur-glass:         14px;
+    --sombra:             0 4px 20px rgba(0,0,0,0.65);
+    --blur-glass:         16px;
 }
 
 /* === RESET E BASE === */
@@ -26,7 +26,7 @@ html { scroll-behavior: smooth; }
 
 body {
     font-family: 'Segoe UI', Arial, sans-serif;
-    background: url('/static/img/biblioteca.jpg') center/cover fixed no-repeat;
+    background: url('/static/img/seda.jpg') center/cover fixed no-repeat;
     color: var(--cor-texto);
     font-size: 15px;
     line-height: 1.5;
@@ -38,7 +38,7 @@ body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: rgba(8, 5, 2, 0.60);
+    background: rgba(4, 5, 4, 0.55);
     z-index: 0;
     pointer-events: none;
 }
@@ -84,7 +84,7 @@ header nav a {
 
 header nav a:hover {
     color: var(--cor-primaria);
-    background: rgba(201,168,76,0.12);
+    background: rgba(106,110,121,0.12);
 }
 
 /* === CABEÇALHO DE PÁGINA === */
@@ -146,7 +146,7 @@ form textarea {
     border: 1px solid var(--cor-borda);
     border-radius: var(--raio-borda);
     font-size: 0.95rem;
-    background: rgba(201,168,76,0.06);
+    background: rgba(106,110,121,0.06);
     color: var(--cor-texto);
     transition: border-color 0.2s, box-shadow 0.2s;
     margin-bottom: 14px;
@@ -157,11 +157,11 @@ form select:focus,
 form textarea:focus {
     outline: none;
     border-color: var(--cor-secundaria);
-    box-shadow: 0 0 0 3px rgba(201,168,76,0.18);
+    box-shadow: 0 0 0 3px rgba(106,110,121,0.18);
 }
 
 form select option {
-    background: #1a1208;
+    background: #0c0e14;
     color: var(--cor-texto);
 }
 
@@ -185,7 +185,7 @@ form select[multiple] option {
 }
 
 form select[multiple] option:checked {
-    background: rgba(201,168,76,0.25);
+    background: rgba(106,110,121,0.25);
     color: var(--cor-primaria);
 }
 
@@ -230,24 +230,24 @@ button:hover::after, .btn:hover::after { left: 160%; }
 .btn-primario,
 button[type="submit"]:not(.btn-perigo) {
     background-color: var(--cor-primaria);
-    color: #1a0e00;
+    color: #0a0c10;
 }
 
 .btn-primario:hover,
 button[type="submit"]:not(.btn-perigo):hover {
     background-color: var(--cor-secundaria);
-    box-shadow: 0 4px 18px rgba(201, 168, 76, 0.40);
+    box-shadow: 0 4px 18px rgba(106, 110, 121,0.40);
 }
 
 /* Secundário */
 .btn-secundario {
-    background: rgba(201,168,76,0.10);
+    background: rgba(106,110,121,0.10);
     color: var(--cor-texto);
     border: 1px solid var(--cor-borda);
 }
 
 .btn-secundario:hover {
-    background: rgba(201,168,76,0.18);
+    background: rgba(106,110,121,0.18);
     box-shadow: 0 3px 12px rgba(0,0,0,0.3);
 }
 
@@ -259,9 +259,9 @@ button[type="submit"]:not(.btn-perigo):hover {
 }
 
 /* Acento */
-.btn-acento { background-color: var(--cor-acento); color: #1a0e00; font-weight: 600; }
+.btn-acento { background-color: var(--cor-acento); color: #0a0c10; font-weight: 600; }
 .btn-acento:hover {
-    background-color: #b8900d;
+    background-color: #942818;
     box-shadow: 0 4px 18px rgba(212, 168, 67, 0.4);
 }
 
@@ -279,7 +279,7 @@ table {
 }
 
 thead th {
-    background: rgba(201,168,76,0.18);
+    background: rgba(106,110,121,0.18);
     color: var(--cor-primaria);
     padding: 11px 14px;
     text-align: left;
@@ -289,13 +289,13 @@ thead th {
 }
 
 tbody tr {
-    border-bottom: 1px solid rgba(201,168,76,0.10);
+    border-bottom: 1px solid rgba(106,110,121,0.10);
     transition: background 0.15s;
 }
 
 tbody tr:last-child { border-bottom: none; }
 
-tbody tr:hover { background: rgba(201,168,76,0.08); }
+tbody tr:hover { background: rgba(106,110,121,0.08); }
 
 tbody td {
     padding: 10px 14px;
@@ -447,7 +447,7 @@ hr { border: none; border-top: 1px solid var(--cor-borda); margin: 24px 0; }
     border-radius: var(--raio-borda);
     width: fit-content;
     min-width: 260px;
-    background: rgba(201,168,76,0.05);
+    background: rgba(106,110,121,0.05);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }
@@ -506,15 +506,15 @@ hr { border: none; border-top: 1px solid var(--cor-borda); margin: 24px 0; }
 /* === BOTÃO FLUTUANTE (index page) === */
 
 @keyframes flutuar-suave {
-    0%   { transform: translateY(0px);   box-shadow: 0 4px 14px rgba(201,168,76,0.18); }
-    50%  { transform: translateY(-4px);  box-shadow: 0 8px 22px rgba(201,168,76,0.34); }
-    100% { transform: translateY(0px);   box-shadow: 0 4px 14px rgba(201,168,76,0.18); }
+    0%   { transform: translateY(0px);   box-shadow: 0 4px 14px rgba(106,110,121,0.18); }
+    50%  { transform: translateY(-4px);  box-shadow: 0 8px 22px rgba(106,110,121,0.34); }
+    100% { transform: translateY(0px);   box-shadow: 0 4px 14px rgba(106,110,121,0.18); }
 }
 
 @keyframes flutuar-acento {
-    0%   { transform: translateY(0px);   box-shadow: 0 4px 14px rgba(212,168,67,0.22); }
-    50%  { transform: translateY(-4px);  box-shadow: 0 8px 22px rgba(212,168,67,0.40); }
-    100% { transform: translateY(0px);   box-shadow: 0 4px 14px rgba(212,168,67,0.22); }
+    0%   { transform: translateY(0px);   box-shadow: 0 4px 14px rgba(184,50,34,0.28); }
+    50%  { transform: translateY(-4px);  box-shadow: 0 8px 22px rgba(184,50,34,0.50); }
+    100% { transform: translateY(0px);   box-shadow: 0 4px 14px rgba(184,50,34,0.28); }
 }
 
 .btn-float.btn-primario   { animation: flutuar-suave  3.4s ease-in-out infinite; }
@@ -542,7 +542,7 @@ hr { border: none; border-top: 1px solid var(--cor-borda); margin: 24px 0; }
     color: var(--cor-primaria);
     margin-bottom: 0.8rem;
     padding-bottom: 0.35rem;
-    border-bottom: 1px solid rgba(201,168,76,0.20);
+    border-bottom: 1px solid rgba(106,110,121,0.20);
     letter-spacing: 0.02em;
 }
 
@@ -586,10 +586,10 @@ tbody tr:hover .icone-linha { transform: scale(1.4) rotate(-8deg); }
 /* === LOGIN CARD — glassmorphism === */
 
 .login-card {
-    background: rgba(18, 12, 6, 0.60) !important;
+    background: rgba(8, 9, 14, 0.72) !important;
     backdrop-filter: blur(22px) !important;
     -webkit-backdrop-filter: blur(22px) !important;
-    border: 1px solid rgba(201,168,76,0.25) !important;
+    border: 1px solid rgba(106,110,121,0.25) !important;
     box-shadow: 0 8px 40px rgba(0,0,0,0.65) !important;
 }
 
