@@ -2,6 +2,8 @@ import pymysql
 import os
 from urllib.parse import urlparse
 from werkzeug.security import generate_password_hash
+from dotenv import load_dotenv
+load_dotenv()
 
 url = urlparse(os.environ['DATABASE_URL'])
 conn = pymysql.connect(
@@ -11,6 +13,7 @@ conn = pymysql.connect(
     database=url.path.lstrip('/'),
     port=url.port or 3306,
     charset='utf8mb4',
+    cursorclass=pymysql.cursors.DictCursor,
 )
 cursor = conn.cursor()
 
