@@ -18,13 +18,21 @@ def registrar(app):
             turmas = cursor.fetchall()
             cursor.execute("SELECT id_disciplina, nome, sigla FROM disciplina ORDER BY nome")
             disciplinas = cursor.fetchall()
+            cursor.execute("SELECT id_turma, id_disciplina, aulas_semanais FROM grade_curricular")
+            grades_existentes = {}
+            for g in cursor.fetchall():
+                tid = str(g['id_turma'])
+                if tid not in grades_existentes:
+                    grades_existentes[tid] = {}
+                grades_existentes[tid][str(g['id_disciplina'])] = g['aulas_semanais']
 
             if request.method == 'POST':
                 id_turma = request.form.get('id_turma', '').strip()
                 if not id_turma:
                     flash("Selecione uma turma.", 'erro')
                     return render_template('cadastro_grade_curricular.html',
-                                           turmas=turmas, disciplinas=disciplinas)
+                                           turmas=turmas, disciplinas=disciplinas,
+                                           grades_existentes=grades_existentes)
 
                 inseridos = 0
                 repetidos = 0
@@ -39,7 +47,8 @@ def registrar(app):
                     except ValueError:
                         flash("Digite apenas números válidos nas aulas semanais.", 'erro')
                         return render_template('cadastro_grade_curricular.html',
-                                               turmas=turmas, disciplinas=disciplinas)
+                                               turmas=turmas, disciplinas=disciplinas,
+                                               grades_existentes=grades_existentes)
                     if aulas_semanais <= 0:
                         continue
 
@@ -66,7 +75,8 @@ def registrar(app):
                     flash("Preencha pelo menos uma disciplina com a quantidade de aulas semanais.", 'erro')
 
         return render_template('cadastro_grade_curricular.html',
-                               turmas=turmas, disciplinas=disciplinas)
+                               turmas=turmas, disciplinas=disciplinas,
+                               grades_existentes=grades_existentes)
 
     @app.route('/selecionar_turno_grades')
     @requer_perfil('diretor', 'secretaria')

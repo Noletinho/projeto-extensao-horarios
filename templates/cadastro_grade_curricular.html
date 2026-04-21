@@ -6,16 +6,15 @@
     .tabela-grade { max-width: 750px; }
     .tabela-grade input[type="number"] { width: 90px; margin-bottom: 0; }
     .ja-cadastrado {
+        display: inline-block;
         font-size: 0.78rem;
-        color: var(--cor-texto);
-        opacity: 0.55;
+        color: var(--cor-secundaria);
+        font-weight: 600;
         margin-left: 8px;
         white-space: nowrap;
     }
-    .ja-cadastrado.tem-valor {
-        opacity: 1;
-        color: var(--cor-secundaria);
-        font-weight: 600;
+    .input-ja-cadastrado {
+        border-color: var(--cor-secundaria) !important;
     }
 </style>
 {% endblock %}
@@ -58,7 +57,7 @@
                                id="aulas_{{ disciplina['id_disciplina'] }}"
                                name="aulas_semanais_{{ disciplina['id_disciplina'] }}"
                                min="0" placeholder="0">
-                        <span class="ja-cadastrado" id="existente_{{ disciplina['id_disciplina'] }}"></span>
+                        <span class="ja-cadastrado" id="existente_{{ disciplina['id_disciplina'] }}" style="display:none;"></span>
                     </td>
                 </tr>
                 {% endfor %}
@@ -74,42 +73,43 @@
 
 {% block scripts_extra %}
 <script>
+    const GRADES = {{ grades_existentes | tojson }};
+
     const select = document.getElementById('select-turma');
 
     function limparCampos() {
         document.querySelectorAll('[id^="aulas_"]').forEach(input => {
             input.value = '';
-            input.style.borderColor = '';
+            input.classList.remove('input-ja-cadastrado');
         });
         document.querySelectorAll('[id^="existente_"]').forEach(span => {
             span.textContent = '';
-            span.className = 'ja-cadastrado';
+            span.style.display = 'none';
         });
     }
 
-    select.addEventListener('change', async () => {
+    function preencherGrade(idTurma) {
         limparCampos();
-        const id = select.value;
-        if (!id) return;
-
-        try {
-            const resp = await fetch(`/api/grade_turma/${id}`);
-            const dados = await resp.json();
-
-            for (const [idDisc, aulas] of Object.entries(dados)) {
-                const input = document.getElementById(`aulas_${idDisc}`);
-                const span  = document.getElementById(`existente_${idDisc}`);
-                if (input) {
-                    input.value = aulas;
-                    input.style.borderColor = 'var(--cor-secundaria)';
-                }
-                if (span) {
-                    span.textContent = `já cadastrado: ${aulas} aulas`;
-                    span.className = 'ja-cadastrado tem-valor';
-                }
+        const dados = GRADES[String(idTurma)] || {};
+        for (const [idDisc, aulas] of Object.entries(dados)) {
+            const input = document.getElementById('aulas_' + idDisc);
+            const span  = document.getElementById('existente_' + idDisc);
+            if (input) {
+                input.value = aulas;
+                input.classList.add('input-ja-cadastrado');
             }
-        } catch (e) {
-            console.error('Erro ao buscar grade:', e);
+            if (span) {
+                span.textContent = 'já cadastrado: ' + aulas + ' aula' + (aulas !== 1 ? 's' : '');
+                span.style.display = 'inline-block';
+            }
+        }
+    }
+
+    select.addEventListener('change', () => {
+        if (select.value) {
+            preencherGrade(select.value);
+        } else {
+            limparCampos();
         }
     });
 </script>
