@@ -173,6 +173,19 @@ def registrar(app):
             conexao.commit()
         return redirect(url_for('selecionar_turno_grades'))
 
+    @app.route('/api/grade_turma/<int:id_turma>')
+    @requer_perfil('diretor', 'secretaria')
+    def api_grade_turma(id_turma):
+        from flask import jsonify
+        with conectar() as conexao:
+            cursor = conexao.cursor()
+            cursor.execute(
+                "SELECT id_disciplina, aulas_semanais FROM grade_curricular WHERE id_turma = %s",
+                (id_turma,)
+            )
+            rows = cursor.fetchall()
+        return jsonify({str(r['id_disciplina']): r['aulas_semanais'] for r in rows})
+
 
 def _agregar_grades(registros):
     grades_por_serie = {}

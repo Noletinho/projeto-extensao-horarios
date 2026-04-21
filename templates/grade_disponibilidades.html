@@ -4,16 +4,21 @@
 {% block estilos_extra %}
 <style>
     .tabela-grade { table-layout: fixed; }
-    .tabela-grade .col-professor { width: 160px; font-weight: bold; background: #fafafa; }
+    .tabela-grade .col-professor {
+        width: 160px;
+        font-weight: bold;
+        background: var(--cor-superficie-alt);
+        color: var(--cor-texto);
+    }
     .bloco-horario {
         border: 1px solid var(--cor-borda);
         padding: 4px 6px;
         margin-bottom: 5px;
-        background: #f9f9f9;
+        background: rgba(28,20,10,0.50);
         border-radius: 4px;
         font-size: 0.85rem;
     }
-    .dia-vazio { color: #999; text-align: center; font-size: 0.9rem; }
+    .dia-vazio { color: var(--cor-texto); opacity: 0.35; text-align: center; font-size: 0.9rem; }
     .btn-editar-dia { font-size: 0.78rem; padding: 3px 8px; }
 </style>
 {% endblock %}

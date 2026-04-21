@@ -1,6 +1,22 @@
 {% extends "base.html" %}
 {% block titulo %}Turmas{% endblock %}
 
+{% block estilos_extra %}
+<style>
+    .grupo-turno td {
+        background: rgba(201,168,76,0.12);
+        color: var(--cor-primaria);
+        font-weight: 700;
+        font-size: 0.82rem;
+        letter-spacing: 1.5px;
+        padding: 6px 12px;
+        text-transform: uppercase;
+    }
+    .turma-nome { font-weight: 600; }
+    .turma-serie { font-size: 0.8rem; opacity: 0.65; }
+</style>
+{% endblock %}
+
 {% block conteudo %}
 <div class="cabecalho-pagina">
     <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
@@ -11,27 +27,40 @@
 <table>
     <thead>
         <tr>
-            <th>Nome</th>
-            <th>Série</th>
-            <th>Turno</th>
+            <th>Turma</th>
             <th>Ações</th>
         </tr>
     </thead>
     <tbody>
+        {% set ns = namespace(turno_atual='') %}
         {% for turma in turmas %}
-        <tr data-turno="{{ turma['nome_turno'] }}">
-            <td>{{ turma['nome'] }}</td>
-            <td>{{ turma['serie'] }}</td>
-            <td>{{ turma['nome_turno'] }}</td>
-            <td>
-                <div class="flex-linha">
-                    <a href="{{ url_for('editar_turma', id_turma=turma['id_turma']) }}#form-edicao" class="btn btn-secundario">Editar</a>
-                    <form action="{{ url_for('deletar_turma', id_turma=turma['id_turma']) }}" method="POST">
-                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
-                    </form>
-                </div>
-            </td>
-        </tr>
+            {% if turma['nome_turno'] != ns.turno_atual %}
+                {% set ns.turno_atual = turma['nome_turno'] %}
+                <tr class="grupo-turno">
+                    <td colspan="2">
+                        {% if 'matu' in turma['nome_turno']|lower %}☀️
+                        {% elif 'vesp' in turma['nome_turno']|lower %}🌅
+                        {% elif 'notu' in turma['nome_turno']|lower or 'noit' in turma['nome_turno']|lower %}🌙
+                        {% else %}🏫
+                        {% endif %}
+                        {{ turma['nome_turno'] }}
+                    </td>
+                </tr>
+            {% endif %}
+            <tr data-turno="{{ turma['nome_turno'] }}">
+                <td>
+                    <span class="turma-nome">{{ turma['nome'] }}</span><br>
+                    <span class="turma-serie">{{ turma['serie'] }}</span>
+                </td>
+                <td>
+                    <div class="flex-linha">
+                        <a href="{{ url_for('editar_turma', id_turma=turma['id_turma']) }}#form-edicao" class="btn btn-secundario">Editar</a>
+                        <form action="{{ url_for('deletar_turma', id_turma=turma['id_turma']) }}" method="POST">
+                            <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
         {% endfor %}
     </tbody>
 </table>
@@ -66,4 +95,3 @@
 {% endif %}
 
 {% endblock %}
-

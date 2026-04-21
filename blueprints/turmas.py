@@ -61,7 +61,7 @@ def registrar(app):
                        turno.nome AS nome_turno
                 FROM turma
                 LEFT JOIN turno ON turma.id_turno = turno.id_turno
-                ORDER BY turma.nome
+                ORDER BY turno.nome, turma.serie, turma.nome
             """)
             turmas = cursor.fetchall()
             cursor.execute("SELECT id_turno, nome FROM turno ORDER BY nome")
@@ -78,7 +78,7 @@ def registrar(app):
                        turno.nome AS nome_turno
                 FROM turma
                 JOIN turno ON turma.id_turno = turno.id_turno
-                ORDER BY turma.nome
+                ORDER BY turno.nome, turma.serie, turma.nome
             """)
             turmas = cursor.fetchall()
             cursor.execute("SELECT * FROM turma WHERE id_turma = %s", (id_turma,))

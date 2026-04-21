@@ -3,8 +3,20 @@
 
 {% block estilos_extra %}
 <style>
-    .tabela-grade { max-width: 700px; }
+    .tabela-grade { max-width: 750px; }
     .tabela-grade input[type="number"] { width: 90px; margin-bottom: 0; }
+    .ja-cadastrado {
+        font-size: 0.78rem;
+        color: var(--cor-texto);
+        opacity: 0.55;
+        margin-left: 8px;
+        white-space: nowrap;
+    }
+    .ja-cadastrado.tem-valor {
+        opacity: 1;
+        color: var(--cor-secundaria);
+        font-weight: 600;
+    }
 </style>
 {% endblock %}
 
@@ -18,11 +30,11 @@
     <form method="POST" action="{{ url_for('cadastrar_grade_curricular') }}">
         <div class="form-grupo">
             <label>Turma:</label>
-            <select name="id_turma" required>
+            <select name="id_turma" id="select-turma" required>
                 <option value="">Selecione</option>
                 {% for turma in turmas %}
                     <option value="{{ turma['id_turma'] }}">
-                        {{ turma['nome'] }} - {{ turma['serie'] }} - {{ turma['nome_turno'] }}
+                        {{ turma['nome'] }} — {{ turma['serie'] }} — {{ turma['nome_turno'] }}
                     </option>
                 {% endfor %}
             </select>
@@ -43,8 +55,10 @@
                     <td>{{ disciplina['sigla'] }}</td>
                     <td>
                         <input type="number"
+                               id="aulas_{{ disciplina['id_disciplina'] }}"
                                name="aulas_semanais_{{ disciplina['id_disciplina'] }}"
                                min="0" placeholder="0">
+                        <span class="ja-cadastrado" id="existente_{{ disciplina['id_disciplina'] }}"></span>
                     </td>
                 </tr>
                 {% endfor %}
@@ -56,5 +70,47 @@
         </div>
     </form>
 </div>
+{% endblock %}
 
+{% block scripts_extra %}
+<script>
+    const select = document.getElementById('select-turma');
+
+    function limparCampos() {
+        document.querySelectorAll('[id^="aulas_"]').forEach(input => {
+            input.value = '';
+            input.style.borderColor = '';
+        });
+        document.querySelectorAll('[id^="existente_"]').forEach(span => {
+            span.textContent = '';
+            span.className = 'ja-cadastrado';
+        });
+    }
+
+    select.addEventListener('change', async () => {
+        limparCampos();
+        const id = select.value;
+        if (!id) return;
+
+        try {
+            const resp = await fetch(`/api/grade_turma/${id}`);
+            const dados = await resp.json();
+
+            for (const [idDisc, aulas] of Object.entries(dados)) {
+                const input = document.getElementById(`aulas_${idDisc}`);
+                const span  = document.getElementById(`existente_${idDisc}`);
+                if (input) {
+                    input.value = aulas;
+                    input.style.borderColor = 'var(--cor-secundaria)';
+                }
+                if (span) {
+                    span.textContent = `já cadastrado: ${aulas} aulas`;
+                    span.className = 'ja-cadastrado tem-valor';
+                }
+            }
+        } catch (e) {
+            console.error('Erro ao buscar grade:', e);
+        }
+    });
+</script>
 {% endblock %}
