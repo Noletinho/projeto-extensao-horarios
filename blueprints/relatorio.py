@@ -29,6 +29,9 @@ def registrar(app):
         turno, turmas, horarios, dias, grade = _montar_dados_relatorio(id_turno)
         if not turno:
             return redirect(url_for('selecionar_turno_relatorio'))
+        if not turmas:
+            flash('Este turno não possui turmas cadastradas.', 'erro')
+            return redirect(url_for('selecionar_turno_relatorio'))
         return render_template('relatorio.html',
                                turno=turno, turmas=turmas,
                                horarios=horarios, dias=dias, grade=grade)
@@ -46,7 +49,14 @@ def _montar_dados_professor(id_professor):
         cursor.execute("SELECT nome FROM professor WHERE id_professor = %s", (id_professor,))
         row = cursor.fetchone()
         professor_nome = row['nome'] if row else 'Professor'
-        cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+        cursor.execute("""
+            SELECT * FROM horario_aula
+            WHERE eh_intervalo = 1
+               OR id_horario IN (
+                   SELECT DISTINCT id_horario FROM alocacao WHERE id_professor = %s
+               )
+            ORDER BY hora_inicio
+        """, (id_professor,))
         horarios = cursor.fetchall()
         cursor.execute("""
             SELECT a.dia_semana, a.id_horario,
@@ -87,7 +97,17 @@ def _montar_dados_relatorio(id_turno):
             ORDER BY t.serie, t.nome
         """, (id_turno,))
         turmas = cursor.fetchall()
-        cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+        cursor.execute("""
+            SELECT * FROM horario_aula
+            WHERE eh_intervalo = 1
+               OR id_horario IN (
+                   SELECT DISTINCT a.id_horario
+                   FROM alocacao a
+                   JOIN turma t ON a.id_turma = t.id_turma
+                   WHERE t.id_turno = %s
+               )
+            ORDER BY hora_inicio
+        """, (id_turno,))
         horarios = cursor.fetchall()
         cursor.execute("""
             SELECT a.id_turma, a.dia_semana, a.id_horario,

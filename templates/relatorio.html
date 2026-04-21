@@ -349,6 +349,7 @@
                 </tr>
             </thead>
             <tbody>
+                {% set ns = namespace(num_aula=0) %}
                 {% for horario in horarios %}
                     {% if horario['eh_intervalo'] %}
                     <tr>
@@ -357,8 +358,9 @@
                         <td colspan="{{ dias|length * turmas|length }}" class="celula-intervalo">— INTERVALO —</td>
                     </tr>
                     {% else %}
+                    {% set ns.num_aula = ns.num_aula + 1 %}
                     <tr>
-                        <td class="col-aula">{{ loop.index }}ª</td>
+                        <td class="col-aula">{{ ns.num_aula }}ª</td>
                         <td class="col-hora">
                             {{ horario['hora_inicio'] }}<br>{{ horario['hora_fim'] }}
                         </td>
