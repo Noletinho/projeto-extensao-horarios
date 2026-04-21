@@ -97,17 +97,7 @@ def _montar_dados_relatorio(id_turno):
             ORDER BY t.serie, t.nome
         """, (id_turno,))
         turmas = cursor.fetchall()
-        cursor.execute("""
-            SELECT * FROM horario_aula
-            WHERE eh_intervalo = 1
-               OR id_horario IN (
-                   SELECT DISTINCT a.id_horario
-                   FROM alocacao a
-                   JOIN turma t ON a.id_turma = t.id_turma
-                   WHERE t.id_turno = %s
-               )
-            ORDER BY hora_inicio
-        """, (id_turno,))
+        cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
         horarios = cursor.fetchall()
         cursor.execute("""
             SELECT a.id_turma, a.dia_semana, a.id_horario,
