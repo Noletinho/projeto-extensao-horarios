@@ -7,7 +7,7 @@ import auth
 from blueprints import (
     autenticacao, professores, disciplinas, turnos, turmas, locais,
     horarios, professor_disciplina, disponibilidade,
-    grade_curricular, alocacao, relatorio, usuarios
+    grade_curricular, alocacao, relatorio, usuarios, sugestao
 )
 
 app = Flask(__name__)
@@ -26,6 +26,7 @@ grade_curricular.registrar(app)
 alocacao.registrar(app)
 relatorio.registrar(app)
 usuarios.registrar(app)
+sugestao.registrar(app)
 
 
 @app.context_processor

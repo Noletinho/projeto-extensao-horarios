@@ -312,8 +312,17 @@ td:hover .btn-remover-slot { opacity: 1; }
 
 {% block conteudo %}
 <div class="cabecalho-pagina">
+    {% if sugestao_id %}
+    <a href="{{ url_for('ver_sugestao', id_sugestao=sugestao_id) }}" class="btn btn-secundario">←</a>
+    {% else %}
     <a href="{{ url_for('selecionar_turma_alocacao') }}" class="btn btn-secundario">←</a>
+    {% endif %}
     <h1>Grade — {{ turma['serie'] }}ª {{ turma['nome'] }} &nbsp;<small style="font-weight:400;font-size:.7em;opacity:.6;">{{ turma['nome_turno'] }}</small></h1>
+    {% if sugestao_id %}
+    <span style="font-size:.78rem;padding:4px 10px;border-radius:4px;background:rgba(184,50,34,.15);color:var(--cor-acento);border:1px solid rgba(184,50,34,.3);">
+        ✦ Editando sugestão
+    </span>
+    {% endif %}
 </div>
 
 <form method="POST" id="form-grade">
@@ -442,10 +451,11 @@ const ocupacao     = {{ ocupacao_json|safe }};
 const disponib     = {{ disponibilidades_json|safe }};
 const horariosLst  = {{ horarios_json|safe }};
 const locaisLst    = {{ locais_json|safe }};
+const sugestaoPendentes = {{ sugestao_pendentes_json|safe }};
 
 // Estado
 let discAtiva = null;   // objeto da grade
-let pendentes = {};     // "dia|hid" -> {id_disciplina, id_professor, id_local, dia, id_horario, sigla, cor, prof}
+let pendentes = Object.assign({}, sugestaoPendentes);  // pré-carrega sugestão se houver
 let popupCelula = null; // célula com popup aberto
 
 // ─── Inicialização ───────────────────────────────────────────────────────

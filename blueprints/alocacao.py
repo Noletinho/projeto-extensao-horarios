@@ -31,6 +31,7 @@ def registrar(app):
     @app.route('/alocar_turma/<int:id_turma>', methods=['GET', 'POST'])
     @requer_perfil('diretor', 'secretaria')
     def alocar_turma_completa(id_turma):
+        sugestao_id = request.args.get('sugestao_id', type=int)
         with conectar() as conexao:
             cursor = conexao.cursor()
 
@@ -107,6 +108,33 @@ def registrar(app):
             cursor.execute("SELECT * FROM `local` WHERE status = 'ativo' ORDER BY nome")
             locais = cursor.fetchall()
 
+            # Carregar pendentes de sugestão, se solicitado
+            sugestao_pendentes = {}
+            if sugestao_id:
+                try:
+                    cursor.execute(
+                        "SELECT dados_json FROM sugestao_grade WHERE id_sugestao = %s",
+                        (sugestao_id,)
+                    )
+                    row = cursor.fetchone()
+                    if row:
+                        dados_sug = json.loads(row['dados_json'])
+                        for s in dados_sug.get('slots', []):
+                            if s['id_turma'] == id_turma:
+                                key = f"{s['dia']}|{s['id_horario']}"
+                                sugestao_pendentes[key] = {
+                                    'id_disciplina': s['id_disciplina'],
+                                    'id_professor':  s['id_professor'],
+                                    'id_local':      s['id_local'],
+                                    'dia':           s['dia'],
+                                    'id_horario':    s['id_horario'],
+                                    'sigla':         s['sigla'],
+                                    'cor':           s['cor'],
+                                    'prof':          s['prof'],
+                                }
+                except Exception:
+                    pass
+
             if request.method == 'POST':
                 slots_raw = request.form.get('slots_json', '[]')
                 try:
@@ -170,6 +198,8 @@ def registrar(app):
             locais_json=json.dumps([{
                 'id': l['id_local'], 'nome': l['nome']
             } for l in locais]),
+            sugestao_pendentes_json=json.dumps(sugestao_pendentes),
+            sugestao_id=sugestao_id,
         )
 
     @app.route('/deletar_alocacao_turma/<int:id_turma>/<int:id_alocacao>', methods=['POST'])

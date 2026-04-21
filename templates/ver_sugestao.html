@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block titulo %}{{ sugestao['nome'] }}{% endblock %}
+
+{% block estilos_extra %}
+<style>
+.grade-mini {
+    border-collapse: collapse;
+    font-size: .74rem;
+    margin-bottom: 4px;
+    width: 100%;
+}
+
+.grade-mini th {
+    background: rgba(106,110,121,.18);
+    color: var(--cor-primaria);
+    padding: 4px 6px;
+    text-align: center;
+    font-weight: 700;
+    border: 1px solid rgba(106,110,121,.15);
+    font-size: .7rem;
+}
+
+.grade-mini td {
+    border: 1px solid rgba(106,110,121,.12);
+    padding: 0;
+    text-align: center;
+    vertical-align: middle;
+    height: 34px;
+    min-width: 58px;
+    position: relative;
+}
+
+.cell-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 1px 3px;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,.5);
+    font-size: .65rem;
+    line-height: 1.2;
+}
+
+.cell-mini .sigla { font-weight: 900; font-size: .7rem; }
+.cell-mini .prof  { font-size: .58rem; opacity: .85; }
+
+.td-hora-mini {
+    font-size: .65rem;
+    color: var(--cor-texto);
+    opacity: .55;
+    padding: 0 6px;
+    white-space: nowrap;
+    background: rgba(106,110,121,.08) !important;
+    text-align: left;
+}
+
+.turma-bloco {
+    background: var(--cor-superficie);
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-borda);
+    backdrop-filter: blur(var(--blur-glass));
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.turma-bloco-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.turma-nome { font-weight: 700; font-size: .92rem; color: var(--cor-primaria); }
+.turma-meta { font-size: .75rem; opacity: .6; }
+
+.nao-aloc-lista {
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: rgba(248,113,113,.08);
+    border: 1px solid rgba(248,113,113,.2);
+    border-radius: 6px;
+    font-size: .78rem;
+    color: var(--cor-erro);
+}
+</style>
+{% endblock %}
+
+{% block conteudo %}
+<div class="cabecalho-pagina">
+    <a href="{{ url_for('listar_sugestoes') }}" class="btn btn-secundario">←</a>
+    <h1>{{ sugestao['nome'] }}</h1>
+</div>
+
+<div class="flex-linha mb-2" style="flex-wrap:wrap;gap:8px;">
+    <form method="POST" action="{{ url_for('aplicar_sugestao', id_sugestao=sugestao['id_sugestao']) }}"
+          onsubmit="return confirm('Aplicar TODA esta sugestão? As alocações já existentes não serão afetadas.')">
+        <button type="submit" class="btn btn-acento">⚡ Aplicar Tudo</button>
+    </form>
+    <form method="POST" action="{{ url_for('excluir_sugestao', id_sugestao=sugestao['id_sugestao']) }}"
+          onsubmit="return confirm('Excluir esta sugestão?')">
+        <button type="submit" class="btn-perigo">Excluir Sugestão</button>
+    </form>
+</div>
+
+{% if nao_alocados %}
+<div class="nao-aloc-lista mb-2">
+    <strong>⚠ Disciplinas sem slot disponível ({{ nao_alocados|length }}):</strong>
+    <ul style="margin:6px 0 0 14px;padding:0;">
+        {% for na in nao_alocados %}
+        <li>{{ na['nome'] }} (faltam {{ na['faltam'] }} aula(s)) — {{ na['motivo'] }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% for id_turma, slots in por_turma.items() %}
+{% set turma = turmas.get(id_turma) %}
+{% if turma %}
+<div class="turma-bloco">
+    <div class="turma-bloco-header">
+        <div>
+            <div class="turma-nome">{{ turma['serie'] }}ª {{ turma['nome'] }} <span style="opacity:.5;font-weight:400;">— {{ turma['nome_turno'] }}</span></div>
+            <div class="turma-meta">{{ slots|length }} alocação(ões) nesta sugestão</div>
+        </div>
+        <div class="flex-linha" style="gap:8px;">
+            <a href="{{ url_for('alocar_turma_completa', id_turma=id_turma, sugestao_id=sugestao['id_sugestao']) }}"
+               class="btn btn-secundario" style="font-size:.8rem;">
+                ✏ Editar no editor visual
+            </a>
+            <form method="POST" action="{{ url_for('aplicar_sugestao', id_sugestao=sugestao['id_sugestao']) }}"
+                  onsubmit="return confirm('Aplicar apenas esta turma?')">
+                <input type="hidden" name="id_turma" value="{{ id_turma }}">
+                <button type="submit" class="btn btn-primario" style="font-size:.8rem;">Aplicar esta turma</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mini grade visual -->
+    <div style="overflow-x:auto;">
+        <table class="grade-mini">
+            <thead>
+                <tr>
+                    <th style="min-width:52px;text-align:left;padding-left:6px;">Horário</th>
+                    <th>Seg</th>
+                    <th>Ter</th>
+                    <th>Qua</th>
+                    <th>Qui</th>
+                    <th>Sex</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set slots_map = namespace(d={}) %}
+                {% for s in slots %}
+                    {% set _ = slots_map.d.update({s['dia'] ~ '|' ~ s['id_horario']: s}) %}
+                {% endfor %}
+                {% for hid, h in horarios.items() %}
+                <tr>
+                    <td class="td-hora-mini">{{ h['hora_inicio'] }}</td>
+                    {% for dia in dias %}
+                    {% set key = dia ~ '|' ~ hid %}
+                    {% set cell = slots_map.d.get(key) %}
+                    <td {% if cell %}style="background:{{ cell['cor'] }};"{% endif %}>
+                        {% if cell %}
+                        <div class="cell-mini">
+                            <span class="sigla">{{ cell['sigla'] }}</span>
+                            <span class="prof">{{ cell['prof'] }}</span>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% if not por_turma %}
+<p style="opacity:.5;text-align:center;padding:32px;">Nenhum slot gerado para este turno.</p>
+{% endif %}
+
+<a href="{{ url_for('listar_sugestoes') }}" class="link-voltar">← Voltar para Sugestões</a>
+{% endblock %}
