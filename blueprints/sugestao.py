@@ -270,29 +270,30 @@ def registrar(app):
             slots = dados.get('slots', [])
             nao_alocados = dados.get('nao_alocados', [])
 
-            # Buscar nomes das turmas
+            # Turmas do turno ordenadas por série/nome
             cursor.execute("""
                 SELECT t.id_turma, t.nome, t.serie, tr.nome AS nome_turno
                 FROM turma t JOIN turno tr ON t.id_turno = tr.id_turno
                 WHERE t.id_turno = %s ORDER BY t.serie, t.nome
             """, (sugestao['id_turno'],))
-            turmas = {t['id_turma']: t for t in cursor.fetchall()}
+            turmas_lista = cursor.fetchall()
+            turmas = {t['id_turma']: t for t in turmas_lista}
 
-            # Buscar horários para exibição
-            cursor.execute("SELECT * FROM horario_aula WHERE eh_intervalo = 0 ORDER BY hora_inicio")
-            horarios = {h['id_horario']: h for h in cursor.fetchall()}
+            # Todos os horários (incluindo intervalos para exibição correta)
+            cursor.execute("SELECT * FROM horario_aula ORDER BY hora_inicio")
+            horarios_lista = cursor.fetchall()
 
-        # Organizar slots por turma
-        por_turma = {}
+        # grade_map: {id_turma: {dia: {id_horario: slot}}} — lookup O(1) no template
+        grade_map = {}
         for s in slots:
             tid = s['id_turma']
-            por_turma.setdefault(tid, []).append(s)
+            grade_map.setdefault(tid, {}).setdefault(s['dia'], {})[s['id_horario']] = s
 
         return render_template('ver_sugestao.html',
             sugestao=sugestao,
-            por_turma=por_turma,
-            turmas=turmas,
-            horarios=horarios,
+            grade_map=grade_map,
+            turmas_lista=turmas_lista,
+            horarios_lista=horarios_lista,
             nao_alocados=nao_alocados,
             dias=_DIAS,
         )

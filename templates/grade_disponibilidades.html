@@ -3,75 +3,199 @@
 
 {% block estilos_extra %}
 <style>
-    .tabela-grade { table-layout: fixed; }
-    .tabela-grade .col-professor {
-        width: 160px;
-        font-weight: bold;
-        background: var(--cor-superficie-alt);
-        color: var(--cor-texto);
-    }
-    .bloco-horario {
-        border: 1px solid var(--cor-borda);
-        padding: 4px 6px;
-        margin-bottom: 5px;
-        background: rgba(28,20,10,0.50);
-        border-radius: 4px;
-        font-size: 0.85rem;
-    }
-    .dia-vazio { color: var(--cor-texto); opacity: 0.35; text-align: center; font-size: 0.9rem; }
-    .btn-editar-dia { font-size: 0.78rem; padding: 3px 8px; }
+/* ── GRADE VISUAL ── */
+.grade-disp {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .8rem;
+    background: var(--cor-superficie);
+    backdrop-filter: blur(var(--blur-glass));
+    border-radius: var(--raio-borda);
+    overflow: hidden;
+    border: 1px solid var(--cor-borda);
+    box-shadow: var(--sombra);
+}
+
+.grade-disp th {
+    background: rgba(106,110,121,.18);
+    color: var(--cor-primaria);
+    padding: 10px 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: .78rem;
+    border: 1px solid rgba(106,110,121,.15);
+}
+
+.th-prof {
+    text-align: left !important;
+    padding-left: 16px !important;
+    min-width: 160px;
+}
+
+.grade-disp td {
+    border: 1px solid rgba(106,110,121,.10);
+    padding: 6px 8px;
+    vertical-align: top;
+}
+
+.td-prof {
+    background: rgba(106,110,121,.06);
+    border-right: 2px solid rgba(106,110,121,.15) !important;
+    padding: 8px 14px !important;
+}
+
+.prof-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ── SLOTS DE HORÁRIO ── */
+.slots-dia {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 90px;
+}
+
+.slot-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: .71rem;
+    font-weight: 600;
+    white-space: nowrap;
+    background: rgba(110,216,138,.12);
+    color: var(--cor-sucesso);
+    border: 1px solid rgba(110,216,138,.20);
+}
+
+.slot-pill.indisponivel {
+    background: rgba(248,113,113,.08);
+    color: var(--cor-erro);
+    border-color: rgba(248,113,113,.15);
+    opacity: .6;
+}
+
+.slot-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: currentColor;
+}
+
+.dia-vazio {
+    font-size: .72rem;
+    opacity: .25;
+    text-align: center;
+    padding: 4px 0;
+}
+
+/* ── Link "editar dia" no hover ── */
+.td-dia-wrap {
+    position: relative;
+}
+
+.btn-editar-dia-hover {
+    display: block;
+    margin-top: 4px;
+    font-size: .65rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(106,110,121,.08);
+    color: var(--cor-texto-claro);
+    text-decoration: none;
+    text-align: center;
+    border: 1px solid var(--cor-borda);
+    transition: background .15s;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+}
+
+td:hover .btn-editar-dia-hover {
+    opacity: 1;
+    pointer-events: auto;
+}
 </style>
 {% endblock %}
 
 {% block conteudo %}
 <div class="cabecalho-pagina">
-    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Voltar</a>
-    <h1>Grade de Disponibilidades dos Professores</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">←</a>
+    <h1>Disponibilidades</h1>
 </div>
 
-<div class="flex-linha mb-2">
-    <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="btn btn-primario">Cadastrar Nova Disponibilidade</a>
-    <a href="{{ url_for('listar_disponibilidade_professor') }}" class="btn btn-secundario">Ver Lista Tradicional</a>
+<div class="tabela-topo" style="margin-bottom:14px;">
+    <div class="tabela-topo-titulo">
+        Grade de Disponibilidades
+        <span class="contador-badge">{{ professores_ordem|length }} professor(es)</span>
+    </div>
+    <div class="tabela-topo-acoes">
+        <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="btn btn-primario">+ Cadastrar</a>
+        <a href="{{ url_for('listar_disponibilidade_professor') }}" class="btn btn-secundario">Ver Lista</a>
+    </div>
 </div>
 
-<table class="tabela-grade">
+<div style="overflow-x:auto;">
+<table class="grade-disp">
     <thead>
         <tr>
-            <th class="col-professor">Professor</th>
+            <th class="th-prof">Professor</th>
             {% for dia in dias %}
-                <th>{{ dia | capitalize }}</th>
+            <th>{{ dia|capitalize }}</th>
             {% endfor %}
         </tr>
     </thead>
     <tbody>
         {% for professor in professores_ordem %}
-            <tr>
-                <td class="col-professor">{{ professor }}</td>
-                {% for dia in dias %}
-                    <td>
-                        <div style="margin-bottom: 6px;">
-                            <a href="{{ url_for('editar_disponibilidade_dia', id_professor=grade[professor]['id_professor'], dia_semana=dia) }}"
-                               class="btn btn-secundario btn-editar-dia">Editar dia</a>
+        <tr>
+            <td class="td-prof">
+                <div class="prof-cell">
+                    <span class="avatar-ini">{{ professor[0]|upper }}</span>
+                    <span style="font-weight:600;">{{ professor }}</span>
+                </div>
+            </td>
+            {% for dia in dias %}
+            <td>
+                <div class="td-dia-wrap">
+                    {% if grade[professor]['dias'][dia] %}
+                        <div class="slots-dia">
+                        {% for item in grade[professor]['dias'][dia] %}
+                            <span class="slot-pill {% if item['disponivel'] != 1 %}indisponivel{% endif %}">
+                                <span class="slot-dot"></span>
+                                {{ item['horario'].split(' às ')[0] }}
+                            </span>
+                        {% endfor %}
                         </div>
-                        {% if grade[professor]['dias'][dia] %}
-                            {% for item in grade[professor]['dias'][dia] %}
-                                <div class="bloco-horario">
-                                    <strong>{{ item['horario'] }}</strong><br>
-                                    {% if item['disponivel'] == 1 %}
-                                        <span class="badge badge-ativo">Disponível</span>
-                                    {% else %}
-                                        <span class="badge badge-inativo">Indisponível</span>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="dia-vazio">—</div>
-                        {% endif %}
-                    </td>
-                {% endfor %}
-            </tr>
+                    {% else %}
+                        <div class="dia-vazio">—</div>
+                    {% endif %}
+                    <a href="{{ url_for('editar_disponibilidade_dia', id_professor=grade[professor]['id_professor'], dia_semana=dia) }}"
+                       class="btn-editar-dia-hover">editar</a>
+                </div>
+            </td>
+            {% endfor %}
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="{{ dias|length + 1 }}">
+                <div class="estado-vazio">
+                    <span class="estado-vazio-icone">📅</span>
+                    Nenhuma disponibilidade cadastrada.
+                </div>
+            </td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
+</div>
 
+<p style="font-size:.72rem;opacity:.4;margin-top:10px;">
+    Passe o cursor sobre cada célula para ver o botão de edição do dia.
+    Verde = disponível · Vermelho = indisponível cadastrado.
+</p>
 {% endblock %}

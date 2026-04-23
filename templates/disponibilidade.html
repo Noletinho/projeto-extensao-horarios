@@ -5,21 +5,16 @@
 <div class="cabecalho-pagina">
     <a href="{{ url_for('index') }}" class="btn btn-secundario">←</a>
     <h1>Disponibilidades</h1>
+    <span class="contador-badge">{{ disponibilidades|length }}</span>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+        <a href="{{ url_for('grade_disponibilidades') }}" class="btn btn-secundario">Grade Visual</a>
+        <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="btn btn-primario">+ Cadastrar</a>
+    </div>
 </div>
 
-<div class="tabela-topo">
-    <div class="tabela-topo-titulo">
-        Lista de Disponibilidades
-        <span class="contador-badge">{{ disponibilidades|length }}</span>
-    </div>
-    <input class="filtro-busca" type="search" id="busca-disp"
-           placeholder="Filtrar por professor ou dia…"
-           oninput="filtrar('busca-disp','tabela-disp')">
-    <div class="tabela-topo-acoes">
-        <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="btn btn-primario">+ Nova Disponibilidade</a>
-        <a href="{{ url_for('grade_disponibilidades') }}" class="btn btn-secundario">Grade Visual</a>
-    </div>
-</div>
+<input class="filtro-busca" type="search" id="busca-disp" style="margin-bottom:10px;max-width:280px;"
+       placeholder="Filtrar por professor ou dia…"
+       oninput="filtrar('busca-disp','tabela-disp')">
 
 <table id="tabela-disp">
     <thead>
@@ -27,7 +22,7 @@
             <th>Professor</th>
             <th>Dia</th>
             <th>Horário</th>
-            <th style="text-align:center;">Disponível</th>
+            <th style="text-align:center;width:90px;">Status</th>
             <th class="td-acoes">Ações</th>
         </tr>
     </thead>
@@ -38,22 +33,20 @@
                 {% set ns.prof_atual = d['nome_professor'] %}
                 <tr class="linha-grupo">
                     <td colspan="5">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span class="avatar-ini">{{ d['nome_professor'][0]|upper }}</span>
-                            {{ d['nome_professor'] }}
-                        </div>
+                        <span class="avatar-ini" style="display:inline-flex;vertical-align:middle;margin-right:6px;">{{ d['nome_professor'][0]|upper }}</span>
+                        {{ d['nome_professor'] }}
                     </td>
                 </tr>
             {% endif %}
             <tr>
-                <td style="font-size:.82rem;opacity:.55;padding-left:20px;">└ {{ d['nome_professor'] }}</td>
-                <td><strong>{{ d['dia_semana']|capitalize }}</strong></td>
-                <td style="font-size:.85rem;">{{ d['hora_inicio'] }} – {{ d['hora_fim'] }}</td>
+                <td style="padding-left:22px;font-size:.82rem;color:var(--cor-texto-claro);">└</td>
+                <td style="font-weight:600;">{{ d['dia_semana']|capitalize }}</td>
+                <td style="font-size:.85rem;color:var(--cor-texto-claro);">{{ d['hora_inicio'] }} – {{ d['hora_fim'] }}</td>
                 <td style="text-align:center;">
                     {% if d['disponivel'] == 1 %}
-                    <span class="badge badge-ativo">Sim</span>
+                    <span class="badge badge-ativo">Disponível</span>
                     {% else %}
-                    <span class="badge badge-inativo">Não</span>
+                    <span class="badge badge-inativo">Indisponível</span>
                     {% endif %}
                 </td>
                 <td class="td-acoes">

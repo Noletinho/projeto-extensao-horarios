@@ -3,88 +3,165 @@
 
 {% block estilos_extra %}
 <style>
-.grade-mini {
-    border-collapse: collapse;
-    font-size: .74rem;
-    margin-bottom: 4px;
-    width: 100%;
+/* ── BARRA DE TOPO STICKY ── */
+.sug-barra {
+    position: sticky;
+    top: 64px;
+    z-index: 40;
+    background: rgba(4,5,4,.92);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--cor-borda);
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
 }
 
-.grade-mini th {
+.sug-meta {
+    font-size: .78rem;
+    opacity: .55;
+    margin-left: 4px;
+}
+
+/* ── GRADE COMBINADA DO TURNO ── */
+.grade-turno {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .74rem;
+    background: var(--cor-superficie);
+    backdrop-filter: blur(var(--blur-glass));
+    border-radius: var(--raio-borda);
+    overflow: hidden;
+    border: 1px solid var(--cor-borda);
+    box-shadow: var(--sombra);
+}
+
+.grade-turno th {
     background: rgba(106,110,121,.18);
     color: var(--cor-primaria);
-    padding: 4px 6px;
-    text-align: center;
-    font-weight: 700;
+    padding: 8px 6px;
     border: 1px solid rgba(106,110,121,.15);
-    font-size: .7rem;
+    font-weight: 700;
+    font-size: .72rem;
+    white-space: nowrap;
 }
 
-.grade-mini td {
-    border: 1px solid rgba(106,110,121,.12);
+.grade-turno td {
+    border: 1px solid rgba(106,110,121,.10);
     padding: 0;
-    text-align: center;
     vertical-align: middle;
-    height: 34px;
-    min-width: 58px;
-    position: relative;
+    height: 42px;
 }
 
-.cell-mini {
+/* Coluna do dia (vertical) */
+.td-dia-vertical {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    background: rgba(106,110,121,.12);
+    color: var(--cor-primaria);
+    font-weight: 700;
+    font-size: .72rem;
+    letter-spacing: .8px;
+    text-align: center;
+    padding: 8px 4px;
+    white-space: nowrap;
+    border-right: 2px solid rgba(106,110,121,.20);
+    min-width: 28px;
+}
+
+/* Coluna de hora */
+.td-hora {
+    font-size: .68rem;
+    color: var(--cor-texto-claro);
+    padding: 4px 8px;
+    white-space: nowrap;
+    background: rgba(106,110,121,.06);
+    border-right: 1px solid rgba(106,110,121,.12);
+    min-width: 60px;
+}
+
+/* Linha de intervalo */
+.tr-intervalo td {
+    background: rgba(106,110,121,.08);
+    border-top: 1px solid rgba(106,110,121,.18);
+    border-bottom: 1px solid rgba(106,110,121,.18);
+}
+
+.td-intervalo-label {
+    text-align: center;
+    font-size: .65rem;
+    color: var(--cor-texto-claro);
+    opacity: .5;
+    letter-spacing: .6px;
+    padding: 4px 0;
+}
+
+/* Célula de aula */
+.cell-aula {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100%;
-    padding: 1px 3px;
+    padding: 2px 3px;
     color: #fff;
-    text-shadow: 0 1px 2px rgba(0,0,0,.5);
-    font-size: .65rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,.55);
+    font-size: .66rem;
     line-height: 1.2;
+    transition: filter .15s;
 }
 
-.cell-mini .sigla { font-weight: 900; font-size: .7rem; }
-.cell-mini .prof  { font-size: .58rem; opacity: .85; }
+.cell-aula:hover { filter: brightness(1.15); }
+.cell-sigla { font-weight: 900; font-size: .72rem; }
+.cell-prof  { font-size: .58rem; opacity: .85; }
 
-.td-hora-mini {
-    font-size: .65rem;
-    color: var(--cor-texto);
-    opacity: .55;
-    padding: 0 6px;
-    white-space: nowrap;
-    background: rgba(106,110,121,.08) !important;
-    text-align: left;
+/* Célula vazia */
+.cell-vazia {
+    background: transparent;
 }
 
-.turma-bloco {
-    background: var(--cor-superficie);
-    border: 1px solid var(--cor-borda);
+/* Cabeçalho de turma */
+.th-turma {
+    text-align: center !important;
+    min-width: 72px;
+    padding: 6px 4px !important;
+}
+
+.th-turma .turma-nome { font-weight: 700; display: block; }
+.th-turma .turma-editar {
+    display: inline-block;
+    margin-top: 3px;
+    font-size: .62rem;
+    font-weight: 400;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: rgba(138,155,176,.12);
+    color: var(--cor-secundaria);
+    text-decoration: none;
+    border: 1px solid rgba(138,155,176,.18);
+    transition: background .15s;
+}
+
+.th-turma .turma-editar:hover { background: rgba(138,155,176,.22); }
+
+/* Separador entre dias */
+.tr-sep-dia td {
+    padding: 0;
+    height: 4px;
+    background: rgba(106,110,121,.18);
+    border: none;
+}
+
+/* Aviso de não alocados */
+.aviso-nao-aloc {
+    background: rgba(248,113,113,.07);
+    border: 1px solid rgba(248,113,113,.18);
     border-radius: var(--raio-borda);
-    backdrop-filter: blur(var(--blur-glass));
-    padding: 14px 16px;
-    margin-bottom: 16px;
-}
-
-.turma-bloco-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.turma-nome { font-weight: 700; font-size: .92rem; color: var(--cor-primaria); }
-.turma-meta { font-size: .75rem; opacity: .6; }
-
-.nao-aloc-lista {
-    margin-top: 8px;
-    padding: 10px 14px;
-    background: rgba(248,113,113,.08);
-    border: 1px solid rgba(248,113,113,.2);
-    border-radius: 6px;
-    font-size: .78rem;
-    color: var(--cor-erro);
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    font-size: .82rem;
 }
 </style>
 {% endblock %}
@@ -95,95 +172,114 @@
     <h1>{{ sugestao['nome'] }}</h1>
 </div>
 
-<div class="flex-linha mb-2" style="flex-wrap:wrap;gap:8px;">
+<!-- Barra de ações sticky -->
+<div class="sug-barra">
     <form method="POST" action="{{ url_for('aplicar_sugestao', id_sugestao=sugestao['id_sugestao']) }}"
-          onsubmit="return confirm('Aplicar TODA esta sugestão? As alocações já existentes não serão afetadas.')">
-        <button type="submit" class="btn btn-acento">⚡ Aplicar Tudo</button>
+          onsubmit="return confirm('Aplicar toda esta sugestão? As alocações existentes não são afetadas.')">
+        <button type="submit" class="btn btn-acento">⚡ Aplicar Todas as Alocações</button>
     </form>
     <form method="POST" action="{{ url_for('excluir_sugestao', id_sugestao=sugestao['id_sugestao']) }}"
           onsubmit="return confirm('Excluir esta sugestão?')">
-        <button type="submit" class="btn-perigo">Excluir Sugestão</button>
+        <button type="submit" class="btn-perigo">Excluir</button>
     </form>
+    <span class="sug-meta">
+        {{ sugestao['nome_turno'] }} ·
+        {{ sugestao['cobertura_pct'] }}% cobertura ·
+        {% if sugestao['nao_alocados'] %}{{ sugestao['nao_alocados'] }} disciplina(s) sem slot{% else %}grade completa{% endif %}
+    </span>
+    <div style="flex:1;"></div>
+    <span style="font-size:.72rem;opacity:.45;">Clique em "Editar" no cabeçalho de cada turma para ajustar no editor visual</span>
 </div>
 
 {% if nao_alocados %}
-<div class="nao-aloc-lista mb-2">
-    <strong>⚠ Disciplinas sem slot disponível ({{ nao_alocados|length }}):</strong>
-    <ul style="margin:6px 0 0 14px;padding:0;">
+<div class="aviso-nao-aloc mb-2">
+    <strong style="color:var(--cor-erro);">⚠ Disciplinas sem slot ({{ nao_alocados|length }}):</strong>
+    <ul style="margin:6px 0 0 16px;padding:0;color:var(--cor-erro);">
         {% for na in nao_alocados %}
-        <li>{{ na['nome'] }} (faltam {{ na['faltam'] }} aula(s)) — {{ na['motivo'] }}</li>
+        {% set t = turmas_lista|selectattr('id_turma', 'equalto', na['id_turma'])|first %}
+        <li style="opacity:.85;">{{ na['nome'] }} — Turma {{ t.nome if t else na['id_turma'] }} (faltam {{ na['faltam'] }} aula(s)) — {{ na['motivo'] }}</li>
         {% endfor %}
     </ul>
 </div>
 {% endif %}
 
-{% for id_turma, slots in por_turma.items() %}
-{% set turma = turmas.get(id_turma) %}
-{% if turma %}
-<div class="turma-bloco">
-    <div class="turma-bloco-header">
-        <div>
-            <div class="turma-nome">{{ turma['serie'] }}ª {{ turma['nome'] }} <span style="opacity:.5;font-weight:400;">— {{ turma['nome_turno'] }}</span></div>
-            <div class="turma-meta">{{ slots|length }} alocação(ões) nesta sugestão</div>
-        </div>
-        <div class="flex-linha" style="gap:8px;">
-            <a href="{{ url_for('alocar_turma_completa', id_turma=id_turma, sugestao_id=sugestao['id_sugestao']) }}"
-               class="btn btn-secundario" style="font-size:.8rem;">
-                ✏ Editar no editor visual
-            </a>
-            <form method="POST" action="{{ url_for('aplicar_sugestao', id_sugestao=sugestao['id_sugestao']) }}"
-                  onsubmit="return confirm('Aplicar apenas esta turma?')">
-                <input type="hidden" name="id_turma" value="{{ id_turma }}">
-                <button type="submit" class="btn btn-primario" style="font-size:.8rem;">Aplicar esta turma</button>
-            </form>
-        </div>
-    </div>
+{% if turmas_lista %}
+<div style="overflow-x:auto;">
+<table class="grade-turno">
+    <thead>
+        <tr>
+            <th style="width:28px;"></th><!-- dia vertical -->
+            <th style="min-width:62px;text-align:left;padding-left:8px;">Horário</th>
+            {% for t in turmas_lista %}
+            <th class="th-turma">
+                <span class="turma-nome">{{ t['serie'] }}ª {{ t['nome'] }}</span>
+                <a href="{{ url_for('alocar_turma_completa', id_turma=t['id_turma'], sugestao_id=sugestao['id_sugestao']) }}"
+                   class="turma-editar">✏ Editar</a>
+            </th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for dia in dias %}
+            {% set dia_label = {'segunda':'Segunda','terca':'Terça','quarta':'Quarta','quinta':'Quinta','sexta':'Sexta'}[dia] %}
+            {% set horarios_aula = horarios_lista|selectattr('eh_intervalo', 'equalto', 0)|list %}
+            {% set n_aulas = horarios_aula|length %}
 
-    <!-- Mini grade visual -->
-    <div style="overflow-x:auto;">
-        <table class="grade-mini">
-            <thead>
-                <tr>
-                    <th style="min-width:52px;text-align:left;padding-left:6px;">Horário</th>
-                    <th>Seg</th>
-                    <th>Ter</th>
-                    <th>Qua</th>
-                    <th>Qui</th>
-                    <th>Sex</th>
+            {# Primeira linha do dia: celula vertical spanning todas as linhas de aula #}
+            {% for h in horarios_lista %}
+
+                {% if h['eh_intervalo'] %}
+                {# ── Linha de INTERVALO ── #}
+                <tr class="tr-intervalo">
+                    {% if loop.first %}
+                    <td class="td-dia-vertical" rowspan="{{ horarios_lista|length }}">{{ dia_label }}</td>
+                    {% endif %}
+                    <td class="td-hora td-intervalo-label" colspan="{{ turmas_lista|length + 1 }}">— INTERVALO —</td>
                 </tr>
-            </thead>
-            <tbody>
-                {% set slots_map = namespace(d={}) %}
-                {% for s in slots %}
-                    {% set _ = slots_map.d.update({s['dia'] ~ '|' ~ s['id_horario']: s}) %}
-                {% endfor %}
-                {% for hid, h in horarios.items() %}
+
+                {% else %}
+                {# ── Linha de AULA ── #}
                 <tr>
-                    <td class="td-hora-mini">{{ h['hora_inicio'] }}</td>
-                    {% for dia in dias %}
-                    {% set key = dia ~ '|' ~ hid %}
-                    {% set cell = slots_map.d.get(key) %}
+                    {% if loop.first %}
+                    <td class="td-dia-vertical" rowspan="{{ horarios_lista|length }}">{{ dia_label }}</td>
+                    {% endif %}
+                    <td class="td-hora">
+                        <strong>{{ h['hora_inicio'] }}</strong><br>
+                        <span style="opacity:.5;font-size:.6rem;">{{ h['hora_fim'] }}</span>
+                    </td>
+                    {% for t in turmas_lista %}
+                    {% set cell = grade_map.get(t['id_turma'], {}).get(dia, {}).get(h['id_horario']) %}
                     <td {% if cell %}style="background:{{ cell['cor'] }};"{% endif %}>
                         {% if cell %}
-                        <div class="cell-mini">
-                            <span class="sigla">{{ cell['sigla'] }}</span>
-                            <span class="prof">{{ cell['prof'] }}</span>
+                        <div class="cell-aula">
+                            <span class="cell-sigla">{{ cell['sigla'] }}</span>
+                            <span class="cell-prof">{{ cell['prof'] }}</span>
                         </div>
+                        {% else %}
+                        <div class="cell-vazia"></div>
                         {% endif %}
                     </td>
                     {% endfor %}
                 </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                {% endif %}
+
+            {% endfor %}
+
+            {# Separador entre dias #}
+            {% if not loop.last %}
+            <tr class="tr-sep-dia"><td colspan="{{ turmas_lista|length + 2 }}"></td></tr>
+            {% endif %}
+
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="estado-vazio">
+    <span class="estado-vazio-icone">📋</span>
+    Nenhuma turma cadastrada para este turno.
 </div>
 {% endif %}
-{% endfor %}
 
-{% if not por_turma %}
-<p style="opacity:.5;text-align:center;padding:32px;">Nenhum slot gerado para este turno.</p>
-{% endif %}
-
-<a href="{{ url_for('listar_sugestoes') }}" class="link-voltar">← Voltar para Sugestões</a>
+<a href="{{ url_for('listar_sugestoes') }}" class="link-voltar mt-2">← Voltar para Sugestões</a>
 {% endblock %}
