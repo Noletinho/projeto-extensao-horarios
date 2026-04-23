@@ -205,23 +205,10 @@ def registrar(app):
                 pid = str(d['id_professor'])
                 disponibilidades.setdefault(pid, {}).setdefault(d['dia_semana'], []).append(d['id_horario'])
 
-            # Ocupação existente (alocações já confirmadas — não devem ser sobrescritas)
-            cursor.execute("SELECT id_professor, dia_semana, id_horario FROM alocacao")
+            # A sugestão representa o horário ideal completo — alocações existentes
+            # NÃO bloqueiam a geração. Conflitos são resolvidos via SAVEPOINT ao aplicar.
             ocup_prof_base = {}
-            for a in cursor.fetchall():
-                pid = str(a['id_professor'])
-                ocup_prof_base.setdefault(pid, {}).setdefault(a['dia_semana'], set()).add(a['id_horario'])
-
-            cursor.execute("""
-                SELECT a.id_turma, a.dia_semana, a.id_horario
-                FROM alocacao a
-                JOIN turma t ON a.id_turma = t.id_turma
-                WHERE t.id_turno = %s
-            """, (id_turno,))
             ocup_turma_base = {}
-            for a in cursor.fetchall():
-                tid = str(a['id_turma'])
-                ocup_turma_base.setdefault(tid, {}).setdefault(a['dia_semana'], set()).add(a['id_horario'])
 
             # Total de aulas esperadas para calcular cobertura
             total_esperado = sum(d['aulas_semanais'] for ds in grade_por_turma.values() for d in ds)
@@ -247,7 +234,9 @@ def registrar(app):
 
             conexao.commit()
 
-        flash(f"{geradas} sugestão(ões) gerada(s) com sucesso!", 'sucesso')
+        flash(f"{geradas} sugestão(ões) gerada(s)! "
+              f"Caso a cobertura seja menor que 100%, verifique se todos os professores "
+              f"têm disponibilidade cadastrada suficiente para cobrir suas disciplinas.", 'sucesso')
         return redirect(url_for('listar_sugestoes'))
 
     @app.route('/sugestao/<int:id_sugestao>')
