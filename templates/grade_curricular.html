@@ -3,64 +3,128 @@
 
 {% block estilos_extra %}
 <style>
-    .bloco-serie { margin-bottom: 32px; }
-    .bloco-turma { margin-bottom: 20px; }
-    .bloco-turma h3 { margin-bottom: 8px; color: var(--cor-texto); }
-    .tabela-grade { max-width: 700px; }
+.gc-turma-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 22px 0 8px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.gc-turma-titulo {
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--cor-primaria);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gc-total-badge {
+    padding: 2px 9px;
+    border-radius: 10px;
+    font-size: .72rem;
+    font-weight: 700;
+    background: rgba(106,110,121,.12);
+    color: var(--cor-texto-claro);
+    border: 1px solid var(--cor-borda);
+}
+
+.gc-total-badge.ok    { background: rgba(110,216,138,.12); color: var(--cor-sucesso); border-color: rgba(110,216,138,.25); }
+.gc-total-badge.acima { background: rgba(248,113,113,.12); color: var(--cor-erro);    border-color: rgba(248,113,113,.25); }
+
+.gc-barra {
+    width: 100px;
+    height: 4px;
+    border-radius: 3px;
+    background: rgba(106,110,121,.15);
+    overflow: hidden;
+}
+
+.gc-barra-fill { height: 100%; border-radius: 3px; background: var(--cor-primaria); transition: width .3s; }
+.gc-barra-fill.ok    { background: var(--cor-sucesso); }
+.gc-barra-fill.acima { background: var(--cor-erro); }
 </style>
 {% endblock %}
 
 {% block conteudo %}
 <div class="cabecalho-pagina">
-    <a href="{{ url_for('selecionar_turno_grades') }}" class="btn btn-secundario">← Voltar</a>
-    <h1>Grades Curriculares — {{ turno['nome'] }}</h1>
+    <a href="{{ url_for('selecionar_turno_grades') }}" class="btn btn-secundario">←</a>
+    <h1>Grade Curricular — <small style="font-weight:400;opacity:.6;">{{ turno['nome'] }}</small></h1>
 </div>
 
 <div class="flex-linha mb-2">
-    <a href="{{ url_for('cadastrar_grade_curricular') }}" class="btn btn-primario">Cadastrar Grade por Turma</a>
-    <a href="{{ url_for('selecionar_turno_grades') }}" class="btn btn-secundario">Selecionar Outro Turno</a>
+    <a href="{{ url_for('cadastrar_grade_curricular') }}" class="btn btn-primario">+ Cadastrar por Turma</a>
+    <a href="{{ url_for('selecionar_turno_grades') }}" class="btn btn-secundario">Outro Turno</a>
 </div>
 
 {% if ordem_series %}
     {% for serie in ordem_series %}
-        <div class="bloco-serie">
-            <h2>Série: {{ serie }}</h2>
-            {% for id_turma, turma in grades_por_serie[serie].items() %}
-                <div class="bloco-turma">
-                    <h3>Turma: {{ turma['nome_turma'] }}</h3>
-                    <table class="tabela-grade">
-                        <thead>
-                            <tr>
-                                <th>Disciplina</th>
-                                <th>Sigla</th>
-                                <th>Aulas Semanais</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for grade in turma['disciplinas'] %}
-                            <tr>
-                                <td>{{ grade['nome_disciplina'] }}</td>
-                                <td>{{ grade['sigla'] }}</td>
-                                <td>{{ grade['aulas_semanais'] }}</td>
-                                <td>
-                                    <div class="flex-linha">
-                                        <a href="{{ url_for('editar_grade_curricular', id_grade=grade['id_grade']) }}#form-edicao" class="btn btn-secundario">Editar</a>
-                                        <form action="{{ url_for('deletar_grade_curricular', id_grade=grade['id_grade']) }}" method="POST">
-                                            <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir esta disciplina da grade?')">Excluir</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+    <div style="font-size:.78rem;text-transform:uppercase;letter-spacing:1.2px;opacity:.45;margin:28px 0 4px;font-weight:700;">
+        {{ serie }}ª Série
+    </div>
+
+    {% for id_turma, turma in grades_por_serie[serie].items() %}
+        {% set total = turma['disciplinas']|sum(attribute='aulas_semanais') %}
+        {% set cls = 'ok' if total == 30 else ('acima' if total > 30 else '') %}
+        {% set pct = [((total / 30) * 100)|int, 100]|min %}
+
+        <div class="gc-turma-header">
+            <div class="gc-turma-titulo">
+                Turma {{ turma['nome_turma'] }}
+                <span class="gc-total-badge {{ cls }}">{{ total }}/30 aulas</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div class="gc-barra">
+                    <div class="gc-barra-fill {{ cls }}" style="width:{{ pct }}%;"></div>
                 </div>
-            {% endfor %}
+                <span style="font-size:.72rem;opacity:.5;">{{ pct }}%</span>
+            </div>
         </div>
+
+        <table style="margin-bottom:4px;">
+            <thead>
+                <tr>
+                    <th>Disciplina</th>
+                    <th style="text-align:center;width:110px;">Aulas/Semana</th>
+                    <th class="td-acoes">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in turma['disciplinas'] %}
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:9px;">
+                            <span style="width:4px;height:30px;border-radius:2px;background:{{ g['cor'] }};flex-shrink:0;"></span>
+                            <div>
+                                <strong>{{ g['nome_disciplina'] }}</strong>
+                                <span class="td-sub">{{ g['sigla'] }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="text-align:center;font-weight:700;color:var(--cor-primaria);">{{ g['aulas_semanais'] }}</td>
+                    <td class="td-acoes">
+                        <div class="flex-linha">
+                            <a href="{{ url_for('editar_grade_curricular', id_grade=g['id_grade']) }}#form-edicao"
+                               class="btn btn-secundario">Editar</a>
+                            <form action="{{ url_for('deletar_grade_curricular', id_grade=g['id_grade']) }}" method="POST">
+                                <button type="submit" class="btn-perigo"
+                                        onclick="return confirm('Remover {{ g['nome_disciplina'] }} da grade?')">Excluir</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
     {% endfor %}
 {% else %}
-    <p>Nenhuma grade curricular cadastrada para este turno.</p>
+<div class="estado-vazio" style="margin-top:32px;">
+    <span class="estado-vazio-icone">📋</span>
+    Nenhuma grade curricular cadastrada para este turno.
+</div>
 {% endif %}
 
 {% if grade_edicao %}
@@ -71,22 +135,22 @@
         <div class="form-grupo">
             <label>Turma:</label>
             <select name="id_turma" required>
-                {% for turma in turmas %}
-                    <option value="{{ turma['id_turma'] }}"
-                        {% if turma['id_turma'] == grade_edicao['id_turma'] %}selected{% endif %}>
-                        {{ turma['nome'] }} - {{ turma['serie'] }} - {{ turma['nome_turno'] }}
-                    </option>
+                {% for t in turmas %}
+                <option value="{{ t['id_turma'] }}"
+                    {% if t['id_turma'] == grade_edicao['id_turma'] %}selected{% endif %}>
+                    {{ t['nome'] }} - {{ t['serie'] }} - {{ t['nome_turno'] }}
+                </option>
                 {% endfor %}
             </select>
         </div>
         <div class="form-grupo">
             <label>Disciplina:</label>
             <select name="id_disciplina" required>
-                {% for disciplina in disciplinas %}
-                    <option value="{{ disciplina['id_disciplina'] }}"
-                        {% if disciplina['id_disciplina'] == grade_edicao['id_disciplina'] %}selected{% endif %}>
-                        {{ disciplina['nome'] }} ({{ disciplina['sigla'] }})
-                    </option>
+                {% for d in disciplinas %}
+                <option value="{{ d['id_disciplina'] }}"
+                    {% if d['id_disciplina'] == grade_edicao['id_disciplina'] %}selected{% endif %}>
+                    {{ d['nome'] }} ({{ d['sigla'] }})
+                </option>
                 {% endfor %}
             </select>
         </div>

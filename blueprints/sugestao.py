@@ -161,17 +161,20 @@ def registrar(app):
                 flash("Turno não encontrado.", 'erro')
                 return redirect(url_for('listar_sugestoes'))
 
-            # Grade curricular de todas as turmas deste turno
+            # Grade curricular — 1 linha por (turma, disciplina), professor único via MIN
             cursor.execute("""
                 SELECT gc.id_turma, gc.id_disciplina, gc.aulas_semanais,
                        d.nome AS nome_disciplina, d.sigla, d.cor,
-                       p.id_professor, p.nome AS nome_professor
+                       MIN(p.id_professor) AS id_professor,
+                       MIN(p.nome)         AS nome_professor
                 FROM grade_curricular gc
                 JOIN turma t ON gc.id_turma = t.id_turma
                 JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
                 LEFT JOIN professor_disciplina pd ON pd.id_disciplina = gc.id_disciplina
                 LEFT JOIN professor p ON p.id_professor = pd.id_professor AND p.status = 'ativo'
                 WHERE t.id_turno = %s
+                GROUP BY gc.id_turma, gc.id_disciplina, gc.aulas_semanais,
+                         d.nome, d.sigla, d.cor
                 ORDER BY gc.id_turma, d.nome
             """, (id_turno,))
             grade_rows = cursor.fetchall()
@@ -182,8 +185,7 @@ def registrar(app):
 
             grade_por_turma = {}
             for r in grade_rows:
-                tid = r['id_turma']
-                grade_por_turma.setdefault(tid, []).append(r)
+                grade_por_turma.setdefault(r['id_turma'], []).append(dict(r))
 
             # Horários (sem intervalo)
             cursor.execute("SELECT id_horario FROM horario_aula WHERE eh_intervalo = 0 ORDER BY hora_inicio")

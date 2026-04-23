@@ -3,38 +3,67 @@
 
 {% block conteudo %}
 <div class="cabecalho-pagina">
-    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
-    <h1>Lista de Disciplinas</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">←</a>
+    <h1>Disciplinas</h1>
 </div>
 
-<a href="{{ url_for('cadastrar_disciplina') }}" class="btn btn-primario mb-2">+ Cadastrar Nova Disciplina</a>
+<div class="tabela-topo">
+    <div class="tabela-topo-titulo">
+        Lista de Disciplinas
+        <span class="contador-badge">{{ disciplinas|length }}</span>
+    </div>
+    <input class="filtro-busca" type="search" id="busca-disc"
+           placeholder="Filtrar por nome ou sigla…"
+           oninput="filtrar('busca-disc','tabela-disc')">
+    <div class="tabela-topo-acoes">
+        <a href="{{ url_for('cadastrar_disciplina') }}" class="btn btn-primario">+ Nova Disciplina</a>
+    </div>
+</div>
 
-<table>
+<table id="tabela-disc">
     <thead>
         <tr>
-            <th>Nome</th>
+            <th>Disciplina</th>
             <th>Sigla</th>
-            <th>Cor</th>
-            <th>Aulas/Semana</th>
-            <th>Ações</th>
+            <th style="text-align:center;">Aulas/Semana</th>
+            <th class="td-acoes">Ações</th>
         </tr>
     </thead>
     <tbody>
-        {% for disciplina in disciplinas %}
-        <tr data-nome="{{ disciplina['nome'] }}" data-sigla="{{ disciplina['sigla'] }}" data-cor="{{ disciplina['cor'] }}">
-            <td>{{ disciplina['nome'] }}</td>
-            <td>{{ disciplina['sigla'] }}</td>
+        {% for d in disciplinas %}
+        <tr data-cor="{{ d['cor'] }}">
             <td>
-                <span style="display:inline-block;width:20px;height:20px;background:{{ disciplina['cor'] }};border:1px solid #ccc;border-radius:3px;vertical-align:middle;"></span>
-                {{ disciplina['cor'] }}
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="width:4px;height:36px;border-radius:2px;background:{{ d['cor'] }};flex-shrink:0;"></span>
+                    <strong>{{ d['nome'] }}</strong>
+                </div>
             </td>
-            <td>{{ disciplina['carga_horaria_semanal'] }}</td>
             <td>
+                <span class="chip-disc">
+                    <span class="chip-disc-cor" style="background:{{ d['cor'] }};"></span>
+                    {{ d['sigla'] }}
+                </span>
+            </td>
+            <td style="text-align:center;font-weight:700;color:var(--cor-primaria);font-size:.95rem;">
+                {{ d['carga_horaria_semanal'] }}
+            </td>
+            <td class="td-acoes">
                 <div class="flex-linha">
-                    <a href="{{ url_for('editar_disciplina', id_disciplina=disciplina['id_disciplina']) }}#form-edicao" class="btn btn-secundario">Editar</a>
-                    <form action="{{ url_for('deletar_disciplina', id_disciplina=disciplina['id_disciplina']) }}" method="POST">
-                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                    <a href="{{ url_for('editar_disciplina', id_disciplina=d['id_disciplina']) }}#form-edicao"
+                       class="btn btn-secundario">Editar</a>
+                    <form action="{{ url_for('deletar_disciplina', id_disciplina=d['id_disciplina']) }}" method="POST">
+                        <button type="submit" class="btn-perigo"
+                                onclick="return confirm('Excluir disciplina {{ d['nome'] }}?')">Excluir</button>
                     </form>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">
+                <div class="estado-vazio">
+                    <span class="estado-vazio-icone">📚</span>
+                    Nenhuma disciplina cadastrada.
                 </div>
             </td>
         </tr>
@@ -103,39 +132,33 @@
     </form>
 </div>
 {% endif %}
-
 {% endblock %}
 
 {% block scripts_extra %}
 <script>
-document.querySelectorAll('tbody tr[data-sigla]').forEach(tr => {
-    const cor = tr.dataset.cor;
-    if (cor) {
-        tr.style.transition = 'box-shadow 0.15s';
-        tr.addEventListener('mouseenter', () => { tr.style.boxShadow = `inset 3px 0 0 ${cor}`; });
-        tr.addEventListener('mouseleave', () => { tr.style.boxShadow = ''; });
-    }
-});
+function filtrar(inputId, tableId) {
+    const q = document.getElementById(inputId).value.toLowerCase();
+    document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
+        tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
 </script>
-
 {% if disciplina_edicao %}
 <script>
-    const inputCorEdit = document.getElementById('cor-input-edit');
-    const previewEdit  = document.getElementById('btn-cor-edit');
-    const hexLabelEdit = document.getElementById('hex-label-edit');
-    const swatchesEdit = document.querySelectorAll('#form-edicao .swatch');
-
-    function aplicarCorEdit(hex) {
-        inputCorEdit.value = hex;
-        previewEdit.style.backgroundColor = hex;
-        hexLabelEdit.textContent = hex.toUpperCase();
-        swatchesEdit.forEach(s => s.classList.toggle('ativo', s.dataset.cor === hex.toLowerCase()));
-    }
-
-    aplicarCorEdit(inputCorEdit.value);
-    previewEdit.addEventListener('click', () => inputCorEdit.click());
-    inputCorEdit.addEventListener('input', () => aplicarCorEdit(inputCorEdit.value));
-    swatchesEdit.forEach(s => s.addEventListener('click', () => aplicarCorEdit(s.dataset.cor)));
+const inputCorEdit = document.getElementById('cor-input-edit');
+const previewEdit  = document.getElementById('btn-cor-edit');
+const hexLabelEdit = document.getElementById('hex-label-edit');
+const swatchesEdit = document.querySelectorAll('#form-edicao .swatch');
+function aplicarCorEdit(hex) {
+    inputCorEdit.value = hex;
+    previewEdit.style.backgroundColor = hex;
+    hexLabelEdit.textContent = hex.toUpperCase();
+    swatchesEdit.forEach(s => s.classList.toggle('ativo', s.dataset.cor === hex.toLowerCase()));
+}
+aplicarCorEdit(inputCorEdit.value);
+previewEdit.addEventListener('click', () => inputCorEdit.click());
+inputCorEdit.addEventListener('input', () => aplicarCorEdit(inputCorEdit.value));
+swatchesEdit.forEach(s => s.addEventListener('click', () => aplicarCorEdit(s.dataset.cor)));
 </script>
 {% endif %}
 {% endblock %}

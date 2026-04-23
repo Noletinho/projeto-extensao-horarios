@@ -3,28 +3,56 @@
 
 {% block conteudo %}
 <div class="cabecalho-pagina">
-    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
-    <h1>Lista de Turnos</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">←</a>
+    <h1>Turnos</h1>
 </div>
-<a href="{{ url_for('cadastrar_turno') }}" class="btn btn-primario mb-2">+ Cadastrar Novo Turno</a>
+
+<div class="tabela-topo">
+    <div class="tabela-topo-titulo">
+        Lista de Turnos
+        <span class="contador-badge">{{ turnos|length }}</span>
+    </div>
+    <div class="tabela-topo-acoes">
+        <a href="{{ url_for('cadastrar_turno') }}" class="btn btn-primario">+ Novo Turno</a>
+    </div>
+</div>
 
 <table>
     <thead>
         <tr>
-            <th>Nome</th>
-            <th>Ações</th>
+            <th>Turno</th>
+            <th class="td-acoes">Ações</th>
         </tr>
     </thead>
     <tbody>
-        {% for turno in turnos %}
-        <tr data-nome="{{ turno['nome'] }}">
-            <td>{{ turno['nome'] }}</td>
+        {% for t in turnos %}
+        <tr data-nome="{{ t['nome'] }}">
             <td>
+                <span style="font-size:1.1rem;margin-right:8px;">
+                    {% if 'matu' in t['nome']|lower %}☀️
+                    {% elif 'vesp' in t['nome']|lower %}🌅
+                    {% elif 'notu' in t['nome']|lower or 'noit' in t['nome']|lower %}🌙
+                    {% else %}🏫{% endif %}
+                </span>
+                <strong>{{ t['nome'] }}</strong>
+            </td>
+            <td class="td-acoes">
                 <div class="flex-linha">
-                    <a href="{{ url_for('editar_turno', id_turno=turno['id_turno']) }}#form-edicao" class="btn btn-secundario">Editar</a>
-                    <form action="{{ url_for('deletar_turno', id_turno=turno['id_turno']) }}" method="POST">
-                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                    <a href="{{ url_for('editar_turno', id_turno=t['id_turno']) }}#form-edicao"
+                       class="btn btn-secundario">Editar</a>
+                    <form action="{{ url_for('deletar_turno', id_turno=t['id_turno']) }}" method="POST">
+                        <button type="submit" class="btn-perigo"
+                                onclick="return confirm('Excluir turno {{ t['nome'] }}?')">Excluir</button>
                     </form>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="2">
+                <div class="estado-vazio">
+                    <span class="estado-vazio-icone">🕐</span>
+                    Nenhum turno cadastrado.
                 </div>
             </td>
         </tr>
@@ -45,6 +73,4 @@
     </form>
 </div>
 {% endif %}
-
 {% endblock %}
-

@@ -3,44 +3,76 @@
 
 {% block conteudo %}
 <div class="cabecalho-pagina">
-    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
-    <h1>Lista de Disponibilidades dos Professores</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">←</a>
+    <h1>Disponibilidades</h1>
 </div>
 
-<div class="flex-linha mb-2">
-    <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="btn btn-primario">Cadastrar Nova Disponibilidade</a>
-    <a href="{{ url_for('grade_disponibilidades') }}" class="btn btn-secundario">Grade de Disponibilidades</a>
+<div class="tabela-topo">
+    <div class="tabela-topo-titulo">
+        Lista de Disponibilidades
+        <span class="contador-badge">{{ disponibilidades|length }}</span>
+    </div>
+    <input class="filtro-busca" type="search" id="busca-disp"
+           placeholder="Filtrar por professor ou dia…"
+           oninput="filtrar('busca-disp','tabela-disp')">
+    <div class="tabela-topo-acoes">
+        <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="btn btn-primario">+ Nova Disponibilidade</a>
+        <a href="{{ url_for('grade_disponibilidades') }}" class="btn btn-secundario">Grade Visual</a>
+    </div>
 </div>
 
-<table>
+<table id="tabela-disp">
     <thead>
         <tr>
             <th>Professor</th>
             <th>Dia</th>
             <th>Horário</th>
-            <th>Disponível</th>
-            <th>Ações</th>
+            <th style="text-align:center;">Disponível</th>
+            <th class="td-acoes">Ações</th>
         </tr>
     </thead>
     <tbody>
+        {% set ns = namespace(prof_atual='') %}
         {% for d in disponibilidades %}
-        <tr>
-            <td>{{ d['nome_professor'] }}</td>
-            <td>{{ d['dia_semana'] | capitalize }}</td>
-            <td>{{ d['hora_inicio'] }} às {{ d['hora_fim'] }}</td>
-            <td>
-                {% if d['disponivel'] == 1 %}
+            {% if d['nome_professor'] != ns.prof_atual %}
+                {% set ns.prof_atual = d['nome_professor'] %}
+                <tr class="linha-grupo">
+                    <td colspan="5">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="avatar-ini">{{ d['nome_professor'][0]|upper }}</span>
+                            {{ d['nome_professor'] }}
+                        </div>
+                    </td>
+                </tr>
+            {% endif %}
+            <tr>
+                <td style="font-size:.82rem;opacity:.55;padding-left:20px;">└ {{ d['nome_professor'] }}</td>
+                <td><strong>{{ d['dia_semana']|capitalize }}</strong></td>
+                <td style="font-size:.85rem;">{{ d['hora_inicio'] }} – {{ d['hora_fim'] }}</td>
+                <td style="text-align:center;">
+                    {% if d['disponivel'] == 1 %}
                     <span class="badge badge-ativo">Sim</span>
-                {% else %}
+                    {% else %}
                     <span class="badge badge-inativo">Não</span>
-                {% endif %}
-            </td>
-            <td>
-                <div class="flex-linha">
-                    <a href="{{ url_for('editar_disponibilidade_professor', id_disponibilidade=d['id_disponibilidade']) }}#form-edicao" class="btn btn-secundario">Editar</a>
-                    <form action="{{ url_for('deletar_disponibilidade_professor', id_disponibilidade=d['id_disponibilidade']) }}" method="POST">
-                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
-                    </form>
+                    {% endif %}
+                </td>
+                <td class="td-acoes">
+                    <div class="flex-linha">
+                        <a href="{{ url_for('editar_disponibilidade_professor', id_disponibilidade=d['id_disponibilidade']) }}#form-edicao"
+                           class="btn btn-secundario">Editar</a>
+                        <form action="{{ url_for('deletar_disponibilidade_professor', id_disponibilidade=d['id_disponibilidade']) }}" method="POST">
+                            <button type="submit" class="btn-perigo"
+                                    onclick="return confirm('Excluir disponibilidade?')">Excluir</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        {% else %}
+        <tr>
+            <td colspan="5">
+                <div class="estado-vazio">
+                    <span class="estado-vazio-icone">📅</span>
+                    Nenhuma disponibilidade cadastrada.
                 </div>
             </td>
         </tr>
@@ -56,11 +88,11 @@
         <div class="form-grupo">
             <label>Professor:</label>
             <select name="id_professor" required>
-                {% for professor in professores %}
-                    <option value="{{ professor['id_professor'] }}"
-                        {% if professor['id_professor'] == disponibilidade_edicao['id_professor'] %}selected{% endif %}>
-                        {{ professor['nome'] }}
-                    </option>
+                {% for p in professores %}
+                <option value="{{ p['id_professor'] }}"
+                    {% if p['id_professor'] == disponibilidade_edicao['id_professor'] %}selected{% endif %}>
+                    {{ p['nome'] }}
+                </option>
                 {% endfor %}
             </select>
         </div>
@@ -68,20 +100,20 @@
             <label>Dia da Semana:</label>
             <select name="dia_semana" required>
                 {% for dia in ['segunda','terca','quarta','quinta','sexta'] %}
-                    <option value="{{ dia }}" {% if disponibilidade_edicao['dia_semana'] == dia %}selected{% endif %}>
-                        {{ dia | capitalize }}
-                    </option>
+                <option value="{{ dia }}" {% if disponibilidade_edicao['dia_semana'] == dia %}selected{% endif %}>
+                    {{ dia|capitalize }}
+                </option>
                 {% endfor %}
             </select>
         </div>
         <div class="form-grupo">
             <label>Horário:</label>
             <select name="id_horario" required>
-                {% for horario in horarios %}
-                    <option value="{{ horario['id_horario'] }}"
-                        {% if horario['id_horario'] == disponibilidade_edicao['id_horario'] %}selected{% endif %}>
-                        {{ horario['hora_inicio'] }} às {{ horario['hora_fim'] }}
-                    </option>
+                {% for h in horarios %}
+                <option value="{{ h['id_horario'] }}"
+                    {% if h['id_horario'] == disponibilidade_edicao['id_horario'] %}selected{% endif %}>
+                    {{ h['hora_inicio'] }} às {{ h['hora_fim'] }}
+                </option>
                 {% endfor %}
             </select>
         </div>
@@ -96,5 +128,15 @@
     </form>
 </div>
 {% endif %}
+{% endblock %}
 
+{% block scripts_extra %}
+<script>
+function filtrar(inputId, tableId) {
+    const q = document.getElementById(inputId).value.toLowerCase();
+    document.querySelectorAll(`#${tableId} tbody tr:not(.linha-grupo)`).forEach(tr => {
+        tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+</script>
 {% endblock %}

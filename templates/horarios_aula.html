@@ -3,32 +3,72 @@
 
 {% block conteudo %}
 <div class="cabecalho-pagina">
-    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
-    <h1>Lista de Horários de Aula</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">←</a>
+    <h1>Horários de Aula</h1>
 </div>
-<a href="{{ url_for('cadastrar_horario') }}" class="btn btn-primario mb-2">+ Cadastrar Novo Horário</a>
+
+<div class="tabela-topo">
+    <div class="tabela-topo-titulo">
+        Horários Cadastrados
+        <span class="contador-badge">{{ horarios|length }}</span>
+    </div>
+    <div class="tabela-topo-acoes">
+        <a href="{{ url_for('cadastrar_horario') }}" class="btn btn-primario">+ Novo Horário</a>
+    </div>
+</div>
 
 <table>
     <thead>
         <tr>
-            <th>Hora Início</th>
-            <th>Hora Fim</th>
+            <th style="width:40px;text-align:center;">#</th>
+            <th>Início</th>
+            <th>Fim</th>
             <th>Tipo</th>
-            <th>Ações</th>
+            <th class="td-acoes">Ações</th>
         </tr>
     </thead>
     <tbody>
-        {% for horario in horarios %}
-        <tr>
-            <td>{% if horario['eh_intervalo'] %}—{% else %}{{ horario['hora_inicio'] }}{% endif %}</td>
-            <td>{% if horario['eh_intervalo'] %}—{% else %}{{ horario['hora_fim'] }}{% endif %}</td>
-            <td>{% if horario['eh_intervalo'] %}<span class="badge badge-inativo">Intervalo</span>{% else %}Aula{% endif %}</td>
+        {% for h in horarios %}
+        <tr {% if h['eh_intervalo'] %}style="opacity:.65;"{% endif %}>
+            <td style="text-align:center;color:var(--cor-texto-claro);font-size:.8rem;">{{ loop.index }}</td>
             <td>
+                {% if h['eh_intervalo'] %}
+                <span style="opacity:.4">—</span>
+                {% else %}
+                <strong>{{ h['hora_inicio'] }}</strong>
+                {% endif %}
+            </td>
+            <td style="color:var(--cor-texto-claro);">
+                {% if h['eh_intervalo'] %}
+                <span style="opacity:.4">—</span>
+                {% else %}
+                {{ h['hora_fim'] }}
+                {% endif %}
+            </td>
+            <td>
+                {% if h['eh_intervalo'] %}
+                <span class="badge badge-intervalo">Intervalo</span>
+                {% else %}
+                <span class="badge badge-aula">Aula</span>
+                {% endif %}
+            </td>
+            <td class="td-acoes">
                 <div class="flex-linha">
-                    <a href="{{ url_for('editar_horario', id_horario=horario['id_horario']) }}#form-edicao" class="btn btn-secundario">Editar</a>
-                    <form action="{{ url_for('deletar_horario', id_horario=horario['id_horario']) }}" method="POST">
-                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                    <a href="{{ url_for('editar_horario', id_horario=h['id_horario']) }}#form-edicao"
+                       class="btn btn-secundario">Editar</a>
+                    <form action="{{ url_for('deletar_horario', id_horario=h['id_horario']) }}" method="POST">
+                        <button type="submit" class="btn-perigo"
+                                onclick="return confirm('Excluir horário?')">Excluir</button>
                     </form>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5">
+                <div class="estado-vazio">
+                    <span class="estado-vazio-icone">🕐</span>
+                    Nenhum horário cadastrado.
                 </div>
             </td>
         </tr>
@@ -67,18 +107,15 @@
     </form>
 </div>
 {% endif %}
-
 {% endblock %}
 
 {% block scripts_extra %}
 <script>
 function toggleHorasEdit() {
     const isIntervalo = document.getElementById('chk-edit-intervalo').checked;
-    const campos = document.getElementById('campos-hora-edit');
-    campos.style.display = isIntervalo ? 'none' : '';
+    document.getElementById('campos-hora-edit').style.display = isIntervalo ? 'none' : '';
     document.getElementById('hora_inicio_edit').required = !isIntervalo;
     document.getElementById('hora_fim_edit').required = !isIntervalo;
 }
 </script>
 {% endblock %}
-

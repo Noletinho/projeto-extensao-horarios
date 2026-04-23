@@ -3,32 +3,68 @@
 
 {% block conteudo %}
 <div class="cabecalho-pagina">
-    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
-    <h1>Lista de Locais</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">←</a>
+    <h1>Locais</h1>
 </div>
-<a href="{{ url_for('cadastrar_local') }}" class="btn btn-primario mb-2">+ Cadastrar Novo Local</a>
 
-<table>
+<div class="tabela-topo">
+    <div class="tabela-topo-titulo">
+        Lista de Locais
+        <span class="contador-badge">{{ locais|length }}</span>
+    </div>
+    <input class="filtro-busca" type="search" id="busca-local"
+           placeholder="Filtrar por nome ou tipo…"
+           oninput="filtrar('busca-local','tabela-local')">
+    <div class="tabela-topo-acoes">
+        <a href="{{ url_for('cadastrar_local') }}" class="btn btn-primario">+ Novo Local</a>
+    </div>
+</div>
+
+<table id="tabela-local">
     <thead>
         <tr>
-            <th>Nome</th>
+            <th>Local</th>
             <th>Tipo</th>
             <th>Status</th>
-            <th>Ações</th>
+            <th class="td-acoes">Ações</th>
         </tr>
     </thead>
     <tbody>
-        {% for local in locais %}
-        <tr data-tipo="{{ local['tipo'] }}">
-            <td>{{ local['nome'] }}</td>
-            <td>{{ local['tipo'] }}</td>
-            <td><span class="badge badge-{{ local['status'] }}">{{ local['status'] }}</span></td>
+        {% for l in locais %}
+        <tr data-tipo="{{ l['tipo'] }}">
             <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:1.1rem;">
+                        {% set tp = l['tipo']|lower %}
+                        {% if 'lab' in tp %}🔬
+                        {% elif 'inform' in tp %}💻
+                        {% elif 'biblio' in tp %}📚
+                        {% elif 'quadra' in tp or 'ginas' in tp %}⚽
+                        {% elif 'audit' in tp %}🎭
+                        {% else %}🏫{% endif %}
+                    </span>
+                    <strong>{{ l['nome'] }}</strong>
+                </div>
+            </td>
+            <td><span class="badge badge-tipo">{{ l['tipo'] }}</span></td>
+            <td><span class="badge badge-{{ l['status'] }}">{{ l['status']|capitalize }}</span></td>
+            <td class="td-acoes">
                 <div class="flex-linha">
-                    <a href="{{ url_for('editar_local', id_local=local['id_local']) }}#form-edicao" class="btn btn-secundario">Editar</a>
-                    <form action="{{ url_for('deletar_local', id_local=local['id_local']) }}" method="POST">
-                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                    <a href="{{ url_for('editar_local', id_local=l['id_local']) }}#form-edicao"
+                       class="btn btn-secundario">Editar</a>
+                    <form action="{{ url_for('deletar_local', id_local=l['id_local']) }}" method="POST">
+                        <button type="submit" class="btn-perigo"
+                                onclick="return confirm('Excluir local {{ l['nome'] }}?')">Excluir</button>
                     </form>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">
+                <div class="estado-vazio">
+                    <span class="estado-vazio-icone">🏛️</span>
+                    Nenhum local cadastrado.
                 </div>
             </td>
         </tr>
@@ -60,6 +96,15 @@
     </form>
 </div>
 {% endif %}
-
 {% endblock %}
 
+{% block scripts_extra %}
+<script>
+function filtrar(inputId, tableId) {
+    const q = document.getElementById(inputId).value.toLowerCase();
+    document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
+        tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

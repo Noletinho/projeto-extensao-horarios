@@ -1,66 +1,70 @@
 {% extends "base.html" %}
 {% block titulo %}Turmas{% endblock %}
 
-{% block estilos_extra %}
-<style>
-    .grupo-turno td {
-        background: rgba(201,168,76,0.12);
-        color: var(--cor-primaria);
-        font-weight: 700;
-        font-size: 0.82rem;
-        letter-spacing: 1.5px;
-        padding: 6px 12px;
-        text-transform: uppercase;
-    }
-    .turma-nome { font-weight: 600; }
-    .turma-serie { font-size: 0.8rem; opacity: 0.65; }
-</style>
-{% endblock %}
-
 {% block conteudo %}
 <div class="cabecalho-pagina">
-    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
-    <h1>Lista de Turmas</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">←</a>
+    <h1>Turmas</h1>
 </div>
-<a href="{{ url_for('cadastrar_turma') }}" class="btn btn-primario mb-2">+ Cadastrar Nova Turma</a>
+
+<div class="tabela-topo">
+    <div class="tabela-topo-titulo">
+        Lista de Turmas
+        <span class="contador-badge">{{ turmas|length }}</span>
+    </div>
+    <div class="tabela-topo-acoes">
+        <a href="{{ url_for('cadastrar_turma') }}" class="btn btn-primario">+ Nova Turma</a>
+    </div>
+</div>
 
 <table>
     <thead>
         <tr>
             <th>Turma</th>
-            <th>Ações</th>
+            <th>Série</th>
+            <th>Turno</th>
+            <th class="td-acoes">Ações</th>
         </tr>
     </thead>
     <tbody>
         {% set ns = namespace(turno_atual='') %}
-        {% for turma in turmas %}
-            {% if turma['nome_turno'] != ns.turno_atual %}
-                {% set ns.turno_atual = turma['nome_turno'] %}
-                <tr class="grupo-turno">
-                    <td colspan="2">
-                        {% if 'matu' in turma['nome_turno']|lower %}☀️
-                        {% elif 'vesp' in turma['nome_turno']|lower %}🌅
-                        {% elif 'notu' in turma['nome_turno']|lower or 'noit' in turma['nome_turno']|lower %}🌙
-                        {% else %}🏫
-                        {% endif %}
-                        {{ turma['nome_turno'] }}
+        {% for t in turmas %}
+            {% if t['nome_turno'] != ns.turno_atual %}
+                {% set ns.turno_atual = t['nome_turno'] %}
+                <tr class="linha-grupo">
+                    <td colspan="4">
+                        {% if 'matu' in t['nome_turno']|lower %}☀️
+                        {% elif 'vesp' in t['nome_turno']|lower %}🌅
+                        {% elif 'notu' in t['nome_turno']|lower or 'noit' in t['nome_turno']|lower %}🌙
+                        {% else %}🏫{% endif %}
+                        {{ t['nome_turno'] }}
                     </td>
                 </tr>
             {% endif %}
-            <tr data-turno="{{ turma['nome_turno'] }}">
-                <td>
-                    <span class="turma-nome">{{ turma['nome'] }}</span><br>
-                    <span class="turma-serie">{{ turma['serie'] }}</span>
-                </td>
-                <td>
+            <tr data-turno="{{ t['nome_turno'] }}">
+                <td><strong>{{ t['nome'] }}</strong></td>
+                <td><span class="badge badge-tipo">{{ t['serie'] }}ª série</span></td>
+                <td style="font-size:.82rem;opacity:.6;">{{ t['nome_turno'] }}</td>
+                <td class="td-acoes">
                     <div class="flex-linha">
-                        <a href="{{ url_for('editar_turma', id_turma=turma['id_turma']) }}#form-edicao" class="btn btn-secundario">Editar</a>
-                        <form action="{{ url_for('deletar_turma', id_turma=turma['id_turma']) }}" method="POST">
-                            <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                        <a href="{{ url_for('editar_turma', id_turma=t['id_turma']) }}#form-edicao"
+                           class="btn btn-secundario">Editar</a>
+                        <form action="{{ url_for('deletar_turma', id_turma=t['id_turma']) }}" method="POST">
+                            <button type="submit" class="btn-perigo"
+                                    onclick="return confirm('Excluir turma {{ t['nome'] }}?')">Excluir</button>
                         </form>
                     </div>
                 </td>
             </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">
+                <div class="estado-vazio">
+                    <span class="estado-vazio-icone">🏫</span>
+                    Nenhuma turma cadastrada.
+                </div>
+            </td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
@@ -82,10 +86,10 @@
             <label>Turno:</label>
             <select name="id_turno" required>
                 {% for turno in turnos %}
-                    <option value="{{ turno['id_turno'] }}"
-                        {% if turma_edicao['id_turno'] == turno['id_turno'] %}selected{% endif %}>
-                        {{ turno['nome'] }}
-                    </option>
+                <option value="{{ turno['id_turno'] }}"
+                    {% if turma_edicao['id_turno'] == turno['id_turno'] %}selected{% endif %}>
+                    {{ turno['nome'] }}
+                </option>
                 {% endfor %}
             </select>
         </div>
@@ -93,5 +97,4 @@
     </form>
 </div>
 {% endif %}
-
 {% endblock %}

@@ -47,8 +47,9 @@ def registrar(app):
             cursor.execute("""
                 SELECT gc.id_disciplina, gc.aulas_semanais,
                        d.nome AS nome_disciplina, d.sigla, d.cor,
-                       p.id_professor, p.nome AS nome_professor,
-                       COUNT(a.id_alocacao) AS ja_alocadas
+                       MIN(p.id_professor)          AS id_professor,
+                       MIN(p.nome)                  AS nome_professor,
+                       COUNT(DISTINCT a.id_alocacao) AS ja_alocadas
                 FROM grade_curricular gc
                 JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
                 LEFT JOIN professor_disciplina pd ON pd.id_disciplina = gc.id_disciplina
@@ -57,8 +58,7 @@ def registrar(app):
                                     AND a.id_disciplina = gc.id_disciplina
                 WHERE gc.id_turma = %s
                 GROUP BY gc.id_disciplina, gc.aulas_semanais,
-                         d.nome, d.sigla, d.cor,
-                         p.id_professor, p.nome
+                         d.nome, d.sigla, d.cor
                 ORDER BY d.nome
             """, (id_turma,))
             grade = cursor.fetchall()

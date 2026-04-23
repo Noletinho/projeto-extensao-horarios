@@ -295,13 +295,154 @@ tbody tr {
 
 tbody tr:last-child { border-bottom: none; }
 
-tbody tr:hover { background: rgba(106,110,121,0.08); }
+tbody tr:not(.linha-grupo):hover { background: rgba(106,110,121,0.10); }
 
 tbody td {
     padding: 10px 14px;
     font-size: 0.92rem;
     color: var(--cor-texto);
 }
+
+/* === TOPO DE TABELA === */
+.tabela-topo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.tabela-topo-titulo {
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--cor-primaria);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.contador-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 11px;
+    background: rgba(106,110,121,.18);
+    color: var(--cor-texto-claro);
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.tabela-topo-acoes { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* === FILTRO DE BUSCA === */
+.filtro-busca {
+    width: 100%;
+    max-width: 300px;
+    padding: 7px 12px 7px 34px;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-borda);
+    background: rgba(106,110,121,.06) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238890A0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 10px center;
+    color: var(--cor-texto);
+    font-size: .88rem;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.filtro-busca:focus {
+    outline: none;
+    border-color: var(--cor-secundaria);
+    box-shadow: 0 0 0 3px rgba(106,110,121,.18);
+}
+
+/* === AVATAR INICIAL === */
+.avatar-ini {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(106,110,121,.18);
+    color: var(--cor-primaria);
+    font-weight: 700;
+    font-size: .82rem;
+    flex-shrink: 0;
+    border: 1px solid var(--cor-borda);
+}
+
+/* === CHIP DE DISCIPLINA === */
+.chip-disc {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px 2px 4px;
+    border-radius: 12px;
+    font-size: .78rem;
+    font-weight: 600;
+    background: rgba(106,110,121,.10);
+    border: 1px solid rgba(106,110,121,.18);
+}
+
+.chip-disc-cor {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* === LINHA SEPARADORA DE GRUPO (em tbody) === */
+.linha-grupo td {
+    background: rgba(106,110,121,.12) !important;
+    color: var(--cor-primaria);
+    font-weight: 700;
+    font-size: .8rem;
+    letter-spacing: .8px;
+    padding: 6px 14px !important;
+    border-bottom: 1px solid rgba(106,110,121,.20) !important;
+}
+
+/* === CELL DE AÇÕES === */
+.td-acoes {
+    white-space: nowrap;
+    text-align: right;
+    padding-right: 12px !important;
+}
+
+.td-acoes .flex-linha { justify-content: flex-end; }
+
+/* === TD SECUNDÁRIO === */
+.td-sub {
+    font-size: .78rem;
+    opacity: .55;
+    display: block;
+    margin-top: 1px;
+}
+
+/* === BADGE EXTRA === */
+.badge-intervalo { background: rgba(245,158,11,.12); color: #f59e0b; border: 1px solid rgba(245,158,11,.25); }
+.badge-aula      { background: rgba(138,155,176,.12); color: var(--cor-primaria); border: 1px solid rgba(138,155,176,.20); }
+.badge-tipo      { background: rgba(106,110,121,.10); color: var(--cor-texto-claro); border: 1px solid var(--cor-borda); }
+
+/* === ESTADO VAZIO === */
+.estado-vazio {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--cor-texto-claro);
+    font-size: .9rem;
+}
+
+.estado-vazio-icone {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 8px;
+    opacity: .35;
+}
+
+/* === PAGINAÇÃO === */
+.paginacao { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.pag-info  { font-size: .82rem; color: var(--cor-texto-claro); margin: 0 auto; }
 
 /* === ALERTAS === */
 .alerta {

@@ -3,39 +3,72 @@
 
 {% block conteudo %}
 <div class="cabecalho-pagina">
-    <a href="{{ url_for('index') }}" class="btn btn-secundario">← Início</a>
-    <h1>Lista de Professores</h1>
+    <a href="{{ url_for('index') }}" class="btn btn-secundario">←</a>
+    <h1>Professores</h1>
 </div>
 
-<a href="{{ url_for('cadastrar_professor') }}" class="btn btn-primario mb-2">+ Cadastrar Novo Professor</a>
+<div class="tabela-topo">
+    <div class="tabela-topo-titulo">
+        Lista de Professores
+        <span class="contador-badge">{{ professores|length }}</span>
+    </div>
+    <input class="filtro-busca" type="search" id="busca-prof"
+           placeholder="Filtrar por nome ou e-mail…"
+           oninput="filtrar('busca-prof','tabela-prof')">
+    <div class="tabela-topo-acoes">
+        <a href="{{ url_for('cadastrar_professor') }}" class="btn btn-primario">+ Novo Professor</a>
+    </div>
+</div>
 
-<table>
+<table id="tabela-prof">
     <thead>
         <tr>
-            <th>Nome</th>
+            <th>Professor</th>
             <th>CPF</th>
-            <th>Email</th>
-            <th>Telefone</th>
+            <th>Contato</th>
             <th>Status</th>
-            <th>Ações</th>
+            <th class="td-acoes">Ações</th>
         </tr>
     </thead>
     <tbody>
-        {% for professor in professores %}
+        {% for p in professores %}
         <tr>
-            <td>{{ professor['nome'] }}</td>
-            <td>{% if pode_ver_cpf %}{{ professor['cpf']|formatar_cpf }}{% elif professor['cpf'] %}***.***.***-**{% else %}—{% endif %}</td>
-            <td>{{ professor['email'] }}</td>
-            <td>{{ professor['telefone'] }}</td>
             <td>
-                <span class="badge badge-{{ professor['status'] }}">{{ professor['status'] }}</span>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span class="avatar-ini">{{ p['nome'][0]|upper }}</span>
+                    <strong>{{ p['nome'] }}</strong>
+                </div>
+            </td>
+            <td style="font-size:.85rem;font-family:monospace;">
+                {% if pode_ver_cpf %}{{ p['cpf']|formatar_cpf }}
+                {% elif p['cpf'] %}***.***.***-**
+                {% else %}<span style="opacity:.35">—</span>{% endif %}
             </td>
             <td>
+                {% if p['email'] %}<div style="font-size:.85rem;">{{ p['email'] }}</div>{% endif %}
+                {% if p['telefone'] %}<span class="td-sub">{{ p['telefone'] }}</span>{% endif %}
+                {% if not p['email'] and not p['telefone'] %}<span style="opacity:.35">—</span>{% endif %}
+            </td>
+            <td>
+                <span class="badge badge-{{ p['status'] }}">{{ p['status']|capitalize }}</span>
+            </td>
+            <td class="td-acoes">
                 <div class="flex-linha">
-                    <a href="{{ url_for('editar_professor', id_professor=professor['id_professor']) }}#form-edicao" class="btn btn-secundario">Editar</a>
-                    <form action="{{ url_for('deletar_professor', id_professor=professor['id_professor']) }}" method="POST">
-                        <button type="submit" class="btn-perigo" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</button>
+                    <a href="{{ url_for('editar_professor', id_professor=p['id_professor']) }}#form-edicao"
+                       class="btn btn-secundario">Editar</a>
+                    <form action="{{ url_for('deletar_professor', id_professor=p['id_professor']) }}" method="POST">
+                        <button type="submit" class="btn-perigo"
+                                onclick="return confirm('Excluir professor {{ p['nome'] }}?')">Excluir</button>
                     </form>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5">
+                <div class="estado-vazio">
+                    <span class="estado-vazio-icone">👨‍🏫</span>
+                    Nenhum professor cadastrado.
                 </div>
             </td>
         </tr>
@@ -92,6 +125,15 @@
     </form>
 </div>
 {% endif %}
-
 {% endblock %}
 
+{% block scripts_extra %}
+<script>
+function filtrar(inputId, tableId) {
+    const q = document.getElementById(inputId).value.toLowerCase();
+    document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
+        tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}
