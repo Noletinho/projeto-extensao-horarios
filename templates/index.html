@@ -1,65 +1,258 @@
 {% extends "base.html" %}
-{% block titulo %}Início{% endblock %}
+{% block titulo %}Dashboard{% endblock %}
 
 {% block conteudo %}
-<h1 class="titulo-inicio">🏫 Sistema de Horários Escolares</h1>
 
-<div class="secao-flutuante">
-    <h2 class="secao-titulo">🗂️ Cadastros Base</h2>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('cadastrar_professor') }}" class="btn btn-primario">Cadastrar Professor</a>
-        <a href="{{ url_for('listar_professores') }}" class="btn btn-secundario">Listar Professores</a>
+<!-- Boas-vindas -->
+<div class="boas-vindas">
+    <div>
+        <div class="boas-vindas-saudacao">
+            {% if usuario_atual %}
+                {% if usuario_atual['perfil'] == 'diretor' %}👑
+                {% elif usuario_atual['perfil'] == 'secretaria' %}📋
+                {% else %}👨‍🏫{% endif %}
+                Olá, {{ usuario_atual['nome'].split()[0] }}!
+            {% else %}
+                Bem-vindo!
+            {% endif %}
+        </div>
+        <div class="boas-vindas-perfil">
+            {% if usuario_atual %}
+                {% if usuario_atual['perfil'] == 'diretor' %}Diretor — Acesso administrativo completo
+                {% elif usuario_atual['perfil'] == 'secretaria' %}Secretaria — Gestão de horários e cadastros
+                {% else %}Professor — Visualização de horários{% endif %}
+            {% endif %}
+        </div>
     </div>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('cadastrar_disciplina') }}" class="btn btn-primario">Cadastrar Disciplina</a>
-        <a href="{{ url_for('listar_disciplinas') }}" class="btn btn-secundario">Listar Disciplinas</a>
-    </div>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('cadastrar_turno') }}" class="btn btn-primario">Cadastrar Turno</a>
-        <a href="{{ url_for('listar_turnos') }}" class="btn btn-secundario">Listar Turnos</a>
-    </div>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('cadastrar_turma') }}" class="btn btn-primario">Cadastrar Turma</a>
-        <a href="{{ url_for('listar_turmas') }}" class="btn btn-secundario">Listar Turmas</a>
-    </div>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('cadastrar_local') }}" class="btn btn-primario">Cadastrar Local</a>
-        <a href="{{ url_for('listar_locais') }}" class="btn btn-secundario">Listar Locais</a>
-    </div>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('cadastrar_horario') }}" class="btn btn-primario">Cadastrar Horário</a>
-        <a href="{{ url_for('listar_horarios') }}" class="btn btn-secundario">Listar Horários</a>
+    <div class="boas-vindas-meta">
+        <div class="boas-vindas-data" id="data-atual">—</div>
+        <div class="boas-vindas-hora" id="hora-atual">—:—</div>
     </div>
 </div>
 
-<div class="secao-flutuante">
-    <h2 class="secao-titulo">🔗 Vínculos</h2>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('cadastrar_professor_disciplina') }}" class="btn btn-primario">Cadastrar Professor × Disciplina</a>
-        <a href="{{ url_for('listar_professores_disciplinas') }}" class="btn btn-secundario">Listar</a>
-    </div>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="btn btn-primario">Cadastrar Disponibilidade</a>
-        <a href="{{ url_for('listar_disponibilidade_professor') }}" class="btn btn-secundario">Lista Tradicional</a>
-        <a href="{{ url_for('grade_disponibilidades') }}" class="btn btn-secundario">Grade de Disponibilidades</a>
-    </div>
+{% if usuario_atual and usuario_atual['perfil'] != 'professor' %}
+
+<!-- Cards de Estatísticas -->
+<div class="dashboard-stats">
+    <a href="{{ url_for('listar_professores') }}" class="stat-card"
+       style="--stat-cor:#3b82f6; --stat-bg:rgba(59,130,246,0.10);">
+        <div class="stat-card-icon">👨‍🏫</div>
+        <div class="stat-card-corpo">
+            <div class="stat-card-numero">{{ total_professores }}</div>
+            <div class="stat-card-label">Professores Ativos</div>
+        </div>
+    </a>
+    <a href="{{ url_for('listar_turmas') }}" class="stat-card"
+       style="--stat-cor:#10b981; --stat-bg:rgba(16,185,129,0.10);">
+        <div class="stat-card-icon">🏫</div>
+        <div class="stat-card-corpo">
+            <div class="stat-card-numero">{{ total_turmas }}</div>
+            <div class="stat-card-label">Turmas</div>
+        </div>
+    </a>
+    <a href="{{ url_for('listar_disciplinas') }}" class="stat-card"
+       style="--stat-cor:#8b5cf6; --stat-bg:rgba(139,92,246,0.10);">
+        <div class="stat-card-icon">📚</div>
+        <div class="stat-card-corpo">
+            <div class="stat-card-numero">{{ total_disciplinas }}</div>
+            <div class="stat-card-label">Disciplinas</div>
+        </div>
+    </a>
+    <a href="{{ url_for('selecionar_turno_alocacoes') }}" class="stat-card"
+       style="--stat-cor:#f59e0b; --stat-bg:rgba(245,158,11,0.10);">
+        <div class="stat-card-icon">📋</div>
+        <div class="stat-card-corpo">
+            <div class="stat-card-numero">{{ total_alocacoes }}</div>
+            <div class="stat-card-label">Aulas Alocadas</div>
+        </div>
+    </a>
 </div>
 
-<div class="secao-flutuante">
-    <h2 class="secao-titulo">📋 Planejamento</h2>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('cadastrar_grade_curricular') }}" class="btn btn-primario">Cadastrar Grade Curricular</a>
-        <a href="{{ url_for('selecionar_turno_grades') }}" class="btn btn-secundario">Listar Grades</a>
+<!-- Módulos Administrativos -->
+<div class="dashboard-modulos">
+
+    <!-- Cadastros Base -->
+    <div class="modulo-card">
+        <h2 class="modulo-titulo"><span class="modulo-icone">🗂️</span> Cadastros Base</h2>
+        <div class="acoes-lista">
+            <a href="{{ url_for('cadastrar_professor') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(59,130,246,0.13);">👨‍🏫</span>
+                <span class="acao-rapida-label">Novo Professor</span>
+            </a>
+            <a href="{{ url_for('listar_professores') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(59,130,246,0.07);">📋</span>
+                <span class="acao-rapida-label">Listar Professores</span>
+            </a>
+
+            <div class="acoes-divisor"></div>
+
+            <a href="{{ url_for('cadastrar_disciplina') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(139,92,246,0.13);">📚</span>
+                <span class="acao-rapida-label">Nova Disciplina</span>
+            </a>
+            <a href="{{ url_for('listar_disciplinas') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(139,92,246,0.07);">📖</span>
+                <span class="acao-rapida-label">Listar Disciplinas</span>
+            </a>
+
+            <div class="acoes-divisor"></div>
+
+            <a href="{{ url_for('cadastrar_turma') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(16,185,129,0.13);">🏫</span>
+                <span class="acao-rapida-label">Nova Turma</span>
+            </a>
+            <a href="{{ url_for('listar_turmas') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(16,185,129,0.07);">🏛️</span>
+                <span class="acao-rapida-label">Listar Turmas</span>
+            </a>
+
+            <div class="acoes-divisor"></div>
+
+            <a href="{{ url_for('cadastrar_turno') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(245,158,11,0.13);">⏱️</span>
+                <span class="acao-rapida-label">Novo Turno</span>
+            </a>
+            <a href="{{ url_for('listar_turnos') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(245,158,11,0.07);">🕐</span>
+                <span class="acao-rapida-label">Listar Turnos</span>
+            </a>
+
+            <div class="acoes-divisor"></div>
+
+            <a href="{{ url_for('cadastrar_local') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(248,113,113,0.13);">📍</span>
+                <span class="acao-rapida-label">Novo Local</span>
+            </a>
+            <a href="{{ url_for('listar_locais') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(248,113,113,0.07);">🗺️</span>
+                <span class="acao-rapida-label">Listar Locais</span>
+            </a>
+
+            <div class="acoes-divisor"></div>
+
+            <a href="{{ url_for('cadastrar_horario') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(106,110,121,0.15);">⏰</span>
+                <span class="acao-rapida-label">Novo Horário de Aula</span>
+            </a>
+            <a href="{{ url_for('listar_horarios') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(106,110,121,0.09);">🗓️</span>
+                <span class="acao-rapida-label">Listar Horários</span>
+            </a>
+        </div>
     </div>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('selecionar_turma_alocacao') }}" class="btn btn-acento btn-float">⚡ Alocar por Turma</a>
-        <a href="{{ url_for('selecionar_turno_alocacoes') }}" class="btn btn-secundario btn-float">Ver Alocações</a>
+
+    <!-- Vínculos e Disponibilidade -->
+    <div class="modulo-card">
+        <h2 class="modulo-titulo"><span class="modulo-icone">🔗</span> Vínculos & Disponibilidade</h2>
+        <div class="acoes-lista">
+            <a href="{{ url_for('cadastrar_professor_disciplina') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(59,130,246,0.13);">🔗</span>
+                <span class="acao-rapida-label">Vincular Professor × Disciplina</span>
+            </a>
+            <a href="{{ url_for('listar_professores_disciplinas') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(59,130,246,0.07);">📋</span>
+                <span class="acao-rapida-label">Listar Vínculos</span>
+            </a>
+
+            <div class="acoes-divisor"></div>
+
+            <a href="{{ url_for('cadastrar_disponibilidade_professor') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(16,185,129,0.13);">✅</span>
+                <span class="acao-rapida-label">Cadastrar Disponibilidade</span>
+            </a>
+            <a href="{{ url_for('listar_disponibilidade_professor') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(16,185,129,0.09);">📅</span>
+                <span class="acao-rapida-label">Lista de Disponibilidades</span>
+            </a>
+            <a href="{{ url_for('grade_disponibilidades') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(16,185,129,0.07);">📊</span>
+                <span class="acao-rapida-label">Grade de Disponibilidades</span>
+            </a>
+        </div>
     </div>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('selecionar_turno_relatorio') }}" class="btn btn-acento">Relatório por Turno</a>
+
+    <!-- Planejamento -->
+    <div class="modulo-card">
+        <h2 class="modulo-titulo"><span class="modulo-icone">📋</span> Planejamento & Relatórios</h2>
+        <div class="acoes-lista">
+            <a href="{{ url_for('cadastrar_grade_curricular') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(139,92,246,0.13);">📐</span>
+                <span class="acao-rapida-label">Nova Grade Curricular</span>
+            </a>
+            <a href="{{ url_for('selecionar_turno_grades') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(139,92,246,0.07);">📚</span>
+                <span class="acao-rapida-label">Listar Grades Curriculares</span>
+            </a>
+
+            <div class="acoes-divisor"></div>
+
+            <a href="{{ url_for('selecionar_turma_alocacao') }}" class="acao-destaque">
+                <span class="acao-rapida-icone">⚡</span>
+                <span class="acao-rapida-label">Alocar por Turma</span>
+            </a>
+            <a href="{{ url_for('selecionar_turno_alocacoes') }}" class="acao-rapida">
+                <span class="acao-rapida-icone" style="background:rgba(184,50,34,0.09);">👁️</span>
+                <span class="acao-rapida-label">Ver Todas as Alocações</span>
+            </a>
+
+            <div class="acoes-divisor"></div>
+
+            <a href="{{ url_for('selecionar_turno_relatorio') }}" class="acao-rapida acao-azul">
+                <span class="acao-rapida-icone">📊</span>
+                <span class="acao-rapida-label">Relatório por Turno</span>
+            </a>
+
+            <div class="acoes-divisor"></div>
+
+            <a href="{{ url_for('listar_sugestoes') }}" class="acao-rapida acao-verde">
+                <span class="acao-rapida-icone">✦</span>
+                <span class="acao-rapida-label">Sugestões Automáticas de Grade</span>
+                {% if total_sugestoes > 0 %}
+                    <span class="acao-rapida-badge">{{ total_sugestoes }}</span>
+                {% endif %}
+            </a>
+        </div>
     </div>
-    <div class="flex-linha mt-1">
-        <a href="{{ url_for('listar_sugestoes') }}" class="btn btn-secundario btn-float">✦ Sugestões Automáticas</a>
+
+</div><!-- /dashboard-modulos -->
+
+{% else %}
+<!-- View simplificada para professor -->
+<div class="dashboard-modulos" style="grid-template-columns: 1fr;">
+    <div class="modulo-card" style="max-width: 480px; margin: 0 auto; width: 100%;">
+        <h2 class="modulo-titulo"><span class="modulo-icone">📅</span> Meus Horários</h2>
+        <div class="acoes-lista">
+            <a href="{{ url_for('meu_horario') }}" class="acao-destaque">
+                <span class="acao-rapida-icone">📋</span>
+                <span class="acao-rapida-label">Ver Meu Horário</span>
+            </a>
+            <a href="{{ url_for('selecionar_turno_relatorio') }}" class="acao-rapida acao-azul">
+                <span class="acao-rapida-icone">📊</span>
+                <span class="acao-rapida-label">Relatório por Turno</span>
+            </a>
+        </div>
     </div>
 </div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+(function () {
+    var dias  = ['domingo','segunda-feira','terça-feira','quarta-feira',
+                 'quinta-feira','sexta-feira','sábado'];
+    var meses = ['janeiro','fevereiro','março','abril','maio','junho',
+                 'julho','agosto','setembro','outubro','novembro','dezembro'];
+    function atualizar() {
+        var n = new Date();
+        var de = document.getElementById('data-atual');
+        var he = document.getElementById('hora-atual');
+        if (de) de.textContent = dias[n.getDay()] + ', ' + n.getDate() + ' de ' + meses[n.getMonth()];
+        if (he) he.textContent = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+    }
+    atualizar();
+    setInterval(atualizar, 15000);
+})();
+</script>
 {% endblock %}

@@ -4,16 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Horário — {{ professor_nome }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --gold:   #8A9BB0;
-            --gold2:  #A8BCCE;
-            --amber:  #B83222;
-            --surface: rgba(8, 9, 12, 0.62);
-            --surface-alt: rgba(15, 16, 22, 0.70);
-            --border: rgba(106,110,121,0.28);
-            --text:   #ECEEF4;
-            --muted:  #8890A0;
+            --azul:   #0F4C81;
+            --azul2:  #1a6fb5;
+            --acento: #B83222;
+            --borda:  #e2e8f0;
+            --text:   #1a1c1e;
+            --muted:  #64748b;
+            --bg:     #f4f6f9;
         }
 
         @page { size: A4 landscape; margin: 8mm; }
@@ -21,30 +22,16 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: url('/static/img/seda.jpg') center/cover fixed no-repeat;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
             color: var(--text);
             font-size: 13px;
             min-height: 100vh;
-            position: relative;
         }
-
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: rgba(8, 5, 2, 0.60);
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        body > * { position: relative; z-index: 1; }
 
         .barra-acoes {
-            background: rgba(10, 6, 2, 0.72);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
+            background: #ffffff;
+            border-bottom: 1px solid var(--borda);
             padding: 12px 24px;
             display: flex;
             align-items: center;
@@ -52,90 +39,108 @@
             position: sticky;
             top: 0;
             z-index: 50;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.5);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
         }
 
-        .barra-titulo { flex: 1; font-size: 1rem; font-weight: 600; color: var(--gold); }
+        .barra-titulo { flex: 1; font-size: 0.95rem; font-weight: 700; color: var(--azul); }
 
         .btn-acao {
-            padding: 8px 18px;
+            padding: 7px 16px;
             border: none;
             border-radius: 6px;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
-            transition: opacity 0.15s, background 0.15s;
+            font-family: inherit;
+            transition: background 0.15s, box-shadow 0.15s;
         }
 
-        .btn-imprimir { background: var(--amber); color: #1a0e00; }
-        .btn-imprimir:hover { opacity: 0.88; }
+        .btn-imprimir { background: var(--acento); color: #fff; }
+        .btn-imprimir:hover { background: #9a2a1c; box-shadow: 0 4px 14px rgba(184,50,34,0.28); }
 
-        .btn-voltar { background: rgba(201,168,76,0.10); color: var(--text); border: 1px solid var(--border); }
-        .btn-voltar:hover { background: rgba(201,168,76,0.20); }
+        .btn-voltar {
+            background: transparent;
+            color: var(--azul);
+            border: 1.5px solid var(--azul);
+        }
+        .btn-voltar:hover { background: #eff6ff; }
 
         .relatorio-wrapper { padding: 24px; max-width: 960px; margin: 0 auto; }
 
         .rel-header {
-            background: rgba(30, 20, 5, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: linear-gradient(135deg, #eff6ff 0%, #f0fdfa 100%);
+            border: 1px solid #bfdbfe;
             border-radius: 10px;
-            padding: 20px 28px;
+            padding: 18px 24px;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
         }
 
-        .rel-header-titulo { font-size: 1.4rem; font-weight: 700; color: var(--gold); letter-spacing: 1px; }
-        .rel-header-subtitulo { font-size: 0.9rem; color: rgba(240,232,216,0.65); margin-top: 4px; text-transform: uppercase; letter-spacing: 2px; }
-        .rel-header-badge { background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.25); padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; color: var(--gold2); }
+        .rel-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--azul), #0d9488, transparent);
+        }
+
+        .rel-header-titulo { font-size: 1.3rem; font-weight: 700; color: var(--azul); letter-spacing: -0.01em; }
+        .rel-header-subtitulo { font-size: 0.85rem; color: var(--muted); margin-top: 3px; letter-spacing: 0.03em; }
+        .rel-header-badge {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.80rem;
+            color: var(--azul);
+            font-weight: 600;
+        }
 
         .tabela-container {
-            background: var(--surface);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid var(--border);
+            background: #ffffff;
+            border: 1px solid var(--borda);
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
         }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
 
-        th, td { border: 1px solid rgba(201,168,76,0.15); text-align: center; vertical-align: middle; padding: 4px; word-wrap: break-word; }
+        th, td { border: 1px solid #e9edf2; text-align: center; vertical-align: middle; padding: 4px; word-wrap: break-word; }
 
-        .th-dia { font-size: 10px; font-weight: 700; background: rgba(201,168,76,0.18); color: var(--gold); height: 26px; letter-spacing: 1px; }
-        .col-aula { width: 36px; font-weight: 700; background: var(--surface-alt); color: var(--muted); font-size: 10px; }
-        .col-hora { width: 65px; font-size: 9px; background: var(--surface-alt); color: var(--muted); line-height: 1.4; }
+        .th-dia { font-size: 10px; font-weight: 700; background: #dbeafe; color: var(--azul); height: 26px; letter-spacing: 0.06em; text-transform: uppercase; }
+        .col-aula { width: 36px; font-weight: 700; background: #f8fafc; color: var(--muted); font-size: 10px; }
+        .col-hora { width: 65px; font-size: 9px; background: #f8fafc; color: var(--muted); line-height: 1.4; }
 
-        .celula { height: 46px; font-size: 9px; line-height: 1.3; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        .celula { height: 46px; font-size: 9px; line-height: 1.3; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         .celula .turma { display: block; font-size: 8px; font-weight: 400; margin-top: 2px; opacity: 0.9; }
-        .celula .local { display: block; font-size: 7px; font-weight: 400; opacity: 0.75; }
+        .celula .local { display: block; font-size: 7px; font-weight: 400; opacity: 0.78; }
 
-        .vazia { background: rgba(10,6,2,0.35); }
+        .vazia { background: #f8fafc; }
 
-        .celula-intervalo { background: rgba(201,168,76,0.10); color: var(--gold); font-weight: 700; font-size: 10px; letter-spacing: 3px; text-align: center; height: 28px; }
+        .celula-intervalo { background: #fef3c7; color: #92400e; font-weight: 700; font-size: 10px; letter-spacing: 3px; text-align: center; height: 28px; border: 1px solid #fde68a; }
 
         .rodape { text-align: center; color: var(--muted); font-size: 0.78rem; padding: 16px; margin-top: 8px; }
 
         @media print {
             body { background: white !important; color: #000; font-size: 9px; }
-            body::before { display: none; }
             .no-print { display: none !important; }
             .relatorio-wrapper { padding: 0; max-width: none; }
-            .rel-header { background: #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin-bottom: 8px; border-radius: 0; padding: 10px 14px; backdrop-filter: none; }
+            .rel-header { background: #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin-bottom: 8px; border-radius: 0; padding: 10px 14px; }
             .rel-header-titulo { color: #fff !important; }
-            .tabela-container { background: white !important; border: none; box-shadow: none; border-radius: 0; backdrop-filter: none; }
+            .rel-header-subtitulo { color: rgba(255,255,255,0.75) !important; }
+            .tabela-container { background: white !important; border: none; box-shadow: none; border-radius: 0; }
             table { font-size: 8px; }
-            th, td { border: 1px solid #aaa !important; }
+            th, td { border: 1px solid #ccc !important; }
             .th-dia { background: #2c5282 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .col-aula, .col-hora { background: #f8f8f8 !important; color: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .vazia { background: #fff !important; }
-            .celula-intervalo { background: #f5f0e8 !important; color: #7a6030 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .celula-intervalo { background: #fef3c7 !important; color: #92400e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .celula { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
             thead { display: table-header-group; }
             tr { page-break-inside: avoid; }

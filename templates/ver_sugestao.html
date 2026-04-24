@@ -8,8 +8,8 @@
     position: sticky;
     top: 64px;
     z-index: 40;
-    background: rgba(4,5,4,.92);
-    backdrop-filter: blur(18px);
+    background: rgba(255,255,255,0.97);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     border-bottom: 1px solid var(--cor-borda);
     padding: 10px 0;
     display: flex;
@@ -39,17 +39,17 @@
 }
 
 .grade-turno th {
-    background: rgba(106,110,121,.18);
+    background: #f1f5f9;
     color: var(--cor-primaria);
     padding: 8px 6px;
-    border: 1px solid rgba(106,110,121,.15);
+    border: 1px solid var(--cor-borda);
     font-weight: 700;
     font-size: .72rem;
     white-space: nowrap;
 }
 
 .grade-turno td {
-    border: 1px solid rgba(106,110,121,.10);
+    border: 1px solid var(--cor-borda);
     padding: 0;
     vertical-align: middle;
     height: 42px;
@@ -59,7 +59,7 @@
 .td-dia-vertical {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    background: rgba(106,110,121,.12);
+    background: #f1f5f9;
     color: var(--cor-primaria);
     font-weight: 700;
     font-size: .72rem;
@@ -67,7 +67,7 @@
     text-align: center;
     padding: 8px 4px;
     white-space: nowrap;
-    border-right: 2px solid rgba(106,110,121,.20);
+    border-right: 2px solid var(--cor-borda-forte);
     min-width: 28px;
 }
 
@@ -77,16 +77,16 @@
     color: var(--cor-texto-claro);
     padding: 4px 8px;
     white-space: nowrap;
-    background: rgba(106,110,121,.06);
-    border-right: 1px solid rgba(106,110,121,.12);
+    background: var(--cor-superficie-alt);
+    border-right: 1px solid var(--cor-borda);
     min-width: 60px;
 }
 
 /* Linha de intervalo */
 .tr-intervalo td {
-    background: rgba(106,110,121,.08);
-    border-top: 1px solid rgba(106,110,121,.18);
-    border-bottom: 1px solid rgba(106,110,121,.18);
+    background: #fef9c3;
+    border-top: 1px solid #fde68a;
+    border-bottom: 1px solid #fde68a;
 }
 
 .td-intervalo-label {
@@ -137,27 +137,27 @@
     font-weight: 400;
     padding: 1px 6px;
     border-radius: 3px;
-    background: rgba(138,155,176,.12);
-    color: var(--cor-secundaria);
+    background: #eff6ff;
+    color: var(--cor-primaria);
     text-decoration: none;
-    border: 1px solid rgba(138,155,176,.18);
+    border: 1px solid #bfdbfe;
     transition: background .15s;
 }
 
-.th-turma .turma-editar:hover { background: rgba(138,155,176,.22); }
+.th-turma .turma-editar:hover { background: #dbeafe; }
 
 /* Separador entre dias */
 .tr-sep-dia td {
     padding: 0;
     height: 4px;
-    background: rgba(106,110,121,.18);
+    background: var(--cor-borda-forte);
     border: none;
 }
 
 /* Aviso de não alocados */
 .aviso-nao-aloc {
-    background: rgba(248,113,113,.07);
-    border: 1px solid rgba(248,113,113,.18);
+    background: #fef2f2;
+    border: 1px solid #fecaca;
     border-radius: var(--raio-borda);
     padding: 14px 18px;
     margin-bottom: 18px;

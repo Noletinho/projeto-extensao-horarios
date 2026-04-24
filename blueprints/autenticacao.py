@@ -9,7 +9,24 @@ def registrar(app):
     @app.route('/')
     @requer_login
     def index():
-        return render_template('index.html')
+        from auth import usuario_logado
+        u = usuario_logado()
+        stats = dict(total_professores=0, total_turmas=0,
+                     total_disciplinas=0, total_alocacoes=0, total_sugestoes=0)
+        if u and u['perfil'] != 'professor':
+            with conectar() as conexao:
+                cursor = conexao.cursor()
+                cursor.execute("SELECT COUNT(*) AS total FROM professor WHERE status='ativo'")
+                stats['total_professores'] = cursor.fetchone()['total']
+                cursor.execute("SELECT COUNT(*) AS total FROM turma")
+                stats['total_turmas'] = cursor.fetchone()['total']
+                cursor.execute("SELECT COUNT(*) AS total FROM disciplina")
+                stats['total_disciplinas'] = cursor.fetchone()['total']
+                cursor.execute("SELECT COUNT(*) AS total FROM alocacao")
+                stats['total_alocacoes'] = cursor.fetchone()['total']
+                cursor.execute("SELECT COUNT(*) AS total FROM sugestao_grade")
+                stats['total_sugestoes'] = cursor.fetchone()['total']
+        return render_template('index.html', **stats)
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():

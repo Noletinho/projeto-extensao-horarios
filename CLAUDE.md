@@ -126,47 +126,61 @@ Todo template herda de `base.html`:
 
 Blocos disponíveis: `titulo`, `conteudo`, `estilos_extra` (CSS no `<head>`), `scripts_extra` (JS antes do `</body>`).
 
-### Tema Glassmorphism — Seda Escura (atual)
+### Tema Atual — Academic Authority (Profissional Claro)
 
-O site usa fundo fixo de imagem (`static/img/seda.jpg`) — seda preta abstrata — com overlay escuro `rgba(4,5,4,0.55)` via `body::before`. Todos os elementos de superfície (`.card`, `table`, `header`) têm `backdrop-filter: blur(16px)` com `background: rgba(...)` semitransparente.
-
-Paleta derivada (#6A6E79 slate + #040504 preto) + acento crimson da logo:
+Design system baseado no projeto Stitch "Gestor de Horários Pro". Fundo claro, sem glassmorphism, sem imagem de fundo. Fonte Inter via Google Fonts.
 
 | Variável | Valor | Uso |
 |----------|-------|-----|
-| `--cor-primaria` | `#8A9BB0` | Títulos, thead, botão primário (slate azul) |
-| `--cor-secundaria` | `#A8BCCE` | Hover/foco |
-| `--cor-acento` | `#B83222` | Botão de destaque (crimson da logo) |
-| `--cor-superficie` | `rgba(8,9,12,0.62)` | Cards, tabelas — translúcido |
-| `--cor-superficie-alt` | `rgba(15,16,22,0.70)` | Inputs, hover de rows |
-| `--cor-borda` | `rgba(106,110,121,0.28)` | Bordas (slate suave) |
-| `--cor-texto` | `#ECEEF4` | Texto principal (branco frio) |
+| `--cor-primaria` | `#0F4C81` | Azul institucional — headers, botões, links |
+| `--cor-secundaria` | `#1a6fb5` | Azul hover |
+| `--cor-acento` | `#B83222` | Crimson — ações de destaque |
+| `--cor-fundo` | `#f4f6f9` | Background da página |
+| `--cor-superficie` | `#ffffff` | Cards, tabelas |
+| `--cor-superficie-alt` | `#f8fafc` | Hover de linhas, inputs |
+| `--cor-borda` | `#e2e8f0` | Bordas leves |
+| `--cor-borda-forte` | `#cbd5e1` | Bordas com mais contraste |
+| `--cor-texto` | `#1a1c1e` | Texto principal (escuro) |
+| `--cor-texto-claro` | `#64748b` | Texto secundário |
+| `--cor-sucesso` | `#16a34a` | Verde |
+| `--cor-erro` | `#dc2626` | Vermelho |
 
-Logo da escola: `static/img/logo.png` — exibida no header do `base.html` e no cabeçalho do `relatorio.html` (com fundo branco arredondado).
+**Fonte:** `'Inter', 'Segoe UI', Arial, sans-serif` — carregada via `<link>` no `base.html`.
+
+**Regra:** Cards e tabelas usam fundo branco (#ffffff) com borda `#e2e8f0` e sombra sutil. Sem `backdrop-filter`, sem `rgba()` para superfícies.
+
+**Exceções que mantêm estilo próprio:**
+- `login.html`: fundo escuro estrelado (campo estelar) para contraste com o card branco
+- `relatorio.html`: standalone de impressão com header crimson (branding da escola)
+- `meu_horario.html`: standalone com tema claro próprio
+
+Logo da escola: `static/img/logo.png` — exibida no header do `base.html` e no cabeçalho do `relatorio.html`.
 
 Paleta do relatório de impressão (cores da logo):
 - Crimson escuro `#7B1818` → `--crim` (header, coluna dia, separadores)
 - Crimson médio `#9B2020` → `--crim2` (cabeçalho de turmas)
 - Laranja `#C8601A` → `--laranja` (badge de turno, bordas de intervalo)
 
-**Regra:** Nunca usar `background-color` sólido nos elementos de superfície — sempre `rgba(...)` para manter a transparência sobre a imagem de fundo.
+### Dashboard (index.html)
 
-### Tema Noturno (legado — substituído)
+A rota `/` agora carrega estatísticas do banco e passa ao template:
+- `total_professores`, `total_turmas`, `total_disciplinas`, `total_alocacoes`, `total_sugestoes`
+- Exibidos em `.stat-card` no `.dashboard-stats`
+- Módulos de navegação em `.dashboard-modulos` com `.modulo-card` + `.acao-rapida`
 
-O site usa tema escuro por padrão. Todas as variáveis CSS são dark:
+### Padrão de Cores para Badges e Indicadores
 
-| Variável | Valor | Uso |
-|----------|-------|-----|
-| `--cor-fundo` | `#0e1117` | Fundo da página |
-| `--cor-superficie` | `#1a1d2e` | Cards e tabelas |
-| `--cor-superficie-alt` | `#242840` | Inputs, hover de rows |
-| `--cor-primaria` | `#5b9bd5` | Títulos, thead, botão primário |
-| `--cor-secundaria` | `#7ab3e8` | Hover e foco |
-| `--cor-acento` | `#f0a500` | Botão de destaque |
-| `--cor-borda` | `#2d3452` | Bordas |
-| `--cor-texto` | `#e2e8f0` | Texto principal |
-| `--cor-erro` | `#f87171` | Erros e excluir |
-| `--cor-sucesso` | `#4ade80` | Badges ativos |
+Usar sempre tons semânticos consistentes com o tema claro:
+
+| Tipo | Background | Border | Texto |
+|------|-----------|--------|-------|
+| Sucesso / ok | `#f0fdf4` | `#bbf7d0` | `var(--cor-sucesso)` |
+| Alerta / médio | `#fef3c7` | `#fde68a` | `#92400e` |
+| Erro / baixo | `#fef2f2` | `#fecaca` | `var(--cor-erro)` |
+| Primário / info | `#eff6ff` | `#bfdbfe` | `var(--cor-primaria)` |
+| Neutro | `var(--cor-superficie-alt)` | `var(--cor-borda)` | `var(--cor-texto-claro)` |
+
+**Regra para cabeçalhos de tabela:** usar `background: #f1f5f9` com `border: 1px solid var(--cor-borda)`. Nunca `rgba(106,110,121,.18)` (era da paleta do tema escuro).
 
 ### Classes de Componentes
 

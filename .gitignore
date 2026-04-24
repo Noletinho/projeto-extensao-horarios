@@ -11,3 +11,4 @@ venv/
 *.sqlite-journal
 .env
 static/img/biblioteca.jpg
+.claude/settings.local.json

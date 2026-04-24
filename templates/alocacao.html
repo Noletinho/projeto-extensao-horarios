@@ -3,23 +3,14 @@
 
 {% block estilos_extra %}
 <style>
-/* ── CABEÇALHO DO TURNO ── */
-.aloc-turno-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 22px;
-    flex-wrap: wrap;
-}
-
 .aloc-turno-badge {
     font-size: .72rem;
     font-weight: 700;
     letter-spacing: .8px;
     text-transform: uppercase;
     color: var(--cor-primaria);
-    background: rgba(138,155,176,.12);
-    border: 1px solid rgba(138,155,176,.18);
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
     border-radius: 20px;
     padding: 3px 12px;
 }
@@ -69,38 +60,35 @@
     width: 100%;
     font-size: .8rem;
     background: var(--cor-superficie);
-    backdrop-filter: blur(var(--blur-glass));
-    border-radius: var(--raio-borda);
-    overflow: hidden;
     border: 1px solid var(--cor-borda);
     box-shadow: var(--sombra);
     margin-bottom: 4px;
 }
 
 .tabela-aloc th {
-    background: rgba(106,110,121,.18);
+    background: #f1f5f9;
     color: var(--cor-primaria);
     padding: 8px 12px;
     text-align: left;
     font-weight: 700;
     font-size: .72rem;
     letter-spacing: .4px;
-    border-bottom: 1px solid rgba(106,110,121,.15);
+    border-bottom: 1px solid var(--cor-borda);
     white-space: nowrap;
 }
 
 .tabela-aloc td {
     padding: 7px 12px;
-    border-bottom: 1px solid rgba(106,110,121,.07);
+    border-bottom: 1px solid var(--cor-borda);
     vertical-align: middle;
 }
 
 .tabela-aloc tbody tr:last-child td { border-bottom: none; }
-.tabela-aloc tbody tr:hover td { background: rgba(106,110,121,.06); }
+.tabela-aloc tbody tr:hover td { background: var(--cor-superficie-alt); }
 
 /* Separador de dia */
 .tabela-aloc .tr-dia-sep td {
-    background: rgba(106,110,121,.08);
+    background: #f1f5f9;
     padding: 3px 12px;
     font-size: .68rem;
     font-weight: 700;
@@ -108,7 +96,7 @@
     text-transform: uppercase;
     color: var(--cor-primaria);
     opacity: .7;
-    border-bottom: 1px solid rgba(106,110,121,.12);
+    border-bottom: 1px solid var(--cor-borda);
 }
 
 /* Chip de disciplina */
@@ -315,9 +303,10 @@
         <div class="form-grupo">
             <label>Dia da Semana:</label>
             <select name="dia_semana" required>
+                {% set _nomes_dia = {'segunda':'Segunda','terca':'Terça','quarta':'Quarta','quinta':'Quinta','sexta':'Sexta'} %}
                 {% for dia in ['segunda','terca','quarta','quinta','sexta'] %}
                 <option value="{{ dia }}" {% if alocacao_edicao['dia_semana'] == dia %}selected{% endif %}>
-                    {{ dia|capitalize }}
+                    {{ _nomes_dia[dia] }}
                 </option>
                 {% endfor %}
             </select>
@@ -333,7 +322,7 @@
                 {% endfor %}
             </select>
         </div>
-        <button type="submit">Atualizar</button>
+        <button type="submit" class="btn btn-primario">Atualizar</button>
     </form>
 </div>
 {% endif %}

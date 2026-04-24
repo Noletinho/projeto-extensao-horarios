@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login — Sistema de Horários</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         body {
@@ -13,25 +16,11 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            padding: 1rem;
+            padding: 1.2rem;
             box-sizing: border-box;
+            background: #0a1628; /* fallback antes do campo estelar carregar */
         }
-        .login-wrap { width: 100%; max-width: 380px; }
-        .login-card { padding: 2.4rem 2rem; border-radius: var(--raio-borda); }
-        .login-titulo {
-            text-align: center;
-            margin: 0 0 0.4rem;
-            font-size: 1.4rem;
-        }
-        .login-subtitulo {
-            text-align: center;
-            color: var(--cor-texto);
-            opacity: 0.55;
-            font-size: 0.87rem;
-            margin: 0 0 1.8rem;
-        }
-        .form-grupo label { font-size: 0.88rem; }
-        .btn-login { width: 100%; margin-top: 0.6rem; padding: 11px; font-size: 0.95rem; }
+        .login-wrap { width: 100%; max-width: 400px; }
     </style>
 </head>
 <body>
@@ -45,39 +34,63 @@
         {% endwith %}
 
         <div class="login-card">
-            <h1 class="login-titulo">🏫 Sistema de Horários</h1>
-            <p class="login-subtitulo">Faça login para continuar</p>
 
-            <form method="POST" action="{{ url_for('login') }}">
-                <div class="form-grupo">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" name="email" required autofocus
-                           placeholder="seu@email.com" autocomplete="username">
+            <!-- Branding -->
+            <div class="login-branding">
+                <img src="{{ url_for('static', filename='img/logo.png') }}"
+                     alt="Logo da Escola" class="login-logo">
+                <div class="login-escola-nome">Sistema de Horários</div>
+                <div class="login-sistema-tag">Portal Administrativo Escolar</div>
+            </div>
+
+            <!-- Formulário -->
+            <form method="POST" action="{{ url_for('login') }}" autocomplete="on">
+
+                <div class="login-input-grupo">
+                    <label class="login-input-label" for="email">E-mail</label>
+                    <div class="login-input-wrapper">
+                        <span class="login-input-prefix">✉️</span>
+                        <input class="login-input" type="email" id="email" name="email"
+                               required autofocus placeholder="seu@email.com"
+                               autocomplete="username">
+                    </div>
                 </div>
-                <div class="form-grupo">
-                    <label for="senha">Senha</label>
-                    <input type="password" id="senha" name="senha" required
-                           placeholder="••••••••" autocomplete="current-password">
+
+                <div class="login-input-grupo">
+                    <label class="login-input-label" for="senha">Senha</label>
+                    <div class="login-input-wrapper">
+                        <span class="login-input-prefix">🔒</span>
+                        <input class="login-input" type="password" id="senha" name="senha"
+                               required placeholder="••••••••"
+                               autocomplete="current-password">
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primario btn-login">Entrar</button>
+
+                <button type="submit" class="login-btn-entrar">
+                    Entrar <span>→</span>
+                </button>
             </form>
+
+            <div class="login-rodape">
+                © {{ 2024 }} Sistema de Horários Escolares &nbsp;·&nbsp;
+                Acesso restrito a usuários autorizados
+            </div>
         </div>
     </div>
 
     <script>
     (function () {
-        var container = document.getElementById('fundo-estrelas');
-        if (!container) return;
+        var c = document.getElementById('fundo-estrelas');
+        if (!c) return;
         var W = window.innerWidth, H = window.innerHeight;
         var total = Math.max(60, Math.min(Math.round((W * H) / 5800), 220));
         for (var i = 0; i < total; i++) {
             var s = document.createElement('div');
             s.className = 'estrela';
             var sz = 0.8 + Math.random() * 1.6;
-            s.style.width = sz + 'px';
-            s.style.height = sz + 'px';
+            s.style.width = sz + 'px'; s.style.height = sz + 'px';
             s.style.left = (Math.random() * 100) + '%';
-            s.style.top = (Math.random() * 100) + '%';
+            s.style.top  = (Math.random() * 100) + '%';
             var dur = 22 + Math.random() * 28;
             s.style.setProperty('--dur', dur + 's');
             s.style.setProperty('--dx', ((Math.random() - 0.5) * 18) + 'px');
@@ -86,7 +99,7 @@
             s.style.setProperty('--op-a', opA);
             s.style.setProperty('--op-b', (parseFloat(opA) + 0.15 + Math.random() * 0.2).toFixed(2));
             s.style.animationDelay = '-' + (Math.random() * dur).toFixed(2) + 's';
-            container.appendChild(s);
+            c.appendChild(s);
         }
     })();
     </script>
