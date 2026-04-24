@@ -27,12 +27,26 @@ def _garantir_tabela():
         conexao.commit()
 
 
+def _slots_disponiveis(pid_str, tid_str, disponibilidades, ocup_prof, ocup_turma, horario_ids):
+    # Professor sem nenhuma disponibilidade cadastrada → considera disponível em todos os horários
+    sem_restricao = pid_str not in disponibilidades
+    available = []
+    for dia in _DIAS:
+        disp_set = set(disponibilidades.get(pid_str, {}).get(dia, []))
+        prof_ocup = ocup_prof.get(pid_str, {}).get(dia, set())
+        turma_ocup = ocup_turma.get(tid_str, {}).get(dia, set())
+        for hid in horario_ids:
+            livre_prof = sem_restricao or (hid in disp_set)
+            if livre_prof and hid not in prof_ocup and hid not in turma_ocup:
+                available.append((dia, hid))
+    return available
+
+
 def _gerar_sugestao(grade_por_turma, disponibilidades, horario_ids, locais,
                     ocup_prof_base, ocup_turma_base, seed):
     rng = random.Random(seed)
     default_local = locais[0]['id'] if locais else 1
 
-    # Cópias de trabalho (não modificamos os originais)
     ocup_prof = {pid: {dia: set(hids) for dia, hids in dias.items()}
                  for pid, dias in ocup_prof_base.items()}
     ocup_turma = {tid: {dia: set(hids) for dia, hids in dias.items()}
@@ -46,16 +60,16 @@ def _gerar_sugestao(grade_por_turma, disponibilidades, horario_ids, locais,
 
     for id_turma in turma_ids:
         disciplinas = list(grade_por_turma[id_turma])
-        # embaralha, mas coloca disciplinas com mais aulas na frente
         rng.shuffle(disciplinas)
         disciplinas.sort(key=lambda d: d['aulas_semanais'], reverse=True)
 
-        for disc in disciplinas:
-            pid = str(disc['id_professor']) if disc['id_professor'] else None
-            tid = str(id_turma)
-            needed = disc['aulas_semanais']
+        tid = str(id_turma)
 
-            if not pid:
+        for disc in disciplinas:
+            needed = disc['aulas_semanais']
+            professores = disc.get('professores', [])
+
+            if not professores:
                 nao_alocados.append({
                     'id_turma': id_turma,
                     'id_disciplina': disc['id_disciplina'],
@@ -65,29 +79,31 @@ def _gerar_sugestao(grade_por_turma, disponibilidades, horario_ids, locais,
                 })
                 continue
 
-            # Slots disponíveis: professor tem disponibilidade + nem ele nem a turma estão ocupados
-            available = []
-            for dia in _DIAS:
-                disp_set = set(disponibilidades.get(pid, {}).get(dia, []))
-                prof_ocup = ocup_prof.get(pid, {}).get(dia, set())
-                turma_ocup = ocup_turma.get(tid, {}).get(dia, set())
-                for hid in horario_ids:
-                    if hid in disp_set and hid not in prof_ocup and hid not in turma_ocup:
-                        available.append((dia, hid))
+            # Escolhe o professor com mais slots disponíveis (balanceamento de carga)
+            best_prof = None
+            best_slots = None
+            best_count = -1
+            for prof in professores:
+                pid_str = str(prof['id'])
+                avail = _slots_disponiveis(pid_str, tid, disponibilidades, ocup_prof, ocup_turma, horario_ids)
+                if len(avail) > best_count:
+                    best_count = len(avail)
+                    best_prof = prof
+                    best_slots = avail
 
+            pid = str(best_prof['id'])
+            available = best_slots or []
             rng.shuffle(available)
 
             # Distribui priorizando dias diferentes
             chosen = []
             day_counts = {dia: 0 for dia in _DIAS}
-            # 1ª passagem: 1 por dia
             for dia, hid in available:
                 if len(chosen) >= needed:
                     break
                 if day_counts[dia] == 0:
                     chosen.append((dia, hid))
                     day_counts[dia] += 1
-            # 2ª passagem: preenche o restante
             if len(chosen) < needed:
                 for dia, hid in available:
                     if (dia, hid) in chosen:
@@ -102,13 +118,13 @@ def _gerar_sugestao(grade_por_turma, disponibilidades, horario_ids, locais,
                 slots_resultado.append({
                     'id_turma': id_turma,
                     'id_disciplina': disc['id_disciplina'],
-                    'id_professor': disc['id_professor'],
+                    'id_professor': best_prof['id'],
                     'id_local': default_local,
                     'dia': dia,
                     'id_horario': hid,
                     'sigla': disc['sigla'],
                     'cor': disc['cor'],
-                    'prof': (disc['nome_professor'] or '').split()[0],
+                    'prof': (best_prof['nome'] or '').split()[0],
                     'nome_disciplina': disc['nome_disciplina'],
                 })
 
@@ -148,6 +164,7 @@ def registrar(app):
     @requer_perfil('diretor', 'secretaria')
     def gerar_sugestoes():
         id_turno = request.form.get('id_turno', '').strip()
+        num_sugestoes = min(max(int(request.form.get('num_sugestoes', 3)), 1), 3)
         if not id_turno:
             flash("Selecione um turno.", 'erro')
             return redirect(url_for('listar_sugestoes'))
@@ -161,21 +178,18 @@ def registrar(app):
                 flash("Turno não encontrado.", 'erro')
                 return redirect(url_for('listar_sugestoes'))
 
-            # Grade curricular — 1 linha por (turma, disciplina), professor único via MIN
+            # Grade curricular — todas as linhas (1 por professor habilitado)
             cursor.execute("""
                 SELECT gc.id_turma, gc.id_disciplina, gc.aulas_semanais,
                        d.nome AS nome_disciplina, d.sigla, d.cor,
-                       MIN(p.id_professor) AS id_professor,
-                       MIN(p.nome)         AS nome_professor
+                       p.id_professor, p.nome AS nome_professor
                 FROM grade_curricular gc
                 JOIN turma t ON gc.id_turma = t.id_turma
                 JOIN disciplina d ON gc.id_disciplina = d.id_disciplina
                 LEFT JOIN professor_disciplina pd ON pd.id_disciplina = gc.id_disciplina
                 LEFT JOIN professor p ON p.id_professor = pd.id_professor AND p.status = 'ativo'
                 WHERE t.id_turno = %s
-                GROUP BY gc.id_turma, gc.id_disciplina, gc.aulas_semanais,
-                         d.nome, d.sigla, d.cor
-                ORDER BY gc.id_turma, d.nome
+                ORDER BY gc.id_turma, gc.id_disciplina, p.id_professor
             """, (id_turno,))
             grade_rows = cursor.fetchall()
 
@@ -183,9 +197,27 @@ def registrar(app):
                 flash("Nenhuma grade curricular cadastrada para este turno.", 'erro')
                 return redirect(url_for('listar_sugestoes'))
 
+            # Agrupa: cada disciplina recebe lista de todos os professores habilitados
             grade_por_turma = {}
+            _disc_map = {}  # (id_turma, id_disciplina) → entrada na lista
             for r in grade_rows:
-                grade_por_turma.setdefault(r['id_turma'], []).append(dict(r))
+                key = (r['id_turma'], r['id_disciplina'])
+                if key not in _disc_map:
+                    entry = {
+                        'id_disciplina': r['id_disciplina'],
+                        'aulas_semanais': r['aulas_semanais'],
+                        'nome_disciplina': r['nome_disciplina'],
+                        'sigla': r['sigla'],
+                        'cor': r['cor'],
+                        'professores': [],
+                    }
+                    _disc_map[key] = entry
+                    grade_por_turma.setdefault(r['id_turma'], []).append(entry)
+                if r['id_professor']:
+                    _disc_map[key]['professores'].append({
+                        'id': r['id_professor'],
+                        'nome': r['nome_professor'],
+                    })
 
             # Horários (sem intervalo)
             cursor.execute("SELECT id_horario FROM horario_aula WHERE eh_intervalo = 0 ORDER BY hora_inicio")
@@ -213,9 +245,9 @@ def registrar(app):
             # Total de aulas esperadas para calcular cobertura
             total_esperado = sum(d['aulas_semanais'] for ds in grade_por_turma.values() for d in ds)
 
-            # Gerar até 3 sugestões com seeds diferentes
+            # Gerar sugestões com seeds diferentes
             geradas = 0
-            for i, seed in enumerate(_SEEDS):
+            for i, seed in enumerate(_SEEDS[:num_sugestoes]):
                 slots, nao_aloc = _gerar_sugestao(
                     grade_por_turma, disponibilidades, horario_ids, locais,
                     ocup_prof_base, ocup_turma_base, seed
@@ -234,9 +266,20 @@ def registrar(app):
 
             conexao.commit()
 
-        flash(f"{geradas} sugestão(ões) gerada(s)! "
-              f"Caso a cobertura seja menor que 100%, verifique se todos os professores "
-              f"têm disponibilidade cadastrada suficiente para cobrir suas disciplinas.", 'sucesso')
+        sem_disp = sum(
+            1 for pid in set(
+                str(p['id'])
+                for ds in grade_por_turma.values()
+                for disc in ds
+                for p in disc['professores']
+            )
+            if pid not in disponibilidades
+        )
+        msg = f"{geradas} sugestão(ões) gerada(s) com sucesso!"
+        if sem_disp:
+            msg += (f" Atenção: {sem_disp} professor(es) sem disponibilidade cadastrada "
+                    f"foram tratados como disponíveis em todos os horários.")
+        flash(msg, 'sucesso')
         return redirect(url_for('listar_sugestoes'))
 
     @app.route('/sugestao/<int:id_sugestao>')

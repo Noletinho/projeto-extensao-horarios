@@ -84,11 +84,19 @@
                     {% endfor %}
                 </select>
             </div>
-            <button type="submit" class="btn btn-acento">Gerar 3 Sugestões</button>
+            <div class="form-grupo" style="margin:0;min-width:120px;">
+                <label>Quantidade:</label>
+                <select name="num_sugestoes">
+                    <option value="1">1 sugestão</option>
+                    <option value="2">2 sugestões</option>
+                    <option value="3" selected>3 sugestões</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-acento">⚡ Gerar</button>
         </div>
     </form>
     <p style="font-size:.75rem;opacity:.5;margin-top:10px;margin-bottom:0;">
-        Cada geração cria 3 variações com distribuição diferente de dias/professores.
+        Cada variação usa distribuição diferente de dias e professores.
         As sugestões não modificam alocações já salvas.
     </p>
 </div>
