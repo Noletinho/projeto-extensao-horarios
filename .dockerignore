@@ -1,0 +1,14 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+.venv
+venv
+.env
+projeto_facul
+docs
+.vscode
+.claude
+DESIGN.md
+DOCUMENTACAO_PROJETO.md
+RELATORIO_FINAL_PREENCHIDO.md

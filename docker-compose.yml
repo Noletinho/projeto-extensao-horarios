@@ -1,0 +1,45 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootsenha}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-horarios_escola}
+      MYSQL_USER: ${MYSQL_USER:-app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-app123}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootsenha}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER:-app}:${MYSQL_PASSWORD:-app123}@db:3306/${MYSQL_DATABASE:-horarios_escola}
+      SECRET_KEY: ${SECRET_KEY:-troque-esta-chave-antes-de-usar}
+      FLASK_DEBUG: ${FLASK_DEBUG:-0}
+      DB_SEED_DEFAULT_USERS: ${DB_SEED_DEFAULT_USERS:-false}
+    ports:
+      - "5000:5000"
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    ports:
+      - "8082:80"
+
+volumes:
+  mysql_data:

@@ -33,6 +33,23 @@ python rotas.py
 pip install -r requirements.txt
 ```
 
+### Docker (opcional — app + MySQL num único comando)
+
+Alternativa ao venv + MySQL local: sobe os dois containers (app e MySQL 8.0) já conectados,
+com schema criado automaticamente pelo `docker-entrypoint.sh` na primeira subida. Útil para
+demonstrar/entregar o projeto num ambiente que não tenha Python/MySQL instalados (ex.: a escola,
+inclusive Windows via Docker Desktop) sem precisar configurar nada manualmente.
+
+```bash
+docker compose up --build   # builda a imagem e sobe app (porta 5000) + MySQL
+docker compose down         # para os containers (mantém os dados no volume mysql_data)
+docker compose down -v      # para os containers E apaga os dados do MySQL
+```
+
+Variáveis (`MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `SECRET_KEY`,
+`FLASK_DEBUG`, `DB_SEED_DEFAULT_USERS`) podem ser sobrescritas num `.env` na raiz — ver
+`.env.example`. Sem `.env`, usa valores padrão (bons para demo, não para uso real).
+
 ## Variáveis de Ambiente
 
 | Variável | Obrigatória | Descrição |
@@ -185,7 +202,10 @@ entrada. Novos templates com listas ganham a cascata de `tbody tr` automaticamen
 
 ## Entrega
 
-**Demonstração local + código aberto.** O sistema roda localmente (`python rotas.py` →
-<http://127.0.0.1:5000>) e é apresentado presencialmente; não há hospedagem online nem arquivos de
-deploy (Procfile/wsgi/gunicorn foram removidos). O código-fonte fica publicado no GitHub sob licença
-aberta para quem quiser instalar localmente.
+**Demonstração local + código aberto.** O sistema roda localmente (`python rotas.py` ou
+`docker compose up` → <http://127.0.0.1:5000>) e é apresentado presencialmente; não há hospedagem
+online nem arquivos de deploy voltados a produção (Procfile/wsgi/gunicorn foram removidos — o
+servidor de desenvolvimento do Flask é usado mesmo dentro do container). O Dockerfile/docker-compose
+existem só para empacotar app + MySQL e facilitar rodar em qualquer máquina (inclusive Windows via
+Docker Desktop) sem instalar Python/MySQL manualmente — não configuram hospedagem online. O
+código-fonte fica publicado no GitHub sob licença aberta para quem quiser instalar localmente.
